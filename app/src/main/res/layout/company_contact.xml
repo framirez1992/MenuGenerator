@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:padding="@dimen/layout_padding">
+
+    <TextView android:id="@+id/title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/title_padding"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:text="@string/my_business"
+        android:textStyle="bold"
+        android:textSize="@dimen/titles"
+        android:gravity="center"/>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilFacebook"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/text_input_field_height"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/title">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etFacebook"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:hint="@string/facebook"
+            android:textSize="@dimen/body"
+            android:drawableStart="@drawable/facebook_tiny"
+            android:lines="1"
+            android:inputType="textUri"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilInstagram"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/text_input_field_height"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tilFacebook">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etInstagram"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:hint="@string/instagram"
+            android:textSize="@dimen/body"
+            android:drawableStart="@drawable/instagram_tiny"
+            android:lines="1"
+            android:inputType="textUri"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilWhatsapp"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/text_input_field_height"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tilInstagram">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etWhatsapp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:hint="@string/whatsapp"
+            android:textSize="@dimen/body"
+            android:drawableStart="@drawable/whatsapp_tiny"
+            android:lines="1"
+            android:inputType="textUri"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

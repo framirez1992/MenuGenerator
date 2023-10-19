@@ -1,4 +1,4 @@
-package com.far.menugenerator.data.model
+package com.far.menugenerator.model
 
 /**
  * Data class that captures user information for logged in users retrieved from LoginRepository

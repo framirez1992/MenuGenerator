@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:drawable="@drawable/baseline_image_search_24"
+        android:width="@dimen/medium_image_width"
+        android:height="@dimen/medium_image_height"
+        android:start="@dimen/medium_image_padding"
+        android:end="@dimen/medium_image_padding"
+        android:top="@dimen/medium_image_padding"
+        android:bottom="@dimen/medium_image_padding"/>
+</layer-list>

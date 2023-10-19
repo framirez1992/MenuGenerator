@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:paddingTop="@dimen/layout_padding">
+
+    <TextView android:id="@+id/title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:textSize="@dimen/titles"
+        android:paddingBottom="@dimen/title_padding"
+        android:textStyle="bold"
+        android:text="@string/products"
+        android:gravity="center"/>
+
+
+    <Spinner android:id="@+id/spnCategories"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="50dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/title"/>
+
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilProduct"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="@id/spnCategories"
+        app:layout_constraintEnd_toEndOf="@id/spnCategories"
+        app:layout_constraintTop_toBottomOf="@id/spnCategories">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etProductName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/name"/>
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilProductPrice"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tilProduct">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etProductPrice"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/price"
+            android:inputType="number|numberDecimal"/>
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilProductDescription"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tilProductPrice">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etProductDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/description"/>
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+
+
+    <ImageView android:id="@+id/imgProduct"
+        android:layout_width="200dp"
+        android:layout_height="150dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/btnAddProductImage"
+        app:layout_constraintTop_toBottomOf="@id/tilProductDescription"
+        android:background="@color/grey_500"/>
+
+    <Button android:id="@+id/btnAddProductImage"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="5dp"
+        android:text="@string/search"
+        app:layout_constraintStart_toEndOf="@id/imgProduct"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/imgProduct"
+        app:layout_constraintBottom_toTopOf="@id/btnClearProductImage"/>
+
+
+    <Button android:id="@+id/btnClearProductImage"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="5dp"
+        android:text="@string/clear"
+        app:layout_constraintStart_toEndOf="@id/imgProduct"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btnAddProductImage"
+        app:layout_constraintBottom_toBottomOf="@id/imgProduct"/>
+
+
+    <Button android:id="@+id/btnAdd"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/add"
+        app:layout_constraintStart_toStartOf="@id/imgProduct"
+        app:layout_constraintEnd_toEndOf="@id/btnClearProductImage"
+        app:layout_constraintTop_toBottomOf="@+id/imgProduct"
+        app:layout_constraintBottom_toTopOf="@id/btnPreview"
+        android:visibility="visible"/>
+
+    <Button android:id="@+id/btnPreview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/preview"
+        app:layout_constraintStart_toStartOf="@id/btnAdd"
+        app:layout_constraintEnd_toEndOf="@id/btnAdd"
+        app:layout_constraintTop_toBottomOf="@+id/btnAdd"
+        android:visibility="visible"/>
+
+
+
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
