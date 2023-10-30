@@ -6,7 +6,8 @@ import com.far.menugenerator.model.denpendencyInjection.presentation.Presentatio
 
 open class BaseFragment:Fragment() {
 
+    val baseActivity get() = (activity as BaseActivity)
     val presentationComponent:PresentationComponent by lazy {
-        (activity as BaseActivity).activityComponent.newPresentationComponent(PresentationModule())
+        baseActivity.activityComponent.newPresentationComponent(PresentationModule())
     }
 }

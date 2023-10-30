@@ -1,27 +1,46 @@
 package com.far.menugenerator.view
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.DisplayMetrics
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
 import android.widget.ArrayAdapter
+import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.VIEW_MODEL_STORE_OWNER_KEY
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.far.menugenerator.R
+import com.far.menugenerator.common.utils.FileUtils
 import com.far.menugenerator.common.utils.NumberUtils
 import com.far.menugenerator.databinding.FragmentCreateMenuBinding
+import com.far.menugenerator.databinding.ItemMenuFinalPreviewBinding
+import com.far.menugenerator.model.Company
 import com.far.menugenerator.model.CreateMenuState
 import com.far.menugenerator.model.ItemPreview
 import com.far.menugenerator.model.ItemStyle
+import com.far.menugenerator.model.storage.StorageMenu
 import com.far.menugenerator.view.adapters.CategoriesAdapter
 import com.far.menugenerator.view.adapters.MenuPreviewAdapter
 import com.far.menugenerator.view.common.BaseFragment
+import com.far.menugenerator.view.common.ScreenNavigation
 import com.far.menugenerator.viewModel.CreateMenuViewModel
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import java.util.UUID
+import javax.inject.Inject
+import kotlin.io.path.Path
+import kotlin.io.path.name
 
 
 /**
@@ -37,12 +56,17 @@ class CreateMenuFragment : BaseFragment() {
     private lateinit var _binding:FragmentCreateMenuBinding
     private lateinit var _viewModel:CreateMenuViewModel
 
+    @Inject lateinit var screenNavigation: ScreenNavigation
+    @Inject lateinit var createMenuViewModelFactory: CreateMenuViewModel.CreateMenuViewModelFactory
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
 
         }
-        _viewModel = ViewModelProvider(requireActivity())[CreateMenuViewModel::class.java]
+        presentationComponent.inject(this)
+        _viewModel = ViewModelProvider(this,createMenuViewModelFactory)[CreateMenuViewModel::class.java]
     }
 
     override fun onCreateView(
@@ -71,17 +95,25 @@ class CreateMenuFragment : BaseFragment() {
     }
 
     private fun initViews(){
+
         _binding.llNext.setOnClickListener { _viewModel.nextScreen() }
         _binding.llBack.setOnClickListener { _viewModel.previousScreen() }
-       /* _binding.menuTypeScreen.imageTitleDescription.root.setOnClickListener{
-            _viewModel.selectItemStyle(ItemStyle.MENU_IMAGE_TITLE_DESCRIPTION_PRICE)
+        _binding.llGenerate.setOnClickListener{
+            val fileName = "some name"//selectec by the user
+            val pdfRoute = "${FileUtils.getDownloadsPath()}/temp.pdf"
+            var height = _binding.menuPreviewFinalScreen.llCompany.measuredHeight + calculateTotalItemHeight(_binding.menuPreviewFinalScreen.llItems) + _binding.menuPreviewFinalScreen.llFooter.measuredHeight
+            lifecycleScope.launch(Dispatchers.Main) {
+                //SHOW LOADING AND LOCK NAVIGATION
+                Toast.makeText(baseActivity,"Generando...", Toast.LENGTH_SHORT).show()
+
+                FileUtils.layoutToPdf(_binding.menuPreviewFinalScreen.root,pdfRoute,height)
+
+                val previewItems = (_binding.menuPreviewScreen.rvPreview.adapter as MenuPreviewAdapter).currentPreview
+                _viewModel.saveMenu(LoginActivity.account?.email!!,fileName,previewItems,pdfRoute)
+            }
+
         }
-        _binding.menuTypeScreen.titleDescription.root.setOnClickListener{
-            _viewModel.selectItemStyle(ItemStyle.MENU_TITLE_DESCRIPTION_PRICE)
-        }
-        _binding.menuTypeScreen.titlePrice.root.setOnClickListener{
-            _viewModel.selectItemStyle(ItemStyle.MENU_TITLE_PRICE)
-        }*/
+
 
         _binding.categoriesScreen.btnAdd.setOnClickListener{
             val category = _binding.categoriesScreen.etCategory.text.toString()
@@ -105,28 +137,41 @@ class CreateMenuFragment : BaseFragment() {
             )
             clearProductFields()
         }
-        //_binding.addMenuItemScreen.etProductPrice.addTextChangedListener(/*resources.getString(R.string.currencyFormat)*/"#,##0.00"))
-
         _binding.categoriesScreen.rvCategories.layoutManager = LinearLayoutManager(context,RecyclerView.VERTICAL,false)
         _binding.menuPreviewScreen.rvPreview.layoutManager = LinearLayoutManager(context,RecyclerView.VERTICAL,false)
+
+
+
     }
 
 
     private fun initObservers(){
-        _viewModel.state.observe(requireActivity()){
+        _viewModel.state.observe(viewLifecycleOwner){
             navigate(it.currentScreen)
-            //menuTypeSelected(it.selectedItemStyle)
             setCategoryAdapter(it.categories)
             fillSpinnerCategories(it.categories)
             fillPreviewAdapter(it)
-        }
-        _viewModel.currentItemImage.observe(requireActivity()){
-            if(it != null){
-                _binding.addMenuItemScreen.imgProduct.setImageURI(it)
-            }else{
-                _binding.addMenuItemScreen.imgProduct.setImageDrawable(null)
+
+            if(it.currentScreen == R.id.menuPreviewFinalScreen){
+                fillCompany()
+                fillFinalPreview((_binding.menuPreviewScreen.rvPreview.adapter as MenuPreviewAdapter).currentPreview)
             }
 
+        }
+        _viewModel.currentItemImage.observe(viewLifecycleOwner){
+            if(it != null){
+                Glide.with(baseActivity)
+                    .load(it)
+                    .into(_binding.addMenuItemScreen.imgProduct)
+            }else{
+                _binding.addMenuItemScreen.imgProduct.setImageResource(R.drawable.baseline_photo_library_24)
+            }
+
+        }
+        _viewModel.savedMenuUrl.observe(requireActivity()){
+            //FINISH PROCESS
+            Toast.makeText(baseActivity,"Completado", Toast.LENGTH_SHORT).show()
+            screenNavigation.qrImagePreview(it)
         }
     }
 
@@ -137,37 +182,15 @@ class CreateMenuFragment : BaseFragment() {
 
     private fun navigate(currentView:Int){
         _binding.llBack.visibility = if(currentView == R.id.categoriesScreen) View.GONE else View.VISIBLE
-        _binding.llNext.visibility = if(currentView == R.id.menuPreviewScreen) View.GONE else View.VISIBLE
+        _binding.llNext.visibility = if(currentView == R.id.menuPreviewFinalScreen) View.GONE else View.VISIBLE
+        _binding.llGenerate.visibility = if(currentView == R.id.menuPreviewFinalScreen) View.VISIBLE else View.GONE
 
-        //_binding.menuTypeScreen.root.visibility= if(currentView == R.id.menuTypeScreen) View.VISIBLE else View.GONE
         _binding.categoriesScreen.root.visibility= if(currentView == R.id.categoriesScreen) View.VISIBLE else View.GONE
         _binding.addMenuItemScreen.root.visibility= if(currentView == R.id.addMenuItemScreen) View.VISIBLE else View.GONE
         _binding.menuPreviewScreen.root.visibility = if(currentView == R.id.menuPreviewScreen) View.VISIBLE else View.GONE
+        _binding.menuPreviewFinalScreen.root.visibility = if(currentView == R.id.menuPreviewFinalScreen) View.VISIBLE else View.GONE
     }
-/*
-    private fun menuTypeSelected(itemStyle: ItemStyle) {
-        val selectedTextColor:Int = resources.getColor(R.color.white)
-        val selectedCardColor:Int = resources.getColor(R.color.purple_500)
 
-        val unSelectedTextColor:Int = resources.getColor(R.color.black)
-        val unSelectedCardColor:Int = resources.getColor(R.color.white)
-
-        _binding.menuTypeScreen.imageTitleDescription.root.setCardBackgroundColor(if(itemStyle == ItemStyle.MENU_IMAGE_TITLE_DESCRIPTION_PRICE) selectedCardColor else unSelectedCardColor)
-        _binding.menuTypeScreen.imageTitleDescription.title.setTextColor(if(itemStyle == ItemStyle.MENU_IMAGE_TITLE_DESCRIPTION_PRICE) selectedTextColor else unSelectedTextColor)
-        _binding.menuTypeScreen.imageTitleDescription.body.setTextColor(if(itemStyle == ItemStyle.MENU_IMAGE_TITLE_DESCRIPTION_PRICE) selectedTextColor else unSelectedTextColor)
-        _binding.menuTypeScreen.imageTitleDescription.price.setTextColor(if(itemStyle == ItemStyle.MENU_IMAGE_TITLE_DESCRIPTION_PRICE) selectedTextColor else unSelectedTextColor)
-
-        _binding.menuTypeScreen.titleDescription.root.setCardBackgroundColor(if(itemStyle == ItemStyle.MENU_TITLE_DESCRIPTION_PRICE) selectedCardColor else unSelectedCardColor)
-        _binding.menuTypeScreen.titleDescription.title.setTextColor(if(itemStyle == ItemStyle.MENU_TITLE_DESCRIPTION_PRICE) selectedTextColor else unSelectedTextColor)
-        _binding.menuTypeScreen.titleDescription.body.setTextColor(if(itemStyle == ItemStyle.MENU_TITLE_DESCRIPTION_PRICE) selectedTextColor else unSelectedTextColor)
-        _binding.menuTypeScreen.titleDescription.price.setTextColor(if(itemStyle == ItemStyle.MENU_TITLE_DESCRIPTION_PRICE) selectedTextColor else unSelectedTextColor)
-
-        _binding.menuTypeScreen.titlePrice.root.setCardBackgroundColor(if(itemStyle == ItemStyle.MENU_TITLE_PRICE) selectedCardColor else unSelectedCardColor)
-        _binding.menuTypeScreen.titlePrice.title.setTextColor(if(itemStyle == ItemStyle.MENU_TITLE_PRICE) selectedTextColor else unSelectedTextColor)
-        _binding.menuTypeScreen.titlePrice.price.setTextColor(if(itemStyle == ItemStyle.MENU_TITLE_PRICE) selectedTextColor else unSelectedTextColor)
-
-
-    }*/
 
     private fun fillPreviewAdapter(state:CreateMenuState){
         var previewList = mutableListOf<ItemPreview>()
@@ -184,7 +207,7 @@ class CreateMenuFragment : BaseFragment() {
 
             ItemPreview(itemStyle = itemStyle, position = state.items.indexOf(it), categoryName =  it.category, name =  it.name, price =  it.amount.toString(), description =  it.description, image =  it.image)
         })
-        _binding.menuPreviewScreen.rvPreview.adapter = MenuPreviewAdapter(previewList)
+        _binding.menuPreviewScreen.rvPreview.adapter = MenuPreviewAdapter(baseActivity,previewList)
     }
     private fun setCategoryAdapter(categories:MutableList<String>){
         val adapter = CategoriesAdapter(categories)
@@ -222,6 +245,171 @@ class CreateMenuFragment : BaseFragment() {
     private fun clearImage(){
         _viewModel.updateCurrentItemImage(null)
     }
+
+
+    fun calculateTotalItemHeight(recyclerView: RecyclerView): Int {
+        var totalItemHeight = 0
+        for (i in 0 until recyclerView.adapter!!.itemCount) {
+            val view = recyclerView.adapter!!
+                .onCreateViewHolder(recyclerView, i).itemView
+            totalItemHeight += measureItemHeight(view)
+        }
+        return totalItemHeight
+    }
+
+    fun calculateTotalItemHeight(viewGroup: ViewGroup): Int {
+        var totalItemHeight = 0
+        for (i in 0 until viewGroup.childCount) {
+            val view = viewGroup.getChildAt(i)
+            totalItemHeight += measureItemHeight(view)
+        }
+        return totalItemHeight
+    }
+
+
+    fun measureItemHeight(view: View): Int {
+        //val widthSpec = View.MeasureSpec.makeMeasureSpec(view.measuredWidth, View.MeasureSpec.AT_MOST)
+        //val heightSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+        //view.measure(widthSpec, heightSpec)
+        return view.measuredHeight
+    }
+
+
+
+
+    private fun fillFinalPreview(items: List<ItemPreview>){
+
+        _binding.menuPreviewFinalScreen.llItems.removeAllViews()
+
+        items.forEach { itemPreview ->
+            val binding = ItemMenuFinalPreviewBinding.inflate(LayoutInflater.from(baseActivity),_binding.menuPreviewFinalScreen.llItems,false)
+
+            binding.imageTitleDescription.root.visibility = if(itemPreview.itemStyle == ItemStyle.MENU_IMAGE_TITLE_DESCRIPTION_PRICE) View.VISIBLE else View.GONE
+            binding.titleDescription.root.visibility = if(itemPreview.itemStyle == ItemStyle.MENU_TITLE_DESCRIPTION_PRICE) View.VISIBLE else View.GONE
+            binding.titlePrice.root.visibility = if(itemPreview.itemStyle == ItemStyle.MENU_TITLE_PRICE) View.VISIBLE else View.GONE
+            binding.categoryTitle.root.visibility = if (itemPreview.itemStyle == ItemStyle.MENU_CATEGORY_HEADER) View.VISIBLE else View.GONE
+
+            when (itemPreview.itemStyle) {
+                ItemStyle.MENU_IMAGE_TITLE_DESCRIPTION_PRICE -> {
+                    binding.imageTitleDescription.title.text = itemPreview.name
+                    binding.imageTitleDescription.body.text = itemPreview.description
+                    binding.imageTitleDescription.price.text = itemPreview.price
+                    Glide.with(baseActivity)
+                        .load(itemPreview.image)
+                        .into(binding.imageTitleDescription.image)
+
+                }
+                ItemStyle.MENU_TITLE_DESCRIPTION_PRICE -> {
+                    binding.titleDescription.title.text = itemPreview.name
+                    binding.titleDescription.body.text = itemPreview.description
+                    binding.titleDescription.price.text = itemPreview.price
+                }
+                ItemStyle.MENU_TITLE_PRICE -> {
+                    binding.titlePrice.title.text = itemPreview.name
+                    binding.titlePrice.price.text = itemPreview.price
+                }
+                else -> {
+                    binding.categoryTitle.title.text = itemPreview.name
+                }
+            }
+
+
+
+
+            // Get the layout parameters of the view.
+            val layoutParams = binding.root.layoutParams as ViewGroup.MarginLayoutParams
+            if(itemPreview.itemStyle == ItemStyle.MENU_CATEGORY_HEADER)
+                layoutParams.setMargins(0, 20, 0, 0)
+            else
+                layoutParams.setMargins(0, 0, 0, 0)
+
+            binding.root.layoutParams = layoutParams
+            _binding.menuPreviewFinalScreen.llItems.addView(binding.root)
+        }
+
+        _binding.menuPreviewFinalScreen.llItems.invalidate()
+    }
+
+    private fun fillCompany(){
+        val comp = Company(businessName = "Cow Abunga Burgers", address1 = "4455 Landing Lange, APT 4", address2 = "Louisville, KY 40018-1234", address3 = "", phone1 = "", phone2 = "",phone3="", facebook = "https://cowabungaburgers.com", instagram = "@cowabungaburgers.com", whatsapp = "809-998-3580", logo = null)
+        _binding.menuPreviewFinalScreen.logo.setImageResource(R.drawable.foodtruck_logo)
+        if(comp.businessName.isNullOrBlank()){
+            _binding.menuPreviewFinalScreen.tvCompanyName.visibility = View.GONE
+        }else{
+            _binding.menuPreviewFinalScreen.tvCompanyName.text= comp.businessName
+            _binding.menuPreviewFinalScreen.tvCompanyName.visibility = View.VISIBLE
+        }
+
+
+        if(comp.phone1.isNullOrBlank()){
+            _binding.menuPreviewFinalScreen.tvPhone1.visibility = View.GONE
+        }else{
+            _binding.menuPreviewFinalScreen.tvPhone1.text= comp.phone1
+            _binding.menuPreviewFinalScreen.tvPhone1.visibility = View.VISIBLE
+        }
+
+        if(comp.phone2.isNullOrBlank()){
+            _binding.menuPreviewFinalScreen.tvPhone2.visibility = View.GONE
+        }else{
+            _binding.menuPreviewFinalScreen.tvPhone2.text= comp.phone2
+            _binding.menuPreviewFinalScreen.tvPhone2.visibility = View.VISIBLE
+        }
+
+        if(comp.phone3.isNullOrBlank()){
+            _binding.menuPreviewFinalScreen.tvPhone3.visibility = View.GONE
+        }else{
+            _binding.menuPreviewFinalScreen.tvPhone3.text= comp.phone3
+            _binding.menuPreviewFinalScreen.tvPhone3.visibility = View.VISIBLE
+        }
+
+
+        if(comp.address1.isNullOrBlank()){
+            _binding.menuPreviewFinalScreen.tvAddress1.visibility = View.GONE
+        }else{
+            _binding.menuPreviewFinalScreen.tvAddress1.text= comp.address1
+            _binding.menuPreviewFinalScreen.tvAddress1.visibility = View.VISIBLE
+        }
+
+        if(comp.address2.isNullOrBlank()){
+            _binding.menuPreviewFinalScreen.tvAddress2.visibility = View.GONE
+        }else{
+            _binding.menuPreviewFinalScreen.tvAddress2.text= comp.address2
+            _binding.menuPreviewFinalScreen.tvAddress2.visibility = View.VISIBLE
+        }
+
+        if(comp.address3.isNullOrBlank()){
+            _binding.menuPreviewFinalScreen.tvAddress3.visibility = View.GONE
+        }else{
+            _binding.menuPreviewFinalScreen.tvAddress3.text= comp.address3
+            _binding.menuPreviewFinalScreen.tvAddress3.visibility = View.VISIBLE
+        }
+
+
+        if(comp.facebook.isNullOrBlank()){
+            _binding.menuPreviewFinalScreen.llFacebook.visibility = View.GONE
+
+        }else{
+            _binding.menuPreviewFinalScreen.llFacebook.visibility = View.VISIBLE
+            _binding.menuPreviewFinalScreen.tvFacebook.text= comp.facebook
+        }
+
+        if(comp.instagram.isNullOrBlank()){
+            _binding.menuPreviewFinalScreen.llInstagram.visibility = View.GONE
+
+        }else{
+            _binding.menuPreviewFinalScreen.llInstagram.visibility = View.VISIBLE
+            _binding.menuPreviewFinalScreen.tvInstagram.text= comp.instagram
+        }
+
+        if(comp.whatsapp.isNullOrBlank()){
+            _binding.menuPreviewFinalScreen.llWhatsapp.visibility = View.GONE
+
+        }else{
+            _binding.menuPreviewFinalScreen.llWhatsapp.visibility = View.VISIBLE
+            _binding.menuPreviewFinalScreen.tvWhatsapp.text= comp.whatsapp
+        }
+    }
+
 
 
     companion object {

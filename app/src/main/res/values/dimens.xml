@@ -21,4 +21,7 @@
     <dimen name="rounded_card_radius_large">75dp</dimen>
 
     <dimen name="text_input_field_height">60dp</dimen>
+
+
+    <dimen name="item_row_category_header_margin_top">5dp</dimen>
 </resources>

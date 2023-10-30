@@ -1,18 +1,26 @@
 package com.far.menugenerator.view.adapters
 
+
+import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.marginTop
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import com.far.menugenerator.R
+import com.far.menugenerator.common.utils.NumberUtils
 import com.far.menugenerator.databinding.ItemMenuPreviewBinding
 import com.far.menugenerator.model.ItemPreview
 import com.far.menugenerator.model.ItemStyle
+import com.far.menugenerator.view.common.BaseActivity
 import java.util.*
 
-class MenuPreviewAdapter(private val itemPreviewList:List<ItemPreview>): RecyclerView.Adapter<MenuPreviewAdapter.MenuPreviewViewHolder>() {
+
+class MenuPreviewAdapter(private val activity:BaseActivity,private val itemPreviewList:List<ItemPreview>): RecyclerView.Adapter<MenuPreviewAdapter.MenuPreviewViewHolder>() {
 
     private var preview:MutableList<ItemPreview> = mutableListOf()
-
+    val currentPreview get() = preview
     init {
        organizeArray()
     }
@@ -26,9 +34,11 @@ class MenuPreviewAdapter(private val itemPreviewList:List<ItemPreview>): Recycle
     }
 
     override fun onBindViewHolder(holder: MenuPreviewViewHolder, position: Int) {
-        holder.bind(preview[position])
-        holder.itemView.setOnClickListener{
-            //moveUp(preview[position])
+        holder.bind(activity,preview[position])
+        holder.binding.options.btnUp.setOnClickListener{
+            moveUp(preview[position])
+        }
+        holder.binding.options.btnDown.setOnClickListener{
             moveDown(preview[position])
         }
 
@@ -120,9 +130,9 @@ class MenuPreviewAdapter(private val itemPreviewList:List<ItemPreview>): Recycle
     }
 
 
-    class MenuPreviewViewHolder(private val binding:ItemMenuPreviewBinding):RecyclerView.ViewHolder(binding.root){
+    class MenuPreviewViewHolder(val binding:ItemMenuPreviewBinding):RecyclerView.ViewHolder(binding.root){
 
-        fun bind(itemPreview: ItemPreview){
+        fun bind(activity: BaseActivity,itemPreview: ItemPreview){
             binding.imageTitleDescription.root.visibility = if(itemPreview.itemStyle == ItemStyle.MENU_IMAGE_TITLE_DESCRIPTION_PRICE) View.VISIBLE else View.GONE
             binding.titleDescription.root.visibility = if(itemPreview.itemStyle == ItemStyle.MENU_TITLE_DESCRIPTION_PRICE) View.VISIBLE else View.GONE
             binding.titlePrice.root.visibility = if(itemPreview.itemStyle == ItemStyle.MENU_TITLE_PRICE) View.VISIBLE else View.GONE
@@ -133,7 +143,10 @@ class MenuPreviewAdapter(private val itemPreviewList:List<ItemPreview>): Recycle
                     binding.imageTitleDescription.title.text = itemPreview.name
                     binding.imageTitleDescription.body.text = itemPreview.description
                     binding.imageTitleDescription.price.text = itemPreview.price
-                    binding.imageTitleDescription.image.setImageURI(itemPreview.image)
+                    Glide.with(activity)
+                        .load(itemPreview.image)
+                        .into(binding.imageTitleDescription.image)
+
                 }
                 ItemStyle.MENU_TITLE_DESCRIPTION_PRICE -> {
                     binding.titleDescription.title.text = itemPreview.name
@@ -148,6 +161,20 @@ class MenuPreviewAdapter(private val itemPreviewList:List<ItemPreview>): Recycle
                     binding.categoryTitle.title.text = itemPreview.name
                 }
             }
+
+
+
+
+            // Get the layout parameters of the view.
+            val layoutParams = binding.root.layoutParams as ViewGroup.MarginLayoutParams
+            if(itemPreview.itemStyle == ItemStyle.MENU_CATEGORY_HEADER)
+                layoutParams.setMargins(0, 20, 0, 0)
+            else
+                layoutParams.setMargins(0, 0, 0, 0)
+
+            binding.root.layoutParams = layoutParams
         }
+
+
     }
 }

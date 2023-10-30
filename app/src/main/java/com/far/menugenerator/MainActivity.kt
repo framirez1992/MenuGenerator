@@ -6,6 +6,7 @@ import com.far.menugenerator.databinding.ActivityMainBinding
 import com.far.menugenerator.view.common.BaseActivity
 import com.far.menugenerator.view.common.ScreenNavigation
 import com.far.menugenerator.viewModel.MainActivityViewModel
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import javax.inject.Inject
 
 class MainActivity : BaseActivity() {
@@ -14,6 +15,7 @@ class MainActivity : BaseActivity() {
     private  lateinit var viewModel:MainActivityViewModel
 
     @Inject lateinit var screenNavigation: ScreenNavigation
+    @Inject lateinit var mGoogleSignInClient: GoogleSignInClient
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         presentationComponent.inject(this)
@@ -25,10 +27,17 @@ class MainActivity : BaseActivity() {
         presentationComponent.inject(this)
 
 
-        //screenNavigation.companyFragment()
-        screenNavigation.createMenuFragment()
-
+        if(savedInstanceState == null){
+            //screenNavigation.companyFragment()
+            screenNavigation.createMenuFragment()
+        }
     }
 
+    private fun signOut() {
+        mGoogleSignInClient.signOut()
+            .addOnCompleteListener(this) {
+                finish()
+            }
+    }
 
 }

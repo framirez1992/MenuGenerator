@@ -6,28 +6,38 @@ import com.far.menugenerator.R
 import com.far.menugenerator.view.CompanyFragment
 import com.far.menugenerator.view.CreateMenuFragment
 import com.far.menugenerator.view.MainScreenFragment
+import com.far.menugenerator.view.QRPreviewFragment
 import javax.inject.Inject
 
-class ScreenNavigation @Inject constructor(private val activity: BaseActivity) {
+class ScreenNavigation (val baseActivity: BaseActivity) {
 
+    private val activity get() = baseActivity
+    private val fragmentManager get() = activity.supportFragmentManager
+    private lateinit var currentFragment:BaseFragment
 
     fun mainActivity(){
         activity.startActivity(Intent(activity,MainActivity::class.java))
     }
     fun mainScreenFragment(){
-        setFragment(MainScreenFragment.newInstance())
+        currentFragment = MainScreenFragment.newInstance()
+        setFragment()
     }
     fun companyFragment(){
-        setFragment(CompanyFragment.newInstance())
+        currentFragment = CompanyFragment.newInstance()
+        setFragment()
     }
     fun createMenuFragment(){
-        setFragment(CreateMenuFragment.newInstance())
+        currentFragment = CreateMenuFragment.newInstance()
+        setFragment()
+    }
+    fun qrImagePreview(data:String){
+        currentFragment = QRPreviewFragment.newInstance(data)
+        setFragment()
     }
 
-    private fun setFragment(baseFragment: BaseFragment){
-        val fragmentManager = activity.supportFragmentManager
+    private fun setFragment(){
         val fragmentTransaction = fragmentManager.beginTransaction()
-        fragmentTransaction.add(R.id.frame, baseFragment)
+        fragmentTransaction.replace(R.id.frame,currentFragment)
         fragmentTransaction.commit()
     }
 }

@@ -8,7 +8,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/options"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <include android:id="@+id/categoryTitle"
@@ -33,17 +33,5 @@
 
 
     </RelativeLayout>
-
-
-    <include android:id="@+id/options"
-        layout="@layout/item_menu_preview_options"
-        android:layout_width="100dp"
-        android:layout_height="0dp"
-        app:layout_constraintStart_toEndOf="@id/rlParent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@id/rlParent"
-        app:layout_constraintBottom_toBottomOf="@id/rlParent"/>
-
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>
