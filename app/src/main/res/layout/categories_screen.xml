@@ -19,12 +19,11 @@
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/tilCategory"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/btnAdd"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/title"
-        android:layout_marginStart="@dimen/layout_padding"
         android:layout_marginEnd="10dp">
 
         <com.google.android.material.textfield.TextInputEditText
@@ -35,15 +34,37 @@
 
     </com.google.android.material.textfield.TextInputLayout>
 
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:id="@+id/llButtons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintStart_toStartOf="@id/tilCategory"
+        app:layout_constraintEnd_toEndOf="@id/tilCategory"
+        app:layout_constraintTop_toBottomOf="@id/tilCategory">
 
-    <ImageButton android:id="@+id/btnAdd"
-        android:layout_width="100dp"
-        android:layout_height="50dp"
-        app:layout_constraintStart_toEndOf="@id/tilCategory"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="@id/tilCategory"
-        android:layout_marginEnd="@dimen/layout_padding"
-        android:src="@drawable/baseline_add_24"/>
+        <Button android:id="@+id/btnAdd"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/add"
+            android:src="@drawable/baseline_add_24"/>
+
+        <Button android:id="@+id/btnEdit"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/edit"
+            android:src="@drawable/baseline_add_24"/>
+
+        <Button android:id="@+id/btnCancel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/cancel"
+            android:src="@drawable/baseline_add_24"/>
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+
+
 
 
         <androidx.recyclerview.widget.RecyclerView
@@ -52,7 +73,7 @@
             android:layout_height="0dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tilCategory"
+            app:layout_constraintTop_toBottomOf="@id/llButtons"
             app:layout_constraintBottom_toBottomOf="parent"
             android:layout_marginTop="10dp"
             android:background="@color/grey_500"/>

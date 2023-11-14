@@ -9,7 +9,7 @@
 
     <RelativeLayout android:id="@+id/screens"
         android:layout_width="match_parent"
-        android:layout_height="300dp"
+        android:layout_height="wrap_content"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -17,25 +17,25 @@
         <include android:id="@+id/layoutCompanyName"
             layout="@layout/company_name"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:visibility="visible"/>
 
         <include android:id="@+id/layoutCompanyAddress"
             layout="@layout/company_address"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:visibility="gone"/>
 
         <include android:id="@+id/layoutCompanyContact"
             layout="@layout/company_contact"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:visibility="gone"/>
 
         <include android:id="@+id/layoutCompanyLogo"
             layout="@layout/company_logo"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:visibility="gone"/>
     </RelativeLayout>
 

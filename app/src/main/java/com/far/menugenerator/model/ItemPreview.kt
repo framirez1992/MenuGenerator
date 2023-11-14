@@ -1,8 +1,9 @@
 package com.far.menugenerator.model
 
 import android.net.Uri
+import java.io.Serializable
 
-data class ItemPreview (val itemStyle:ItemStyle, val position:Int,val categoryName:String, val name:String,val price:String?,val description:String?, val image:Uri?)
+data class ItemPreview (val item:Item,val itemStyle:ItemStyle, val position:Int):Serializable
 
 
 enum class ItemStyle{

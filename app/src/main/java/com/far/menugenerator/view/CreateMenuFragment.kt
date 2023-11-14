@@ -1,19 +1,15 @@
 package com.far.menugenerator.view
 
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.util.DisplayMetrics
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowManager
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.VIEW_MODEL_STORE_OWNER_KEY
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -24,23 +20,20 @@ import com.far.menugenerator.common.utils.FileUtils
 import com.far.menugenerator.common.utils.NumberUtils
 import com.far.menugenerator.databinding.FragmentCreateMenuBinding
 import com.far.menugenerator.databinding.ItemMenuFinalPreviewBinding
-import com.far.menugenerator.model.Company
-import com.far.menugenerator.model.CreateMenuState
+import com.far.menugenerator.model.Item
 import com.far.menugenerator.model.ItemPreview
 import com.far.menugenerator.model.ItemStyle
-import com.far.menugenerator.model.storage.StorageMenu
+import com.far.menugenerator.model.database.model.CompanyFirebase
+import com.far.menugenerator.model.database.model.MenuFirebase
 import com.far.menugenerator.view.adapters.CategoriesAdapter
 import com.far.menugenerator.view.adapters.MenuPreviewAdapter
 import com.far.menugenerator.view.common.BaseFragment
+import com.far.menugenerator.view.common.DialogManager
 import com.far.menugenerator.view.common.ScreenNavigation
 import com.far.menugenerator.viewModel.CreateMenuViewModel
-import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.util.UUID
 import javax.inject.Inject
-import kotlin.io.path.Path
-import kotlin.io.path.name
 
 
 /**
@@ -48,25 +41,31 @@ import kotlin.io.path.name
  * Use the [CreateMenuFragment.newInstance] factory method to
  * create an instance of this fragment.
  */
+private const val ARG_COMPANY = "company"
+private const val ARG_EDIT_MENU = "editMenu"
 class CreateMenuFragment : BaseFragment() {
     // TODO: Rename and change types of parameters
-    //private var param1: String? = null
-    //private var param2: String? = null
+    private lateinit var company: CompanyFirebase
+    private var editMenu: MenuFirebase? = null
 
     private lateinit var _binding:FragmentCreateMenuBinding
     private lateinit var _viewModel:CreateMenuViewModel
 
     @Inject lateinit var screenNavigation: ScreenNavigation
+    @Inject lateinit var dialogManager: DialogManager
     @Inject lateinit var createMenuViewModelFactory: CreateMenuViewModel.CreateMenuViewModelFactory
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
-
+            company = it.getSerializable(ARG_COMPANY) as CompanyFirebase
+            editMenu = it.getSerializable(ARG_EDIT_MENU) as MenuFirebase?
         }
         presentationComponent.inject(this)
         _viewModel = ViewModelProvider(this,createMenuViewModelFactory)[CreateMenuViewModel::class.java]
+        _viewModel.prepareMenuEdit(editMenu)
+
     }
 
     override fun onCreateView(
@@ -98,18 +97,18 @@ class CreateMenuFragment : BaseFragment() {
 
         _binding.llNext.setOnClickListener { _viewModel.nextScreen() }
         _binding.llBack.setOnClickListener { _viewModel.previousScreen() }
-        _binding.llGenerate.setOnClickListener{
+        _binding.llGenerate.setOnClickListener {
             val fileName = "some name"//selectec by the user
-            val pdfRoute = "${FileUtils.getDownloadsPath()}/temp.pdf"
+            val pdfPath = "${FileUtils.getDownloadsPath()}/temp.pdf"
             var height = _binding.menuPreviewFinalScreen.llCompany.measuredHeight + calculateTotalItemHeight(_binding.menuPreviewFinalScreen.llItems) + _binding.menuPreviewFinalScreen.llFooter.measuredHeight
             lifecycleScope.launch(Dispatchers.Main) {
                 //SHOW LOADING AND LOCK NAVIGATION
                 Toast.makeText(baseActivity,"Generando...", Toast.LENGTH_SHORT).show()
 
-                FileUtils.layoutToPdf(_binding.menuPreviewFinalScreen.root,pdfRoute,height)
+                FileUtils.layoutToPdf(_binding.menuPreviewFinalScreen.root,pdfPath,height)
 
                 val previewItems = (_binding.menuPreviewScreen.rvPreview.adapter as MenuPreviewAdapter).currentPreview
-                _viewModel.saveMenu(LoginActivity.account?.email!!,fileName,previewItems,pdfRoute)
+                _viewModel.processMenu(user= LoginActivity.account?.email!!, companyId = company.companyId, fileName =  fileName, itemPreviews =  previewItems, pdfPath =   pdfPath)
             }
 
         }
@@ -117,26 +116,57 @@ class CreateMenuFragment : BaseFragment() {
 
         _binding.categoriesScreen.btnAdd.setOnClickListener{
             val category = _binding.categoriesScreen.etCategory.text.toString()
+            if(category == CreateMenuViewModel.NO_CATEGORY) return@setOnClickListener
+
             _viewModel.addCategory(category)
             _binding.categoriesScreen.etCategory.text?.clear()
         }
-        _binding.addMenuItemScreen.btnAddProductImage.setOnClickListener {
+        _binding.categoriesScreen.btnEdit.setOnClickListener{
+            _viewModel.saveEditCategory(_binding.categoriesScreen.etCategory.text.toString())
+            _viewModel.setScreen(R.id.categoriesScreen)
+            _binding.categoriesScreen.etCategory.text?.clear()
+        }
+        _binding.categoriesScreen.btnCancel.setOnClickListener{
+            _binding.categoriesScreen.etCategory.text?.clear()
+            _viewModel.setEditCategory(null)
+            _viewModel.setScreen(R.id.categoriesScreen)
+        }
+
+
+        _binding.addMenuItemScreen.productData.btnAddProductImage.setOnClickListener {
             val intent = Intent(Intent.ACTION_PICK).setType("image/*")
             startActivityForResult(intent, REQUEST_CODE_PICK_IMAGE)
         }
-        _binding.addMenuItemScreen.btnClearProductImage.setOnClickListener {
+        _binding.addMenuItemScreen.productData.btnClearProductImage.setOnClickListener {
             _viewModel.updateCurrentItemImage(null)
         }
         _binding.addMenuItemScreen.btnAdd.setOnClickListener {
             if(!validateProductData()) return@setOnClickListener
             _viewModel.addProduct(
-                _binding.addMenuItemScreen.spnCategories.selectedItem as String,
-                _binding.addMenuItemScreen.etProductName.text.toString(),
-                _binding.addMenuItemScreen.etProductDescription.text.toString(),
-                _binding.addMenuItemScreen.etProductPrice.text.toString().toDouble()
+                _binding.addMenuItemScreen.productData.spnCategories.selectedItem as String,
+                _binding.addMenuItemScreen.productData.etProductName.text.toString(),
+                _binding.addMenuItemScreen.productData.etProductDescription.text.toString(),
+                _binding.addMenuItemScreen.productData.etProductPrice.text.toString().toDouble()
             )
-            clearProductFields()
+            clearAddProductFields()
         }
+
+        _binding.addMenuItemScreen.btnEdit.setOnClickListener{
+            _viewModel.saveEditItemChanges(
+                category= _binding.addMenuItemScreen.productData.spnCategories.selectedItem as String,
+                name=_binding.addMenuItemScreen.productData.etProductName.text.toString(),
+                description= _binding.addMenuItemScreen.productData.etProductDescription.text.toString(),
+                price= _binding.addMenuItemScreen.productData.etProductPrice.text.toString().toDouble()
+            )
+            _viewModel.setScreen(R.id.menuPreviewScreen)
+            clearAddProductFields()
+        }
+        _binding.addMenuItemScreen.btnCancel.setOnClickListener{
+            clearAddProductFields()
+            _viewModel.setScreen(R.id.menuPreviewScreen)
+        }
+
+
         _binding.categoriesScreen.rvCategories.layoutManager = LinearLayoutManager(context,RecyclerView.VERTICAL,false)
         _binding.menuPreviewScreen.rvPreview.layoutManager = LinearLayoutManager(context,RecyclerView.VERTICAL,false)
 
@@ -148,23 +178,54 @@ class CreateMenuFragment : BaseFragment() {
     private fun initObservers(){
         _viewModel.state.observe(viewLifecycleOwner){
             navigate(it.currentScreen)
-            setCategoryAdapter(it.categories)
-            fillSpinnerCategories(it.categories)
-            fillPreviewAdapter(it)
 
-            if(it.currentScreen == R.id.menuPreviewFinalScreen){
-                fillCompany()
-                fillFinalPreview((_binding.menuPreviewScreen.rvPreview.adapter as MenuPreviewAdapter).currentPreview)
+        }
+        _viewModel.editCategory.observe(viewLifecycleOwner){
+            if(it != null){
+                _binding.llNext.visibility = View.GONE
+                _binding.llBack.visibility = View.GONE
+                _binding.categoriesScreen.etCategory.setText(it)
+                _binding.categoriesScreen.btnAdd.visibility = View.GONE
+                _binding.categoriesScreen.btnEdit.visibility = View.VISIBLE
+                _binding.categoriesScreen.btnCancel.visibility = View.VISIBLE
+            }else{
+                _binding.categoriesScreen.btnAdd.visibility = View.VISIBLE
+                _binding.categoriesScreen.btnEdit.visibility = View.GONE
+                _binding.categoriesScreen.btnCancel.visibility = View.GONE
+            }
+        }
+        _viewModel.editItem.observe(viewLifecycleOwner){
+
+            if(it != null){
+                _binding.llNext.visibility = View.GONE
+                _binding.llBack.visibility = View.GONE
             }
 
+            _binding.addMenuItemScreen.btnAdd.visibility = if(it != null) View.GONE else View.VISIBLE
+            _binding.addMenuItemScreen.btnEdit.visibility = if(it == null) View.GONE else View.VISIBLE
+            _binding.addMenuItemScreen.btnCancel.visibility = if(it == null) View.GONE else View.VISIBLE
+            _binding.addMenuItemScreen.title.text = resources.getString(if(it!=null) R.string.edit_product else R.string.products)
+
+            if (it != null) {
+                fillEditProductData(it)
+            }
+        }
+
+
+        _viewModel.categories.observe(viewLifecycleOwner){
+            setCategoryAdapter(it)
+            fillSpinnerCategoriesAddProductScreen(it)
+        }
+        _viewModel.itemsPreview.observe(viewLifecycleOwner){
+            fillPreviewAdapter(it)
         }
         _viewModel.currentItemImage.observe(viewLifecycleOwner){
             if(it != null){
                 Glide.with(baseActivity)
                     .load(it)
-                    .into(_binding.addMenuItemScreen.imgProduct)
+                    .into(_binding.addMenuItemScreen.productData.imgProduct)
             }else{
-                _binding.addMenuItemScreen.imgProduct.setImageResource(R.drawable.baseline_photo_library_24)
+                _binding.addMenuItemScreen.productData.imgProduct.setImageResource(R.drawable.search_image)
             }
 
         }
@@ -175,10 +236,11 @@ class CreateMenuFragment : BaseFragment() {
         }
     }
 
-    private fun fillSpinnerCategories(categories: MutableList<String>){
-        var adapter = ArrayAdapter<String>(requireContext(),android.R.layout.simple_list_item_1,categories)
-        _binding.addMenuItemScreen.spnCategories.adapter = adapter
+    private fun fillSpinnerCategoriesAddProductScreen(categories: MutableList<String>){
+        var adapter = ArrayAdapter(requireContext(),android.R.layout.simple_list_item_1,categories)
+        _binding.addMenuItemScreen.productData.spnCategories.adapter = adapter
     }
+
 
     private fun navigate(currentView:Int){
         _binding.llBack.visibility = if(currentView == R.id.categoriesScreen) View.GONE else View.VISIBLE
@@ -189,75 +251,94 @@ class CreateMenuFragment : BaseFragment() {
         _binding.addMenuItemScreen.root.visibility= if(currentView == R.id.addMenuItemScreen) View.VISIBLE else View.GONE
         _binding.menuPreviewScreen.root.visibility = if(currentView == R.id.menuPreviewScreen) View.VISIBLE else View.GONE
         _binding.menuPreviewFinalScreen.root.visibility = if(currentView == R.id.menuPreviewFinalScreen) View.VISIBLE else View.GONE
+
+        if(currentView == R.id.menuPreviewFinalScreen){
+            fillCompany()
+            fillFinalPreview((_binding.menuPreviewScreen.rvPreview.adapter as MenuPreviewAdapter).currentPreview)
+        }
     }
 
 
-    private fun fillPreviewAdapter(state:CreateMenuState){
-        var previewList = mutableListOf<ItemPreview>()
-        previewList.addAll(state.categories.map { ItemPreview(itemStyle = ItemStyle.MENU_CATEGORY_HEADER, position = state.categories.indexOf(it), categoryName =  it, name =  it, price =  null, description =  null, image =  null) })
-
-        previewList.addAll(state.items.map {
-            var itemStyle: ItemStyle = if(it.image != null){
-                ItemStyle.MENU_IMAGE_TITLE_DESCRIPTION_PRICE
-            }else if(!it.description.isNullOrBlank()){
-                ItemStyle.MENU_TITLE_DESCRIPTION_PRICE
-            }else{
-                ItemStyle.MENU_TITLE_PRICE
+    private fun fillPreviewAdapter(items:MutableList<ItemPreview>){
+        _binding.menuPreviewScreen.rvPreview.adapter = MenuPreviewAdapter(baseActivity,items){item->
+            dialogManager.showOptionDialog(resources.getString(R.string.options),
+                arrayOf(resources.getString(R.string.edit),getString(R.string.delete))){ option->
+                if(option == resources.getString(R.string.edit)){
+                   _viewModel.editItem(item)
+                   _viewModel.setScreen(R.id.addMenuItemScreen)
+                }else{
+                    _viewModel.deleteItem(item)
+                }
             }
-
-            ItemPreview(itemStyle = itemStyle, position = state.items.indexOf(it), categoryName =  it.category, name =  it.name, price =  it.amount.toString(), description =  it.description, image =  it.image)
-        })
-        _binding.menuPreviewScreen.rvPreview.adapter = MenuPreviewAdapter(baseActivity,previewList)
+        }
     }
     private fun setCategoryAdapter(categories:MutableList<String>){
-        val adapter = CategoriesAdapter(categories)
+        val categoriesFiltered = mutableListOf<String>()
+        categoriesFiltered.addAll(categories.filter { it != CreateMenuViewModel.NO_CATEGORY })
+
+        val adapter = CategoriesAdapter(categoriesFiltered){ category->
+            dialogManager.showOptionDialog(resources.getString(R.string.options),
+                arrayOf(resources.getString(R.string.edit),resources.getString(R.string.delete))){ option->
+                if(option == resources.getString(R.string.delete)){
+                    _viewModel.removeCategory(category)
+                }else{
+                    _viewModel.setEditCategory(category)
+                }
+            }
+        }
         _binding.categoriesScreen.rvCategories.adapter = adapter
     }
 
     private fun validateProductData():Boolean{
-        if(_binding.addMenuItemScreen.etProductName.text.isNullOrBlank()){
-            _binding.addMenuItemScreen.etProductName.error = resources.getString(R.string.required)
-            _binding.addMenuItemScreen.etProductName.requestFocus()
+        if(_binding.addMenuItemScreen.productData.etProductName.text.isNullOrBlank()){
+            _binding.addMenuItemScreen.productData.etProductName.error = resources.getString(R.string.required)
+            _binding.addMenuItemScreen.productData.etProductName.requestFocus()
 
             return false
         }
-        if(_binding.addMenuItemScreen.etProductPrice.text.isNullOrBlank()){
-            _binding.addMenuItemScreen.etProductPrice.error = resources.getString(R.string.required)
-            _binding.addMenuItemScreen.etProductPrice.requestFocus()
+        if(_binding.addMenuItemScreen.productData.etProductPrice.text.isNullOrBlank()){
+            _binding.addMenuItemScreen.productData.etProductPrice.error = resources.getString(R.string.required)
+            _binding.addMenuItemScreen.productData.etProductPrice.requestFocus()
             return false
         }
-        if(NumberUtils.stringIsNumber(_binding.addMenuItemScreen.etProductPrice.text.toString())){
-            _binding.addMenuItemScreen.etProductPrice.error = resources.getString(R.string.invalid_value)
-            _binding.addMenuItemScreen.etProductPrice.requestFocus()
+        if(NumberUtils.stringIsNumber(_binding.addMenuItemScreen.productData.etProductPrice.text.toString())){
+            _binding.addMenuItemScreen.productData.etProductPrice.error = resources.getString(R.string.invalid_value)
+            _binding.addMenuItemScreen.productData.etProductPrice.requestFocus()
             return false
         }
         return true
     }
 
-    private fun clearProductFields(){
-        _binding.addMenuItemScreen.etProductName.text?.clear()
-        _binding.addMenuItemScreen.etProductPrice.text?.clear()
-        _binding.addMenuItemScreen.etProductDescription.text?.clear()
-        clearImage()
-        _binding.addMenuItemScreen.etProductName.requestFocus()
+    private fun fillEditProductData(item:Item){
+        _viewModel.updateCurrentItemImage(item.localImage?:item.remoteImage)
+
+        _binding.addMenuItemScreen.productData.etProductName.setText(item.name)
+        _binding.addMenuItemScreen.productData.etProductPrice.setText(item.amount.toString())
+        _binding.addMenuItemScreen.productData.etProductDescription.setText(item.description)
+
+       val position = _viewModel.categories.value?.lastIndexOf(item.category)
+        _binding.addMenuItemScreen.productData.spnCategories.setSelection(position!!)
+    }
+
+
+
+    private fun clearAddProductFields(){
+        _binding.addMenuItemScreen.productData.etProductName.text?.clear()
+        _binding.addMenuItemScreen.productData.etProductPrice.text?.clear()
+        _binding.addMenuItemScreen.productData.etProductDescription.text?.clear()
+        clearAddProductImage()
+        _binding.addMenuItemScreen.productData.etProductName.requestFocus()
 
     }
-    private fun clearImage(){
+
+
+    private fun clearAddProductImage(){
         _viewModel.updateCurrentItemImage(null)
     }
 
 
-    fun calculateTotalItemHeight(recyclerView: RecyclerView): Int {
-        var totalItemHeight = 0
-        for (i in 0 until recyclerView.adapter!!.itemCount) {
-            val view = recyclerView.adapter!!
-                .onCreateViewHolder(recyclerView, i).itemView
-            totalItemHeight += measureItemHeight(view)
-        }
-        return totalItemHeight
-    }
 
-    fun calculateTotalItemHeight(viewGroup: ViewGroup): Int {
+    private fun calculateTotalItemHeight(viewGroup: ViewGroup): Int {
         var totalItemHeight = 0
         for (i in 0 until viewGroup.childCount) {
             val view = viewGroup.getChildAt(i)
@@ -267,10 +348,7 @@ class CreateMenuFragment : BaseFragment() {
     }
 
 
-    fun measureItemHeight(view: View): Int {
-        //val widthSpec = View.MeasureSpec.makeMeasureSpec(view.measuredWidth, View.MeasureSpec.AT_MOST)
-        //val heightSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
-        //view.measure(widthSpec, heightSpec)
+    private fun measureItemHeight(view: View): Int {
         return view.measuredHeight
     }
 
@@ -289,27 +367,34 @@ class CreateMenuFragment : BaseFragment() {
             binding.titlePrice.root.visibility = if(itemPreview.itemStyle == ItemStyle.MENU_TITLE_PRICE) View.VISIBLE else View.GONE
             binding.categoryTitle.root.visibility = if (itemPreview.itemStyle == ItemStyle.MENU_CATEGORY_HEADER) View.VISIBLE else View.GONE
 
+            val item = itemPreview.item
+
+            //Don`t show NO_CATEGORY ITEM
+            if(itemPreview.itemStyle == ItemStyle.MENU_CATEGORY_HEADER &&  item.name == CreateMenuViewModel.NO_CATEGORY){
+                binding.root.visibility = View.GONE
+            }
+
             when (itemPreview.itemStyle) {
                 ItemStyle.MENU_IMAGE_TITLE_DESCRIPTION_PRICE -> {
-                    binding.imageTitleDescription.title.text = itemPreview.name
-                    binding.imageTitleDescription.body.text = itemPreview.description
-                    binding.imageTitleDescription.price.text = itemPreview.price
+                    binding.imageTitleDescription.title.text = item.name
+                    binding.imageTitleDescription.body.text = item.description
+                    binding.imageTitleDescription.price.text = item.amount.toString()
                     Glide.with(baseActivity)
-                        .load(itemPreview.image)
+                        .load(item.localImage?:item.remoteImage)
                         .into(binding.imageTitleDescription.image)
 
                 }
                 ItemStyle.MENU_TITLE_DESCRIPTION_PRICE -> {
-                    binding.titleDescription.title.text = itemPreview.name
-                    binding.titleDescription.body.text = itemPreview.description
-                    binding.titleDescription.price.text = itemPreview.price
+                    binding.titleDescription.title.text = item.name
+                    binding.titleDescription.body.text = item.description
+                    binding.titleDescription.price.text = item.amount.toString()
                 }
                 ItemStyle.MENU_TITLE_PRICE -> {
-                    binding.titlePrice.title.text = itemPreview.name
-                    binding.titlePrice.price.text = itemPreview.price
+                    binding.titlePrice.title.text = item.name
+                    binding.titlePrice.price.text = item.amount.toString()
                 }
                 else -> {
-                    binding.categoryTitle.title.text = itemPreview.name
+                    binding.categoryTitle.title.text = item.name
                 }
             }
 
@@ -331,82 +416,90 @@ class CreateMenuFragment : BaseFragment() {
     }
 
     private fun fillCompany(){
-        val comp = Company(businessName = "Cow Abunga Burgers", address1 = "4455 Landing Lange, APT 4", address2 = "Louisville, KY 40018-1234", address3 = "", phone1 = "", phone2 = "",phone3="", facebook = "https://cowabungaburgers.com", instagram = "@cowabungaburgers.com", whatsapp = "809-998-3580", logo = null)
+        //val company = Company(companyId = "12345",businessName = "Cow Abunga Burgers", address1 = "4455 Landing Lange, APT 4", address2 = "Louisville, KY 40018-1234", address3 = "", phone1 = "", phone2 = "",phone3="", facebook = "https://cowabungaburgers.com", instagram = "@cowabungaburgers.com", whatsapp = "809-998-3580", localImage = null)
         _binding.menuPreviewFinalScreen.logo.setImageResource(R.drawable.foodtruck_logo)
-        if(comp.businessName.isNullOrBlank()){
+        if(company.logoUrl == null){
+            _binding.menuPreviewFinalScreen.logo.visibility = View.GONE
+        }else{
+            Glide.with(baseActivity)
+                .load(company.logoUrl)
+                .into(_binding.menuPreviewFinalScreen.logo)
+        }
+
+        if(company.businessName.isNullOrBlank()){
             _binding.menuPreviewFinalScreen.tvCompanyName.visibility = View.GONE
         }else{
-            _binding.menuPreviewFinalScreen.tvCompanyName.text= comp.businessName
+            _binding.menuPreviewFinalScreen.tvCompanyName.text= company.businessName
             _binding.menuPreviewFinalScreen.tvCompanyName.visibility = View.VISIBLE
         }
 
 
-        if(comp.phone1.isNullOrBlank()){
+        if(company.phone1.isNullOrBlank()){
             _binding.menuPreviewFinalScreen.tvPhone1.visibility = View.GONE
         }else{
-            _binding.menuPreviewFinalScreen.tvPhone1.text= comp.phone1
+            _binding.menuPreviewFinalScreen.tvPhone1.text= company.phone1
             _binding.menuPreviewFinalScreen.tvPhone1.visibility = View.VISIBLE
         }
 
-        if(comp.phone2.isNullOrBlank()){
+        if(company.phone2.isNullOrBlank()){
             _binding.menuPreviewFinalScreen.tvPhone2.visibility = View.GONE
         }else{
-            _binding.menuPreviewFinalScreen.tvPhone2.text= comp.phone2
+            _binding.menuPreviewFinalScreen.tvPhone2.text= company.phone2
             _binding.menuPreviewFinalScreen.tvPhone2.visibility = View.VISIBLE
         }
 
-        if(comp.phone3.isNullOrBlank()){
+        if(company.phone3.isNullOrBlank()){
             _binding.menuPreviewFinalScreen.tvPhone3.visibility = View.GONE
         }else{
-            _binding.menuPreviewFinalScreen.tvPhone3.text= comp.phone3
+            _binding.menuPreviewFinalScreen.tvPhone3.text= company.phone3
             _binding.menuPreviewFinalScreen.tvPhone3.visibility = View.VISIBLE
         }
 
 
-        if(comp.address1.isNullOrBlank()){
+        if(company.address1.isNullOrBlank()){
             _binding.menuPreviewFinalScreen.tvAddress1.visibility = View.GONE
         }else{
-            _binding.menuPreviewFinalScreen.tvAddress1.text= comp.address1
+            _binding.menuPreviewFinalScreen.tvAddress1.text= company.address1
             _binding.menuPreviewFinalScreen.tvAddress1.visibility = View.VISIBLE
         }
 
-        if(comp.address2.isNullOrBlank()){
+        if(company.address2.isNullOrBlank()){
             _binding.menuPreviewFinalScreen.tvAddress2.visibility = View.GONE
         }else{
-            _binding.menuPreviewFinalScreen.tvAddress2.text= comp.address2
+            _binding.menuPreviewFinalScreen.tvAddress2.text= company.address2
             _binding.menuPreviewFinalScreen.tvAddress2.visibility = View.VISIBLE
         }
 
-        if(comp.address3.isNullOrBlank()){
+        if(company.address3.isNullOrBlank()){
             _binding.menuPreviewFinalScreen.tvAddress3.visibility = View.GONE
         }else{
-            _binding.menuPreviewFinalScreen.tvAddress3.text= comp.address3
+            _binding.menuPreviewFinalScreen.tvAddress3.text= company.address3
             _binding.menuPreviewFinalScreen.tvAddress3.visibility = View.VISIBLE
         }
 
 
-        if(comp.facebook.isNullOrBlank()){
+        if(company.facebook.isNullOrBlank()){
             _binding.menuPreviewFinalScreen.llFacebook.visibility = View.GONE
 
         }else{
             _binding.menuPreviewFinalScreen.llFacebook.visibility = View.VISIBLE
-            _binding.menuPreviewFinalScreen.tvFacebook.text= comp.facebook
+            _binding.menuPreviewFinalScreen.tvFacebook.text= company.facebook
         }
 
-        if(comp.instagram.isNullOrBlank()){
+        if(company.instagram.isNullOrBlank()){
             _binding.menuPreviewFinalScreen.llInstagram.visibility = View.GONE
 
         }else{
             _binding.menuPreviewFinalScreen.llInstagram.visibility = View.VISIBLE
-            _binding.menuPreviewFinalScreen.tvInstagram.text= comp.instagram
+            _binding.menuPreviewFinalScreen.tvInstagram.text= company.instagram
         }
 
-        if(comp.whatsapp.isNullOrBlank()){
+        if(company.whatsapp.isNullOrBlank()){
             _binding.menuPreviewFinalScreen.llWhatsapp.visibility = View.GONE
 
         }else{
             _binding.menuPreviewFinalScreen.llWhatsapp.visibility = View.VISIBLE
-            _binding.menuPreviewFinalScreen.tvWhatsapp.text= comp.whatsapp
+            _binding.menuPreviewFinalScreen.tvWhatsapp.text= company.whatsapp
         }
     }
 
@@ -424,11 +517,11 @@ class CreateMenuFragment : BaseFragment() {
          */
         // TODO: Rename and change types and number of parameters
         @JvmStatic
-        fun newInstance(/*param1: String, param2: String*/) =
+        fun newInstance(company: CompanyFirebase, menu:MenuFirebase?) =
             CreateMenuFragment().apply {
                 arguments = Bundle().apply {
-                    //putString(ARG_PARAM1, param1)
-                    //putString(ARG_PARAM2, param2)
+                    putSerializable(ARG_COMPANY, company)
+                    putSerializable(ARG_EDIT_MENU, menu)
                 }
             }
     }

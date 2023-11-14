@@ -1,6 +1,7 @@
 package com.far.menugenerator.model.denpendencyInjection.activity
 
 import com.far.menugenerator.view.common.BaseActivity
+import com.far.menugenerator.view.common.DialogManager
 import com.far.menugenerator.view.common.ScreenNavigation
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
@@ -26,5 +27,8 @@ class ActivityModule(private val activity: BaseActivity) {
     @ActivityScope
     @Provides
     fun screenNavigation(activity: BaseActivity) = ScreenNavigation(activity)
+    @ActivityScope
+    @Provides
+    fun dialogManager(activity: BaseActivity) = DialogManager(activity)
 
 }

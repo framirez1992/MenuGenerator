@@ -45,4 +45,13 @@
     <string name="required">Required</string>
     <string name="invalid_value">Invalid value</string>
     <string name="generate">Generate</string>
+    <string name="new_menu">New Menu</string>
+    <string name="refresh">Refresh</string>
+    <string name="edit_product">Edit Product</string>
+    <string name="edit">Edit</string>
+    <string name="cancel">Cancel</string>
+    <string name="options">Options</string>
+    <string name="delete">Delete</string>
+    <string name="show_menus">Show menus</string>
+    <string name="please_wait">Please wait</string>
 </resources>

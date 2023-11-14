@@ -1,8 +1,11 @@
 package com.far.menugenerator.model.denpendencyInjection.presentation
 
 import com.far.menugenerator.MainActivity
+import com.far.menugenerator.view.CompanyFragment
+import com.far.menugenerator.view.CompanyList
 import com.far.menugenerator.view.CreateMenuFragment
 import com.far.menugenerator.view.LoginActivity
+import com.far.menugenerator.view.MenuListFragment
 import com.far.menugenerator.view.common.ScreenNavigation
 import dagger.Subcomponent
 
@@ -13,6 +16,8 @@ interface PresentationComponent {
 
     fun inject(loginActivity:LoginActivity)
     fun inject(mainActivity: MainActivity)
-
+    fun inject(company:CompanyFragment)
+    fun inject(companyList:CompanyList)
+    fun inject(menuList:MenuListFragment)
     fun inject(createMenu:CreateMenuFragment)
 }

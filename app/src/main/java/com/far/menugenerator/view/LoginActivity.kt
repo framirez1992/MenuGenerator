@@ -32,7 +32,6 @@ class LoginActivity : BaseActivity() {
 
 
     companion object{
-        var user: LoggedInUser?=null
         var account:GoogleSignInAccount?=null
         private const val RC_SIGN_IN = 100
     }
@@ -107,10 +106,11 @@ class LoginActivity : BaseActivity() {
             enableViews(!it.loading)
 
         }
+        /*
         viewModel.user.observe(this){
-            user = it
-            if(user != null) screenNavigation.mainActivity()
-        }
+            //user = it
+            //if(user != null) screenNavigation.mainActivity()
+        }*/
     }
 
     private fun enableViews(enable:Boolean){
