@@ -18,6 +18,7 @@ import com.bumptech.glide.Glide
 import com.far.menugenerator.R
 import com.far.menugenerator.common.utils.FileUtils
 import com.far.menugenerator.common.utils.NumberUtils
+import com.far.menugenerator.common.utils.StringUtils
 import com.far.menugenerator.databinding.FragmentCreateMenuBinding
 import com.far.menugenerator.databinding.ItemMenuFinalPreviewBinding
 import com.far.menugenerator.model.Item
@@ -378,7 +379,7 @@ class CreateMenuFragment : BaseFragment() {
                 ItemStyle.MENU_IMAGE_TITLE_DESCRIPTION_PRICE -> {
                     binding.imageTitleDescription.title.text = item.name
                     binding.imageTitleDescription.body.text = item.description
-                    binding.imageTitleDescription.price.text = item.amount.toString()
+                    binding.imageTitleDescription.price.text = StringUtils.doubleToMoneyString(amount = item.amount, country = "US", language = "en")
                     Glide.with(baseActivity)
                         .load(item.localImage?:item.remoteImage)
                         .into(binding.imageTitleDescription.image)
@@ -387,11 +388,11 @@ class CreateMenuFragment : BaseFragment() {
                 ItemStyle.MENU_TITLE_DESCRIPTION_PRICE -> {
                     binding.titleDescription.title.text = item.name
                     binding.titleDescription.body.text = item.description
-                    binding.titleDescription.price.text = item.amount.toString()
+                    binding.titleDescription.price.text = StringUtils.doubleToMoneyString(amount = item.amount, country = "US", language = "en")
                 }
                 ItemStyle.MENU_TITLE_PRICE -> {
                     binding.titlePrice.title.text = item.name
-                    binding.titlePrice.price.text = item.amount.toString()
+                    binding.titlePrice.price.text = StringUtils.doubleToMoneyString(amount = item.amount, country = "US", language = "en")
                 }
                 else -> {
                     binding.categoryTitle.title.text = item.name

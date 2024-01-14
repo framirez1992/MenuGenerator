@@ -103,6 +103,7 @@ class CompanyViewModel @Inject constructor(
     private fun saveCompany(user:String,company:Company){
 
         viewModelScope.launch {
+            _state.postValue(_state.value?.copy(isLoading = true))
             try {
 
                 var logoUrl:String? = null
@@ -118,6 +119,7 @@ class CompanyViewModel @Inject constructor(
             }catch (e:Exception){
                 e.printStackTrace()
             }
+            _state.postValue(_state.value?.copy(isLoading = false))
 
         }
 
