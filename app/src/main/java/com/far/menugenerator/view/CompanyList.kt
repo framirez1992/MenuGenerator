@@ -15,26 +15,16 @@ import com.far.menugenerator.R
 import com.far.menugenerator.databinding.FragmentCompanyListBinding
 import com.far.menugenerator.model.database.model.CompanyFirebase
 import com.far.menugenerator.view.adapters.CompanyAdapter
+import com.far.menugenerator.view.common.BaseActivity
 import com.far.menugenerator.view.common.BaseFragment
 import com.far.menugenerator.view.common.DialogManager
 import com.far.menugenerator.view.common.ScreenNavigation
 import com.far.menugenerator.viewModel.CompanyListViewModel
 import javax.inject.Inject
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-//private const val ARG_PARAM1 = "param1"
-//private const val ARG_PARAM2 = "param2"
 
-/**
- * A simple [Fragment] subclass.
- * Use the [CompanyList.newInstance] factory method to
- * create an instance of this fragment.
- */
-class CompanyList : BaseFragment() {
-    // TODO: Rename and change types of parameters
-    //private var param1: String? = null
-    //private var param2: String? = null
+
+class CompanyList : BaseActivity() {
 
     private lateinit var binding:FragmentCompanyListBinding
     private lateinit var _viewModel:CompanyListViewModel
@@ -44,52 +34,43 @@ class CompanyList : BaseFragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        arguments?.let {
-            //param1 = it.getString(ARG_PARAM1)
-            //param2 = it.getString(ARG_PARAM2)
-        }
         presentationComponent.inject(this)
         _viewModel = ViewModelProvider(this,companyListFactory)[CompanyListViewModel::class.java]
-    }
+        binding = FragmentCompanyListBinding.inflate(layoutInflater)
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        // Inflate the layout for this fragment
-        binding = FragmentCompanyListBinding.inflate(inflater,container,false)
-        return binding.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+        setContentView(binding.root)
 
         initViews()
         initObservers()
-
-        getCompanies()
     }
 
 
+    override fun onResume() {
+        super.onResume()
+        getCompanies()
+    }
+
     private fun initViews(){
         binding.btnNewCompany.setOnClickListener{
-            navigation.companyFragment(null)
+            navigation.companyActivity(null)
         }
         binding.btnRefresh.setOnClickListener{
             getCompanies()
         }
-        val lm = LinearLayoutManager(requireContext(),RecyclerView.VERTICAL,false)
+        val lm = LinearLayoutManager(this,RecyclerView.VERTICAL,false)
         binding.rv.layoutManager = lm
     }
     private fun initObservers(){
-        _viewModel.isLoading.observe(viewLifecycleOwner){
+        _viewModel.isLoading.observe(this){
             binding.pb.visibility = if(it) View.VISIBLE else View.GONE
         }
-        _viewModel.isProcessing.observe(viewLifecycleOwner){
+        _viewModel.isProcessing.observe(this){
             if(it) dialogManager.showLoadingDialog()
             else dialogManager.dismissLoadingDialog()
         }
-        _viewModel.companies.observe(viewLifecycleOwner){
+        _viewModel.companies.observe(this){
+            //TODO: si no hay companias, abrir navigation.companyActivity() automaticamente
+
             val adapters = CompanyAdapter(it){ comp->
                 dialogManager.showOptionDialog(resources.getString(R.string.options), arrayOf(
                     resources.getString(R.string.show_menus),
@@ -98,7 +79,7 @@ class CompanyList : BaseFragment() {
 
                     when(option){
                         resources.getString(R.string.show_menus)-> navigation.menuListFragment(company = comp)
-                        resources.getString(R.string.edit)-> navigation.companyFragment(comp)
+                        resources.getString(R.string.edit)-> navigation.companyActivity(company = comp)
                         resources.getString(R.string.delete)-> _viewModel.deleteCompany(user = LoginActivity.account?.email!!, company = comp)
                     }
                 }
@@ -111,15 +92,5 @@ class CompanyList : BaseFragment() {
 
     private fun getCompanies(){
         _viewModel.getCompanies(LoginActivity.account?.email!!)
-    }
-    companion object {
-        @JvmStatic
-        fun newInstance() =
-            CompanyList().apply {
-                arguments = Bundle().apply {
-                    //putString(ARG_PARAM1, param1)
-                    //putString(ARG_PARAM2, param2)
-                }
-            }
     }
 }

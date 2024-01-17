@@ -5,13 +5,12 @@ import com.far.menugenerator.MainActivity
 import com.far.menugenerator.R
 import com.far.menugenerator.model.database.model.CompanyFirebase
 import com.far.menugenerator.model.database.model.MenuFirebase
-import com.far.menugenerator.view.CompanyFragment
+import com.far.menugenerator.view.CompanyActivity
 import com.far.menugenerator.view.CompanyList
 import com.far.menugenerator.view.CreateMenuFragment
 import com.far.menugenerator.view.MainScreenFragment
 import com.far.menugenerator.view.MenuListFragment
 import com.far.menugenerator.view.QRPreviewFragment
-import javax.inject.Inject
 
 class ScreenNavigation (private val baseActivity: BaseActivity) {
 
@@ -22,19 +21,20 @@ class ScreenNavigation (private val baseActivity: BaseActivity) {
     fun mainActivity(){
         activity.startActivity(Intent(activity,MainActivity::class.java))
     }
+    fun companyActivity(company:CompanyFirebase?){
+        val i= Intent(activity,CompanyActivity::class.java)
+        i.putExtra(CompanyActivity.ARG_COMPANY,company)
+        activity.startActivity(i)
+    }
+    fun companyListActivity(){
+        activity.startActivity(Intent(activity,CompanyList::class.java))
+    }
+
     fun mainScreenFragment(){
         currentFragment = MainScreenFragment.newInstance()
         setFragment()
     }
-    fun companyFragment(company:CompanyFirebase?){
-        currentFragment = CompanyFragment.newInstance(company)
-        setFragment()
-    }
 
-    fun companyListFragment(){
-        currentFragment = CompanyList.newInstance()
-        setFragment()
-    }
 
     fun menuListFragment(company:CompanyFirebase){
         currentFragment = MenuListFragment.newInstance(company)

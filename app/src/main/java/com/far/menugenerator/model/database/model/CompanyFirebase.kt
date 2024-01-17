@@ -9,4 +9,4 @@ data class CompanyFirebase (var fireBaseRef:String?=null,
                             val phone1:String="", val phone2:String="", val phone3:String="",
                             val address1:String="", val address2:String="", val address3:String="",
                             val facebook:String="", val instagram:String="", val whatsapp:String="",
-                            val logoUrl: String?=null):Serializable
+                            val logoUrl: String?=null,var logoFileName:String?=null):Serializable

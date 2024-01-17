@@ -42,7 +42,8 @@ class CompanyService(private val db:FirebaseFirestore) {
             CompanyFirebase::facebook.name to company.facebook,
             CompanyFirebase::instagram.name to company.instagram,
             CompanyFirebase::whatsapp.name to company.whatsapp,
-            CompanyFirebase::logoUrl.name to company.logoUrl
+            CompanyFirebase::logoUrl.name to company.logoUrl,
+            CompanyFirebase::logoFileName.name to company.logoFileName
         )
 
 

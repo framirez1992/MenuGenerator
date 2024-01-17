@@ -5,31 +5,29 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
 import com.far.menugenerator.R
 import com.far.menugenerator.databinding.FragmentCompanyBinding
 import com.far.menugenerator.model.Company
 import com.far.menugenerator.model.database.model.CompanyFirebase
-import com.far.menugenerator.view.common.BaseFragment
+import com.far.menugenerator.view.common.BaseActivity
 import com.far.menugenerator.view.common.DialogManager
 import com.far.menugenerator.viewModel.CompanyViewModel
 import javax.inject.Inject
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_COMPANY = "company"
+
 
 /**
  * A simple [Fragment] subclass.
- * Use the [CompanyFragment.newInstance] factory method to
+ * Use the [CompanyActivity.newInstance] factory method to
  * create an instance of this fragment.
  */
 private const val REQUEST_CODE_PICK_IMAGE = 100
-class CompanyFragment : BaseFragment() {
+class CompanyActivity : BaseActivity() {
     // TODO: Rename and change types of parameters
     private var company: CompanyFirebase? = null
     private lateinit var _binding:FragmentCompanyBinding
@@ -39,29 +37,26 @@ class CompanyFragment : BaseFragment() {
     @Inject lateinit var dialogManager: DialogManager
 
 
+    companion object{
+        const val ARG_COMPANY = "ARG_COMPANY"
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        arguments?.let {
-            company = it.getSerializable(ARG_COMPANY) as CompanyFirebase?
-        }
         presentationComponent.inject(this)
         _viewModel = ViewModelProvider(this,viewModelFactory)[CompanyViewModel::class.java]
+        _binding = FragmentCompanyBinding.inflate(layoutInflater)
+        setContentView(_binding.root)
+
+
+        company = intent.getSerializableExtra(ARG_COMPANY) as CompanyFirebase?
         _viewModel.prepareCompanyEdit(company)
-    }
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        _binding = FragmentCompanyBinding.inflate(inflater,container,false)
-        return _binding.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
         initViews()
         initObservers()
     }
+
+
 
     private fun initViews(){
 
@@ -92,19 +87,19 @@ class CompanyFragment : BaseFragment() {
     }
 
     private fun initObservers(){
-        _viewModel.state.observe(viewLifecycleOwner){
+        _viewModel.state.observe(this){
             navigate(it.currentScreen)
             if(it.isLoading)
                 dialogManager.showLoadingDialog()
             else
                 dialogManager.dismissLoadingDialog()
         }
-        _viewModel.company.observe(viewLifecycleOwner){
+        _viewModel.company.observe(this){
             setCompanyData(it)
         }
-        _viewModel.currentImage.observe(viewLifecycleOwner){
+        _viewModel.currentImage.observe(this){
             if(it != null){
-                Glide.with(baseActivity)
+                Glide.with(this)
                     .load(it)
                     .into(_binding.layoutCompanyLogo.imgLogo)
             }else{
@@ -162,25 +157,5 @@ class CompanyFragment : BaseFragment() {
         _binding.layoutCompanyContact.etFacebook.setText(company.facebook)
         _binding.layoutCompanyContact.etInstagram.setText(company.instagram)
         _binding.layoutCompanyContact.etWhatsapp.setText(company.whatsapp)
-    }
-
-
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment CompanyFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(company: CompanyFirebase?) =
-            CompanyFragment().apply {
-                arguments = Bundle().apply {
-                    putSerializable(ARG_COMPANY, company)
-                }
-            }
     }
 }

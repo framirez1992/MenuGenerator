@@ -23,11 +23,9 @@ import javax.inject.Inject
 
 class LoginActivity : BaseActivity() {
     private lateinit var _binding:ActivityLoginBinding
-    
     private lateinit var viewModel:LoginViewModel
 
     @Inject lateinit var screenNavigation:ScreenNavigation
-
     @Inject lateinit var mGoogleSignInClient:GoogleSignInClient
 
 
@@ -67,7 +65,7 @@ class LoginActivity : BaseActivity() {
         if(account != null){
             LoginActivity.account = account
             getAccountInfo()
-            startActivity(Intent(this,MainActivity::class.java))
+            screenNavigation.companyListActivity()
         }
     }
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -106,11 +104,6 @@ class LoginActivity : BaseActivity() {
             enableViews(!it.loading)
 
         }
-        /*
-        viewModel.user.observe(this){
-            //user = it
-            //if(user != null) screenNavigation.mainActivity()
-        }*/
     }
 
     private fun enableViews(enable:Boolean){

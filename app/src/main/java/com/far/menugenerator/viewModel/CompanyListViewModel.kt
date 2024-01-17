@@ -47,7 +47,7 @@ class CompanyListViewModel @Inject constructor (
         viewModelScope.launch {
             try {
                 if(company.logoUrl != null)
-                    companyStorage.removeCompanyLogo(user = user, companyId = company.companyId,file=Uri.parse(company.logoUrl))
+                    companyStorage.removeCompanyLogo(user = user, companyId = company.companyId, remoteFileName =company.logoFileName!!)
 
                 val menus = menuService.getMenus(user = user, companyId = company.companyId)
 

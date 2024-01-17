@@ -6,14 +6,17 @@ import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.tasks.await
 
 class CompanyStorage(private val storage: FirebaseStorage) {
-    suspend fun uploadCompanyLogo(user:String,companyId:String,file: Uri): Uri {
-        val fileRef = storage.reference.child("$user/company/$companyId/${FileUtils.getFileName(file)}")
+    suspend fun uploadCompanyLogo(user:String,companyId:String,file: Uri): UploadResult {
+        val fileName = FileUtils.getFileName(file)
+        val fileRef = storage.reference.child("$user/company/$companyId/${fileName}")
         fileRef.putFile(file).await()
-        return fileRef.downloadUrl.await()
+        val fileUri = fileRef.downloadUrl.await()
+        return  UploadResult(fileUri =  fileUri, name = fileName)
     }
 
-    suspend fun removeCompanyLogo(user:String,companyId:String,file:Uri){
-        val fileRef = storage.reference.child("$user/company/$companyId/${FileUtils.getFileName(file)}")
+    suspend fun removeCompanyLogo(user:String,companyId:String,remoteFileName:String){
+        val fileRef = storage.reference.child("$user/company/$companyId/${remoteFileName}")
         fileRef.delete().await()
     }
+
 }

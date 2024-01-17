@@ -21,7 +21,7 @@ import kotlin.io.path.name
 object FileUtils {
 
 
-    fun getFileName(file: Uri):String{
+    fun getFileName(file: Uri):String{//Uris Locales, las remotas de firebase Storage no funciona
         val filePath = Path(file.path!!)
         return filePath.name
     }
