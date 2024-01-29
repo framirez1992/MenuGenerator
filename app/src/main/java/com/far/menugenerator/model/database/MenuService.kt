@@ -4,7 +4,7 @@ import com.far.menugenerator.model.database.model.MenuFirebase
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 
-class MenuService(private val db:FirebaseFirestore) {
+open class MenuService(private val db:FirebaseFirestore) {
 
      fun saveMenu(user:String,companyId:String, m:MenuFirebase){
 

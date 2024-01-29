@@ -1,50 +1,64 @@
 package com.far.menugenerator.viewModel
 
 import android.net.Uri
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.far.menugenerator.model.LoadingState
+import com.far.menugenerator.model.State
 import com.far.menugenerator.model.database.CompanyService
 import com.far.menugenerator.model.database.MenuService
 import com.far.menugenerator.model.database.model.CompanyFirebase
 import com.far.menugenerator.model.storage.CompanyStorage
 import com.far.menugenerator.model.storage.MenuStorage
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Provider
 
 class CompanyListViewModel @Inject constructor (
-    private val companyService:CompanyService,
+    private val companyService: CompanyService,
     private val companyStorage:CompanyStorage,
     private val menuService: MenuService,
     private val menuStorage:MenuStorage
 ): ViewModel() {
 
-    val companies = MutableLiveData<List<CompanyFirebase?>>()
-    val isLoading = MutableLiveData<Boolean>()
-    val isProcessing = MutableLiveData<Boolean>()
+    private val companies = MutableLiveData<List<CompanyFirebase?>>()
+    private val deleteCompanyState = MutableLiveData<LoadingState?>()
+    private val searchCompaniesState = MutableLiveData<LoadingState?>()
 
+    fun getCompanies():LiveData<List<CompanyFirebase?>> = companies
+    fun getSearchCompaniesState():LiveData<LoadingState?> = searchCompaniesState
+    fun getDeleteCompanyState():LiveData<LoadingState?> = deleteCompanyState
     init {
-        companies.postValue(emptyList())
-        isLoading.postValue(false)
-        isProcessing.postValue(false)
+        //companies.postValue(emptyList())
+        //searchCompaniesState.postValue(null)
+        //deleteCompanyState.postValue(null)
     }
+
+    fun onResume(user:String){
+        getCompanies(user=user)
+    }
+
     fun getCompanies(user:String){
-        isLoading.postValue(true)
-        viewModelScope.launch {
+        searchCompaniesState.postValue(LoadingState(state =  State.LOADING))
+        viewModelScope.launch(Dispatchers.IO){
             try{
                 companies.postValue(companyService.getCompanies(user))
+                searchCompaniesState.postValue(LoadingState(state =  State.SUCCESS))
             }catch (e:Exception){
                 e.printStackTrace()
+                searchCompaniesState.postValue(LoadingState(state =  State.ERROR,message= e.message))
             }
-            isLoading.postValue(false)
+
         }
     }
 
     fun deleteCompany(user:String, company:CompanyFirebase){
-        isProcessing.postValue(true)
-        viewModelScope.launch {
+        deleteCompanyState.postValue(LoadingState(state =  State.LOADING))
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 if(company.logoUrl != null)
                     companyStorage.removeCompanyLogo(user = user, companyId = company.companyId, remoteFileName =company.logoFileName!!)
@@ -52,7 +66,7 @@ class CompanyListViewModel @Inject constructor (
                 val menus = menuService.getMenus(user = user, companyId = company.companyId)
 
                 //Delete all menus files files
-                menus?.forEach{
+                menus.forEach{
                     //Delete Files
                     menuStorage.removeAllMenuFiles(user = user, menuId = it?.menuId!!)
                     //Delete  Data
@@ -60,10 +74,11 @@ class CompanyListViewModel @Inject constructor (
                 }
 
                 companyService.deleteCompany(user= user, company= company)
+                deleteCompanyState.postValue(LoadingState(state =  State.SUCCESS))
             }catch (e:Exception){
-
+                deleteCompanyState.postValue(LoadingState(state =  State.ERROR, message = e.message))
             }
-            isProcessing.postValue(false)
+
             getCompanies(user = user)
 
         }

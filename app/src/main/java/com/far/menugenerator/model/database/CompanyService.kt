@@ -3,20 +3,19 @@ package com.far.menugenerator.model.database
 import com.far.menugenerator.model.database.model.CompanyFirebase
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
-
-class CompanyService(private val db:FirebaseFirestore) {
+ class CompanyService(private val db: FirebaseFirestore) {
     fun saveCompany(user:String, company: CompanyFirebase){
         val c = companyToMap(company)
         db.collection(user).document("data").collection("company")
             .add(c)
     }
 
-    fun updateCompany(user:String, company: CompanyFirebase){
+     fun updateCompany(user:String, company: CompanyFirebase){
         val c = companyToMap(company)
         db.collection(user).document("data").collection("company").document(company.fireBaseRef!!)
             .set(c)
     }
-    suspend fun getCompanies(user:String):List<CompanyFirebase?>{
+     suspend fun getCompanies(user:String):List<CompanyFirebase?>{
         val query = db.collection(user).document("data").collection("company").get().await()
         val companies =  query.documents.map { doc->
             doc.toObject(CompanyFirebase::class.java)?.apply {
@@ -26,7 +25,7 @@ class CompanyService(private val db:FirebaseFirestore) {
         return companies
     }
 
-    fun deleteCompany(user:String, company: CompanyFirebase){
+     fun deleteCompany(user:String, company: CompanyFirebase){
         db.collection(user).document("data").collection("company").document(company.fireBaseRef!!)
             .delete()
     }

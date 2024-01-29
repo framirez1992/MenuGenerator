@@ -5,7 +5,7 @@ import com.far.menugenerator.common.utils.FileUtils
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.tasks.await
 
-class CompanyStorage(private val storage: FirebaseStorage) {
+open class CompanyStorage(private val storage: FirebaseStorage) {
     suspend fun uploadCompanyLogo(user:String,companyId:String,file: Uri): UploadResult {
         val fileName = FileUtils.getFileName(file)
         val fileRef = storage.reference.child("$user/company/$companyId/${fileName}")

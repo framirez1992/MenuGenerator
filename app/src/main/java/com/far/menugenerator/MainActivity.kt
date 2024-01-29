@@ -15,7 +15,6 @@ class MainActivity : BaseActivity() {
     private lateinit var viewModel:MainActivityViewModel
 
     @Inject lateinit var screenNavigation: ScreenNavigation
-    @Inject lateinit var mGoogleSignInClient: GoogleSignInClient
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -29,11 +28,6 @@ class MainActivity : BaseActivity() {
 
 
 
-    private fun signOut() {
-        mGoogleSignInClient.signOut()
-            .addOnCompleteListener(this) {
-                finish()
-            }
-    }
+
 
 }

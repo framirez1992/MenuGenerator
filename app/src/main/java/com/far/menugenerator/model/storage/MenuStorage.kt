@@ -9,7 +9,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileInputStream
 
-class MenuStorage(private val storage:FirebaseStorage) {
+open class MenuStorage(private val storage:FirebaseStorage) {
 
     suspend fun uploadFile(user:String,menuId:String,pdfPath:String):Uri{
 
