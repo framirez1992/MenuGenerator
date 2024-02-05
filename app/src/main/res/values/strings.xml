@@ -61,4 +61,7 @@
     <string name="not_now">Not now</string>
     <string name="do_you_want_to_add_a_new_company_now">Do you want to add a new company now?</string>
     <string name="are_you_sure_you_want_to_delete_this_company">Are you sure you want to delete this company?</string>
+    <string name="mandatory">Mandatory</string>
+    <string name="touch_for_options">(touch for options)</string>
+    <string name="add_image">Add image</string>
 </resources>

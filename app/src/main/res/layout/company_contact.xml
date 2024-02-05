@@ -23,7 +23,8 @@
         android:layout_height="@dimen/text_input_field_height"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/title">
+        app:layout_constraintTop_toBottomOf="@id/title"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etFacebook"
@@ -43,7 +44,8 @@
         android:layout_height="@dimen/text_input_field_height"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tilFacebook">
+        app:layout_constraintTop_toBottomOf="@id/tilFacebook"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etInstagram"
@@ -62,7 +64,8 @@
         android:layout_height="@dimen/text_input_field_height"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tilInstagram">
+        app:layout_constraintTop_toBottomOf="@id/tilInstagram"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etWhatsapp"
@@ -72,7 +75,7 @@
             android:textSize="@dimen/body"
             android:drawableStart="@drawable/whatsapp_tiny"
             android:lines="1"
-            android:inputType="textUri"/>
+            android:inputType="phone"/>
     </com.google.android.material.textfield.TextInputLayout>
 
 

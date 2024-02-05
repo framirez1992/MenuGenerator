@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:context=".view.common.ImageOptionBottomSheet"
+    android:paddingVertical="30dp"
+    android:paddingHorizontal="20dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <ImageView
+            android:id="@+id/imgSearch"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/tvSearch"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/imgClear"
+            android:src="@drawable/outline_add_photo_alternate_24"
+            android:layout_marginVertical="10dp"/>
+
+        <TextView
+            android:id="@+id/tvSearch"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="10dp"
+            android:text="@string/add_image"
+            android:textSize="18sp"
+            app:layout_constraintStart_toEndOf="@id/imgSearch"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/imgSearch"
+            app:layout_constraintBottom_toBottomOf="@id/imgSearch"/>
+
+
+        <ImageView
+            android:id="@+id/imgClear"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/tvClear"
+            app:layout_constraintTop_toBottomOf="@+id/imgSearch"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:src="@drawable/outline_delete_24"
+            android:layout_marginVertical="10dp"/>
+
+
+        <TextView android:id="@+id/tvClear"
+            android:layout_width="0dp"
+            android:layout_height="30dp"
+            android:paddingHorizontal="10dp"
+            android:gravity="center_vertical"
+            android:text="@string/clear"
+            android:textSize="18sp"
+            app:layout_constraintStart_toEndOf="@id/imgClear"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/imgClear"
+            app:layout_constraintBottom_toBottomOf="@id/imgClear"/>
+
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</FrameLayout>

@@ -16,11 +16,15 @@
         android:theme="@style/Theme.MenuGenerator"
         tools:targetApi="31">
         <activity
-            android:name=".view.CompanyActivity"
+            android:name=".view.common.CropImage"
             android:exported="false" />
-        <activity android:name=".view.CompanyList"
-            android:exported="false"/>
-
+        <activity
+            android:name=".view.CompanyActivity"
+            android:exported="false"
+            android:windowSoftInputMode="stateVisible" />
+        <activity
+            android:name=".view.CompanyList"
+            android:exported="false" />
         <activity
             android:name=".view.LoginActivity"
             android:exported="true">

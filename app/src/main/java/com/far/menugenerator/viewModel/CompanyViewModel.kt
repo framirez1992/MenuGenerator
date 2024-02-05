@@ -1,6 +1,7 @@
 package com.far.menugenerator.viewModel
 
 import android.net.Uri
+import androidx.annotation.IntegerRes
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -8,7 +9,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.far.menugenerator.R
 import com.far.menugenerator.model.Company
-import com.far.menugenerator.model.CompanyState
+import com.far.menugenerator.model.LoadingState
+import com.far.menugenerator.model.State
 import com.far.menugenerator.model.database.CompanyService
 import com.far.menugenerator.model.database.model.CompanyFirebase
 import com.far.menugenerator.model.storage.CompanyStorage
@@ -23,18 +25,20 @@ class CompanyViewModel @Inject constructor(
     private val companyStorage:CompanyStorage
 ): ViewModel() {
 
-    private val _state = MutableLiveData<CompanyState>()
-    val state:LiveData<CompanyState> = _state
+    @IntegerRes private val _currentScreen = MutableLiveData<Int>()
+    fun getCurrentScreen():LiveData<Int> = _currentScreen
+    private val _state = MutableLiveData<LoadingState>()
+    fun getState():LiveData<LoadingState> = _state
 
     val currentImage = MutableLiveData<Uri?>()
     val company = MutableLiveData<Company>()
     private var editCompany:CompanyFirebase?=null
 
 
-    val isLoading = MutableLiveData<Boolean>()
+
 
     init {
-        _state.value = CompanyState(currentScreen= R.id.layoutCompanyName, isLoading = false)
+        _currentScreen.value = R.id.layoutCompanyName
         company.value = Company(companyId = UUID.randomUUID().toString())
         currentImage.value = null
     }
@@ -54,21 +58,21 @@ class CompanyViewModel @Inject constructor(
     }
 
     fun nextScreen(){
-        val nextScreen = when (_state.value?.currentScreen){
+        val nextScreen = when (_currentScreen.value){
             R.id.layoutCompanyName-> R.id.layoutCompanyAddress
             R.id.layoutCompanyAddress-> R.id.layoutCompanyContact
             else -> R.id.layoutCompanyLogo
         }
-        _state.value = _state.value?.copy(currentScreen = nextScreen)
+        _currentScreen.value = nextScreen
 
     }
     fun previousScreen(){
-        val previousScreen = when (_state.value?.currentScreen){
+        val previousScreen = when (_currentScreen.value){
             R.id.layoutCompanyLogo-> R.id.layoutCompanyContact
             R.id.layoutCompanyContact-> R.id.layoutCompanyAddress
             else -> R.id.layoutCompanyName
         }
-        _state.value = _state.value?.copy(currentScreen = previousScreen)
+        _currentScreen.value =  previousScreen
     }
 
 
@@ -106,7 +110,7 @@ class CompanyViewModel @Inject constructor(
     private fun saveCompany(user:String,company:Company){
 
         viewModelScope.launch {
-            _state.postValue(_state.value?.copy(isLoading = true))
+            _state.postValue(LoadingState(state = State.LOADING))
             try {
 
                 var uploadedFile:UploadResult? = null
@@ -124,10 +128,12 @@ class CompanyViewModel @Inject constructor(
                     facebook = company.facebook, instagram = company.instagram, whatsapp = company.whatsapp,
                     logoUrl = uploadedFile?.fileUri?.toString(), logoFileName = uploadedFile?.name)
                 companyService.saveCompany(user = user,firebaseCompany)
+                _state.postValue(LoadingState(state = State.SUCCESS))
             }catch (e:Exception){
                 e.printStackTrace()
+                _state.postValue(LoadingState(state = State.ERROR, message = e.message))
             }
-            _state.postValue(_state.value?.copy(isLoading = false))
+
 
         }
 
@@ -136,7 +142,7 @@ class CompanyViewModel @Inject constructor(
     private fun updateCompany(user:String,company: Company){
 
         viewModelScope.launch {
-            _state.postValue(_state.value?.copy(isLoading = true))
+            _state.postValue(LoadingState(State.LOADING))
             try {
                 deleteUnusedImagesFromFireStore(user=user, companyId = company.companyId)
                 val uploadResult:UploadResult? = if(currentImage.value != null && editCompany?.logoUrl!=null &&  currentImage.value == Uri.parse(editCompany?.logoUrl )){//no se modifico la imagen que tenia (Dejar igual)
@@ -155,11 +161,13 @@ class CompanyViewModel @Inject constructor(
                     facebook = company.facebook, instagram = company.instagram, whatsapp = company.whatsapp,
                     logoUrl = uploadResult?.fileUri?.toString(), logoFileName = uploadResult?.name, fireBaseRef = editCompany!!.fireBaseRef)
                 companyService.updateCompany(user = user, company =  firebaseCompany)
+                _state.postValue(LoadingState(State.SUCCESS))
             }catch (e:Exception){
                 e.printStackTrace()
+                _state.postValue(LoadingState(State.ERROR))
             }
 
-            _state.postValue(_state.value?.copy(isLoading = false))
+
 
         }
 

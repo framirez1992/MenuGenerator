@@ -2,7 +2,6 @@ package com.far.menugenerator.model
 
 import android.net.Uri
 
-data class CompanyState(val currentScreen:Int,val isLoading:Boolean)
 
 data class Company (
                     val companyId:String,

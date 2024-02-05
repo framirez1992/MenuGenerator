@@ -11,8 +11,11 @@ import com.far.menugenerator.model.State
 import com.far.menugenerator.model.database.CompanyService
 import com.far.menugenerator.model.database.MenuService
 import com.far.menugenerator.model.database.model.CompanyFirebase
+import com.far.menugenerator.model.database.model.MenuFirebase
 import com.far.menugenerator.model.storage.CompanyStorage
 import com.far.menugenerator.model.storage.MenuStorage
+import com.google.firebase.firestore.FirebaseFirestoreException
+import com.google.firebase.storage.StorageException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -44,7 +47,7 @@ class CompanyListViewModel @Inject constructor (
 
     fun getCompanies(user:String){
         searchCompaniesState.postValue(LoadingState(state =  State.LOADING))
-        viewModelScope.launch(Dispatchers.IO){
+        viewModelScope.launch{
             try{
                 companies.postValue(companyService.getCompanies(user))
                 searchCompaniesState.postValue(LoadingState(state =  State.SUCCESS))
@@ -58,22 +61,23 @@ class CompanyListViewModel @Inject constructor (
 
     fun deleteCompany(user:String, company:CompanyFirebase){
         deleteCompanyState.postValue(LoadingState(state =  State.LOADING))
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             try {
                 if(company.logoUrl != null)
-                    companyStorage.removeCompanyLogo(user = user, companyId = company.companyId, remoteFileName =company.logoFileName!!)
+                    deleteCompanyLogo(user=user,company=company)
+
 
                 val menus = menuService.getMenus(user = user, companyId = company.companyId)
-
                 //Delete all menus files files
                 menus.forEach{
                     //Delete Files
-                    menuStorage.removeAllMenuFiles(user = user, menuId = it?.menuId!!)
+                    removeAllMenuFiles(user = user, menuId = it?.menuId!!)
                     //Delete  Data
-                    menuService.deleteMenu(user = user, companyId = company.companyId,it)
+                    deleteMenuFromFirebaseDB(user = user, companyId = company.companyId,menu=it)
                 }
 
-                companyService.deleteCompany(user= user, company= company)
+
+                deleteCompanyFromFirebaseDB(user= user, company= company)
                 deleteCompanyState.postValue(LoadingState(state =  State.SUCCESS))
             }catch (e:Exception){
                 deleteCompanyState.postValue(LoadingState(state =  State.ERROR, message = e.message))
@@ -81,6 +85,47 @@ class CompanyListViewModel @Inject constructor (
 
             getCompanies(user = user)
 
+        }
+    }
+
+    private suspend fun deleteCompanyLogo(user:String, company:CompanyFirebase){
+        try{
+            companyStorage.removeCompanyLogo(user = user, companyId = company.companyId, remoteFileName =company.logoFileName!!)
+        }catch (e:StorageException){
+            if(e.errorCode != StorageException.ERROR_OBJECT_NOT_FOUND){
+                throw e
+            }
+        }
+    }
+
+    private suspend fun removeAllMenuFiles(user:String,menuId:String){
+        try{
+            menuStorage.removeAllMenuFiles(user = user, menuId = menuId)
+        }catch (e:StorageException){
+            if(e.errorCode != StorageException.ERROR_OBJECT_NOT_FOUND){
+                throw e
+            }
+        }
+
+    }
+
+    private fun deleteMenuFromFirebaseDB(user:String,companyId:String,menu:MenuFirebase){
+        try{
+            menuService.deleteMenu(user = user, companyId = companyId,m=menu)
+        }catch (e: FirebaseFirestoreException){
+            if(e.code != FirebaseFirestoreException.Code.NOT_FOUND){
+                throw e
+            }
+        }
+    }
+
+    private fun deleteCompanyFromFirebaseDB(user:String, company:CompanyFirebase){
+        try{
+            companyService.deleteCompany(user= user, company= company)
+        }catch (e: FirebaseFirestoreException){
+            if(e.code != FirebaseFirestoreException.Code.NOT_FOUND){
+                throw e
+            }
         }
     }
 

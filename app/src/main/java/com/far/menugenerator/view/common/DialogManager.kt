@@ -40,9 +40,16 @@ class DialogManager(private val baseActivity: BaseActivity) {
         }
     }
 
+    fun showImageBottomSheet(onclick:(Int)->Unit){
+        val modal = ImageOptionBottomSheet(onclick)
+        fragmentManager.let { modal.show(it, ImageOptionBottomSheet.TAG) }
+    }
+
     private fun showDialog(){
         fragmentManager.let {
             currentDialog.show(it, "DialogFragment")
         }
     }
+
+
 }
