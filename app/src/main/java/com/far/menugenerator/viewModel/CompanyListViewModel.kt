@@ -1,12 +1,11 @@
 package com.far.menugenerator.viewModel
 
-import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.far.menugenerator.model.LoadingState
+import com.far.menugenerator.model.ProcessState
 import com.far.menugenerator.model.State
 import com.far.menugenerator.model.database.CompanyService
 import com.far.menugenerator.model.database.MenuService
@@ -16,7 +15,6 @@ import com.far.menugenerator.model.storage.CompanyStorage
 import com.far.menugenerator.model.storage.MenuStorage
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.storage.StorageException
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Provider
@@ -29,12 +27,12 @@ class CompanyListViewModel @Inject constructor (
 ): ViewModel() {
 
     private val companies = MutableLiveData<List<CompanyFirebase?>>()
-    private val deleteCompanyState = MutableLiveData<LoadingState?>()
-    private val searchCompaniesState = MutableLiveData<LoadingState?>()
+    private val deleteCompanyState = MutableLiveData<ProcessState?>()
+    private val searchCompaniesState = MutableLiveData<ProcessState?>()
 
     fun getCompanies():LiveData<List<CompanyFirebase?>> = companies
-    fun getSearchCompaniesState():LiveData<LoadingState?> = searchCompaniesState
-    fun getDeleteCompanyState():LiveData<LoadingState?> = deleteCompanyState
+    fun getSearchCompaniesState():LiveData<ProcessState?> = searchCompaniesState
+    fun getDeleteCompanyState():LiveData<ProcessState?> = deleteCompanyState
     init {
         //companies.postValue(emptyList())
         //searchCompaniesState.postValue(null)
@@ -46,21 +44,21 @@ class CompanyListViewModel @Inject constructor (
     }
 
     fun getCompanies(user:String){
-        searchCompaniesState.postValue(LoadingState(state =  State.LOADING))
+        searchCompaniesState.postValue(ProcessState(state =  State.LOADING))
         viewModelScope.launch{
             try{
                 companies.postValue(companyService.getCompanies(user))
-                searchCompaniesState.postValue(LoadingState(state =  State.SUCCESS))
+                searchCompaniesState.postValue(ProcessState(state =  State.SUCCESS))
             }catch (e:Exception){
                 e.printStackTrace()
-                searchCompaniesState.postValue(LoadingState(state =  State.ERROR,message= e.message))
+                searchCompaniesState.postValue(ProcessState(state =  State.ERROR,message= e.message))
             }
 
         }
     }
 
     fun deleteCompany(user:String, company:CompanyFirebase){
-        deleteCompanyState.postValue(LoadingState(state =  State.LOADING))
+        deleteCompanyState.postValue(ProcessState(state =  State.LOADING))
         viewModelScope.launch {
             try {
                 if(company.logoUrl != null)
@@ -78,9 +76,9 @@ class CompanyListViewModel @Inject constructor (
 
 
                 deleteCompanyFromFirebaseDB(user= user, company= company)
-                deleteCompanyState.postValue(LoadingState(state =  State.SUCCESS))
+                deleteCompanyState.postValue(ProcessState(state =  State.SUCCESS))
             }catch (e:Exception){
-                deleteCompanyState.postValue(LoadingState(state =  State.ERROR, message = e.message))
+                deleteCompanyState.postValue(ProcessState(state =  State.ERROR, message = e.message))
             }
 
             getCompanies(user = user)

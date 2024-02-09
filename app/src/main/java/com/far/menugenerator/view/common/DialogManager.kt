@@ -3,6 +3,7 @@ package com.far.menugenerator.view.common
 import android.R.id.message
 import android.app.AlertDialog
 import androidx.fragment.app.DialogFragment
+import com.far.menugenerator.view.adapters.ImageOption
 import com.far.menugenerator.view.dialogs.DialogLoading
 import com.far.menugenerator.view.dialogs.DialogProductEdit
 
@@ -40,8 +41,8 @@ class DialogManager(private val baseActivity: BaseActivity) {
         }
     }
 
-    fun showImageBottomSheet(onclick:(Int)->Unit){
-        val modal = ImageOptionBottomSheet(onclick)
+    fun showImageBottomSheet(options:List<ImageOption>,onclick:(ImageOption)->Unit){
+        val modal = ImageOptionBottomSheet(options,onclick)
         fragmentManager.let { modal.show(it, ImageOptionBottomSheet.TAG) }
     }
 

@@ -6,8 +6,11 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.far.menugenerator.R
 import com.far.menugenerator.databinding.FragmentImageOptionBottomSheetBinding
+import com.far.menugenerator.view.adapters.ImageOption
+import com.far.menugenerator.view.adapters.ImageOptionAdapter
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -19,7 +22,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
  * Use the [ImageOptionBottomSheet.newInstance] factory method to
  * create an instance of this fragment.
  */
-class ImageOptionBottomSheet(val onclick:(Int)->Unit) : BottomSheetDialogFragment() {
+class ImageOptionBottomSheet(val options:List<ImageOption>,val onclick:(ImageOption)->Unit) : BottomSheetDialogFragment() {
 
 
     private lateinit var binding:FragmentImageOptionBottomSheetBinding
@@ -36,12 +39,9 @@ class ImageOptionBottomSheet(val onclick:(Int)->Unit) : BottomSheetDialogFragmen
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        binding.tvSearch.setOnClickListener{
-            onclick(it.id)
-            dismiss()
-        }
-        binding.tvClear.setOnClickListener {
-            onclick(it.id)
+        binding.rv.layoutManager = LinearLayoutManager(context,LinearLayoutManager.VERTICAL,false)
+        binding.rv.adapter = ImageOptionAdapter(options=options){
+            onclick(it)
             dismiss()
         }
     }

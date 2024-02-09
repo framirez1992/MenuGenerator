@@ -12,7 +12,7 @@
         <ImageView android:id="@+id/img"
             android:layout_width="100dp"
             android:layout_height="100dp"
-            android:src="@drawable/baseline_menu_book_24"
+            android:src="@drawable/menu"
             android:padding="20dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -28,7 +28,7 @@
             app:layout_constraintBottom_toBottomOf="@id/img"
             android:textStyle="bold"
             android:textSize="18sp"
-            android:paddingHorizontal="20dp"/>
+            android:paddingRight="20dp"/>
 
 
     </androidx.constraintlayout.widget.ConstraintLayout>

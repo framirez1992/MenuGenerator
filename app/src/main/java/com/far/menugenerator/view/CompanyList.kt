@@ -4,12 +4,13 @@ package com.far.menugenerator.view
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.far.menugenerator.R
 import com.far.menugenerator.databinding.FragmentCompanyListBinding
-import com.far.menugenerator.model.LoadingState
+import com.far.menugenerator.model.ProcessState
 import com.far.menugenerator.model.State
 import com.far.menugenerator.model.database.model.CompanyFirebase
 import com.far.menugenerator.view.adapters.CompanyAdapter
@@ -49,10 +50,11 @@ class CompanyList : BaseActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if(item.itemId == R.id.optionNewMenu)
-            navigation.companyActivity(null)
-        else if(item.itemId == R.id.optionLogout)
-            signOut()
+        when(item.itemId){
+            R.id.optionRefresh -> getCompanies()
+            R.id.optionNewMenu -> navigation.companyActivity(null)
+            R.id.optionLogout -> signOut()
+        }
 
         return true
     }
@@ -87,7 +89,7 @@ class CompanyList : BaseActivity() {
                     resources.getString(R.string.delete))){option->
 
                     when(option){
-                        resources.getString(R.string.show_menus)-> navigation.menuListFragment(company = comp)
+                        resources.getString(R.string.show_menus)-> navigation.menuListActivity(company = comp)
                         resources.getString(R.string.edit)-> navigation.companyActivity(company = comp)
                         resources.getString(R.string.delete)-> showDeleteCompanyConfirmationDialog(company = comp)
                     }
@@ -102,33 +104,34 @@ class CompanyList : BaseActivity() {
     private fun getCompanies(){
         _viewModel.getCompanies(LoginActivity.account?.email!!)
     }
-    private fun processCompanySearchState(loadingState: LoadingState?){
-        if(loadingState == null)
+    private fun processCompanySearchState(processState: ProcessState?){
+        if(processState == null)
             return
 
-        binding.swipe.isRefreshing = loadingState.state == State.LOADING
+        binding.swipe.isRefreshing = processState.state == State.LOADING
+        binding.rv.visibility = if(processState.state == State.LOADING) View.GONE else View.VISIBLE
 
-        if(loadingState.state == State.SUCCESS && _viewModel.getCompanies().value!!.isEmpty()){
+        if(processState.state == State.SUCCESS && _viewModel.getCompanies().value!!.isEmpty()){
             dialogManager.showOptionDialog(title = getString(R.string.do_you_want_to_add_a_new_company_now),
                 options =  arrayOf(getString(R.string.yes), getString(R.string.not_now))){
                 if(it == getString(R.string.yes))
                     navigation.companyActivity(null)
             }
-        }else if(loadingState.state == State.ERROR)
+        }else if(processState.state == State.ERROR)
             Snackbar.make(binding.root,
                 getString(R.string.operation_failed_please_retry),
                 Snackbar.LENGTH_LONG).show()
     }
 
-    private fun processDeleteCompanyState(loadingState: LoadingState?){
-        if(loadingState == null)
+    private fun processDeleteCompanyState(processState: ProcessState?){
+        if(processState == null)
             return
-        if(loadingState.state == State.LOADING){
+        if(processState.state == State.LOADING){
             dialogManager.showLoadingDialog()
         }else{
             dialogManager.dismissLoadingDialog()
         }
-        if(loadingState.state == State.ERROR){
+        if(processState.state == State.ERROR){
             Snackbar.make(binding.root,
                 getString(R.string.operation_failed_please_retry),
                 Snackbar.LENGTH_LONG).show()

@@ -9,7 +9,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.far.menugenerator.R
 import com.far.menugenerator.model.Company
-import com.far.menugenerator.model.LoadingState
+import com.far.menugenerator.model.ProcessState
 import com.far.menugenerator.model.State
 import com.far.menugenerator.model.database.CompanyService
 import com.far.menugenerator.model.database.model.CompanyFirebase
@@ -27,8 +27,8 @@ class CompanyViewModel @Inject constructor(
 
     @IntegerRes private val _currentScreen = MutableLiveData<Int>()
     fun getCurrentScreen():LiveData<Int> = _currentScreen
-    private val _state = MutableLiveData<LoadingState>()
-    fun getState():LiveData<LoadingState> = _state
+    private val _state = MutableLiveData<ProcessState>()
+    fun getState():LiveData<ProcessState> = _state
 
     val currentImage = MutableLiveData<Uri?>()
     val company = MutableLiveData<Company>()
@@ -110,7 +110,7 @@ class CompanyViewModel @Inject constructor(
     private fun saveCompany(user:String,company:Company){
 
         viewModelScope.launch {
-            _state.postValue(LoadingState(state = State.LOADING))
+            _state.postValue(ProcessState(state = State.LOADING))
             try {
 
                 var uploadedFile:UploadResult? = null
@@ -128,10 +128,10 @@ class CompanyViewModel @Inject constructor(
                     facebook = company.facebook, instagram = company.instagram, whatsapp = company.whatsapp,
                     logoUrl = uploadedFile?.fileUri?.toString(), logoFileName = uploadedFile?.name)
                 companyService.saveCompany(user = user,firebaseCompany)
-                _state.postValue(LoadingState(state = State.SUCCESS))
+                _state.postValue(ProcessState(state = State.SUCCESS))
             }catch (e:Exception){
                 e.printStackTrace()
-                _state.postValue(LoadingState(state = State.ERROR, message = e.message))
+                _state.postValue(ProcessState(state = State.ERROR, message = e.message))
             }
 
 
@@ -142,7 +142,7 @@ class CompanyViewModel @Inject constructor(
     private fun updateCompany(user:String,company: Company){
 
         viewModelScope.launch {
-            _state.postValue(LoadingState(State.LOADING))
+            _state.postValue(ProcessState(State.LOADING))
             try {
                 deleteUnusedImagesFromFireStore(user=user, companyId = company.companyId)
                 val uploadResult:UploadResult? = if(currentImage.value != null && editCompany?.logoUrl!=null &&  currentImage.value == Uri.parse(editCompany?.logoUrl )){//no se modifico la imagen que tenia (Dejar igual)
@@ -161,10 +161,10 @@ class CompanyViewModel @Inject constructor(
                     facebook = company.facebook, instagram = company.instagram, whatsapp = company.whatsapp,
                     logoUrl = uploadResult?.fileUri?.toString(), logoFileName = uploadResult?.name, fireBaseRef = editCompany!!.fireBaseRef)
                 companyService.updateCompany(user = user, company =  firebaseCompany)
-                _state.postValue(LoadingState(State.SUCCESS))
+                _state.postValue(ProcessState(State.SUCCESS))
             }catch (e:Exception){
                 e.printStackTrace()
-                _state.postValue(LoadingState(State.ERROR))
+                _state.postValue(ProcessState(State.ERROR))
             }
 
 

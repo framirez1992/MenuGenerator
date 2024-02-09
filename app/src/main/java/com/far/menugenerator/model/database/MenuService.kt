@@ -44,4 +44,12 @@ open class MenuService(private val db:FirebaseFirestore) {
         }
         return menus
     }
+
+    suspend fun getMenu(user:String, companyId:String, firebaseRef:String):MenuFirebase?{
+        val menu = db.collection(user).document(companyId).collection("menu").document(firebaseRef).get().await()
+        val menuFireBase = menu.toObject(MenuFirebase::class.java)?.apply {
+            fireBaseRef = menu.reference.id
+        }
+        return menuFireBase
+    }
 }

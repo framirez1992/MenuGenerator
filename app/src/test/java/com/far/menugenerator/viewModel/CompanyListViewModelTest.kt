@@ -1,6 +1,6 @@
 package com.far.menugenerator.viewModel
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import com.far.menugenerator.model.LoadingState
+import com.far.menugenerator.model.ProcessState
 import com.far.menugenerator.model.State
 import com.far.menugenerator.model.database.CompanyService
 import com.far.menugenerator.model.database.MenuService
@@ -68,7 +68,7 @@ class CompanyListViewModelTest {
         /*var job = launch(dispatcher) {
 
         }*/
-        val capturedStates = mutableListOf<LoadingState?>()
+        val capturedStates = mutableListOf<ProcessState?>()
         //para atrapar varios states. porque el rule InstantTaskExecutorRule te dara solo el ultimo estado cunado llames el observable.value
         sut.getSearchCompaniesState().observeForever(){
             capturedStates.add(it)
@@ -93,7 +93,7 @@ class CompanyListViewModelTest {
     @Test
     fun onResume_failed_companyObserverNoInteractionsErrorShown() = runTest {
 
-        val capturedStates = mutableListOf<LoadingState?>()
+        val capturedStates = mutableListOf<ProcessState?>()
 
         failure()
         sut.getSearchCompaniesState().observeForever{
@@ -112,7 +112,7 @@ class CompanyListViewModelTest {
 
     @Test
     fun getCompanies_success_companyObserversNotified() = runTest {
-        val capturedStates = mutableListOf<LoadingState?>()
+        val capturedStates = mutableListOf<ProcessState?>()
         success()
         sut.getSearchCompaniesState().observeForever{
             capturedStates.add(it)
@@ -129,7 +129,7 @@ class CompanyListViewModelTest {
 
     @Test
     fun getCompanies_failed_errorNotified()= runTest {
-        val capturedStates = mutableListOf<LoadingState?>()
+        val capturedStates = mutableListOf<ProcessState?>()
         failure()
         sut.getSearchCompaniesState().observeForever{
             capturedStates.add(it)
@@ -145,7 +145,7 @@ class CompanyListViewModelTest {
 
     @Test
     fun deleteCompany_success_allDependenciesDeleted() = runTest {
-        val deleteStates = mutableListOf<LoadingState?>()
+        val deleteStates = mutableListOf<ProcessState?>()
         success()
         sut.getDeleteCompanyState().observeForever{
             deleteStates.add(it)
@@ -175,7 +175,7 @@ class CompanyListViewModelTest {
 
     @Test
     fun deleteCompany_failed_onCompanyLogoDelete() = runTest{
-        val deleteStates = mutableListOf<LoadingState?>()
+        val deleteStates = mutableListOf<ProcessState?>()
         failureCompanyLogoDelete()
         sut.getDeleteCompanyState().observeForever {
             deleteStates.add(it)
@@ -192,7 +192,7 @@ class CompanyListViewModelTest {
 
     @Test
     fun `deleteCompany success when fileNotFound exception was thrown`() = runTest{
-        val states = mutableListOf<LoadingState?>()
+        val states = mutableListOf<ProcessState?>()
         successWithFileNoFoundException()
         sut.getDeleteCompanyState().observeForever {
             states.add(it)

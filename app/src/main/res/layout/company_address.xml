@@ -1,35 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:padding="@dimen/layout_padding">
-
-    <TextView android:id="@+id/title"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="@dimen/title_padding"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:text="@string/my_business"
-        android:textStyle="bold"
-        android:textSize="@dimen/titles"
-        android:gravity="center"/>
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/tilAddress1"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/text_input_field_height"
+        android:layout_height="wrap_content"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/title"
+        app:layout_constraintTop_toTopOf="parent"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etAddress1"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:hint="@string/address_1"
             android:textSize="@dimen/body"
             android:lines="1"
@@ -40,7 +28,7 @@
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/tilAddress2"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/text_input_field_height"
+        android:layout_height="wrap_content"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tilAddress1"
@@ -49,7 +37,7 @@
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etAddress2"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:hint="@string/address_2"
             android:textSize="@dimen/body"
             android:lines="1"
@@ -60,7 +48,7 @@
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/tilAddress3"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/text_input_field_height"
+        android:layout_height="wrap_content"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tilAddress2"
@@ -69,7 +57,7 @@
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etAddress3"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:hint="@string/address_3"
             android:textSize="@dimen/body"
             android:lines="1"

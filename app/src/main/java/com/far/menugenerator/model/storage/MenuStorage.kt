@@ -46,4 +46,8 @@ open class MenuStorage(private val storage:FirebaseStorage) {
         fileRef.delete().await()
     }
 
+     suspend fun downloadFileStorageReferenceFromUrl(url:String, destination:File){
+         storage.getReferenceFromUrl(url).getFile(destination).await()
+    }
+
 }

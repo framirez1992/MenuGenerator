@@ -13,9 +13,10 @@ import com.canhub.cropper.CropImageOptions
 import com.far.menugenerator.R
 import com.far.menugenerator.databinding.FragmentCompanyBinding
 import com.far.menugenerator.model.Company
-import com.far.menugenerator.model.LoadingState
+import com.far.menugenerator.model.ProcessState
 import com.far.menugenerator.model.State
 import com.far.menugenerator.model.database.model.CompanyFirebase
+import com.far.menugenerator.view.adapters.ImageOption
 import com.far.menugenerator.view.common.BaseActivity
 import com.far.menugenerator.view.common.DialogManager
 import com.far.menugenerator.viewModel.CompanyViewModel
@@ -93,13 +94,14 @@ class CompanyActivity : BaseActivity() {
                whatsapp = _binding.layoutCompanyContact.etWhatsapp.text.toString())
         }
         _binding.layoutCompanyLogo.imgLogo.setOnClickListener{
-            //val intent = Intent(Intent.ACTION_PICK).setType("image/*")
-            //startActivityForResult(intent, REQUEST_CODE_PICK_IMAGE)
-
-            dialogManager.showImageBottomSheet{
-                if(it == R.id.tvSearch){
+            val options = listOf(
+                ImageOption(icon = R.drawable.baseline_image_search_24,R.string.search),
+                ImageOption(icon = R.drawable.baseline_clear_24,R.string.clear),
+                )
+            dialogManager.showImageBottomSheet(options){
+                if(it.string == R.string.search){
                     callCropImage()
-                }else if(it == R.id.tvClear){
+                }else if(it.string == R.string.clear){
                     _viewModel.updateCurrentCompanyLogo(null)
                 }
 
@@ -108,15 +110,6 @@ class CompanyActivity : BaseActivity() {
         }
 
 
-    }
-
-    private fun callCropImage() {
-        val intent = Intent(this,CropImageActivity::class.java)
-        var options = CropImageOptions()
-        options.activityBackgroundColor = getColor(R.color.grey_900)
-        options.backgroundColor = getColor(R.color.grey_900)
-        intent.putExtra(CropImage.CROP_IMAGE_EXTRA_OPTIONS,options)
-        startActivityForResult(intent,REQUEST_CODE_CROP_IMAGE)
     }
 
     private fun initObservers(){
@@ -135,10 +128,19 @@ class CompanyActivity : BaseActivity() {
                     .load(it)
                     .into(_binding.layoutCompanyLogo.imgLogo)
             }else{
-                _binding.layoutCompanyLogo.imgLogo.setImageResource(R.drawable.search_image)
+                _binding.layoutCompanyLogo.imgLogo.setImageDrawable(null)
             }
         }
 
+    }
+
+    private fun callCropImage() {
+        val intent = Intent(this,CropImageActivity::class.java)
+        var options = CropImageOptions()
+        options.activityBackgroundColor = getColor(R.color.grey_900)
+        options.backgroundColor = getColor(R.color.grey_900)
+        intent.putExtra(CropImage.CROP_IMAGE_EXTRA_OPTIONS,options)
+        startActivityForResult(intent,REQUEST_CODE_CROP_IMAGE)
     }
 
 
@@ -221,15 +223,15 @@ class CompanyActivity : BaseActivity() {
         return true
     }
 
-    private fun manageState(loadingState: LoadingState){
-        if(loadingState.state == State.LOADING)
+    private fun manageState(processState: ProcessState){
+        if(processState.state == State.LOADING)
             dialogManager.showLoadingDialog()
         else
             dialogManager.dismissLoadingDialog()
 
-        if(loadingState.state == State.SUCCESS)
+        if(processState.state == State.SUCCESS)
             finish()
-        else if(loadingState.state == State.ERROR)
+        else if(processState.state == State.ERROR)
             Snackbar.make(_binding.root,R.string.operation_failed_please_retry,Snackbar.LENGTH_LONG).show()
 
     }

@@ -4,15 +4,56 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    tools:context=".view.CompanyActivity">
+    tools:context=".view.CompanyActivity"
+    android:paddingTop="30dp">
 
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+
+        <TextView android:id="@+id/title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="@dimen/title_padding"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/screens"
+            android:layout_marginTop="50dp"
+            android:text="@string/my_business"
+            android:textStyle="bold"
+            android:textSize="@dimen/titles"
+            android:gravity="center"/>
+
+
+        <ImageView android:id="@+id/btnBack"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/title"
+            android:src="@drawable/rounded_navigate_before_24"
+            android:layout_marginHorizontal="15dp"
+            android:alpha="0.75"/>
+
+
+        <ImageView android:id="@+id/btnNext"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/title"
+            android:src="@drawable/rounded_navigate_next_24"
+            android:layout_marginHorizontal="15dp"
+            app:tint="@color/purple_500"/>
 
     <RelativeLayout android:id="@+id/screens"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toBottomOf="@id/title">
 
         <include android:id="@+id/layoutCompanyName"
             layout="@layout/company_name"
@@ -39,35 +80,19 @@
             android:visibility="gone"/>
     </RelativeLayout>
 
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/screens"
-        android:padding="@dimen/layout_padding">
-
-        <Button android:id="@+id/btnBack"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Back"
-            android:layout_alignParentStart="true"
-            android:visibility="gone"/>
-
-        <Button android:id="@+id/btnNext"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Next"
-            android:layout_alignParentEnd="true"/>
 
         <Button android:id="@+id/btnFinish"
-            android:layout_width="wrap_content"
+            android:layout_width="200dp"
             android:layout_height="wrap_content"
-            android:text="Finish"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/screens"
+            android:text="@string/finish"
             android:layout_alignParentEnd="true"
-            android:visibility="gone"/>
+            android:visibility="visible"/>
 
-    </RelativeLayout>
 
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

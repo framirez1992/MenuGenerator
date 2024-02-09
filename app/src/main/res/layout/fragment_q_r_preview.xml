@@ -3,17 +3,26 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".view.QRPreviewFragment">
+    tools:context=".view.QRPreview">
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <ImageView android:id="@+id/imgQR"
+        <ImageView
+            android:id="@+id/imgQR"
             android:layout_width="300dp"
             android:layout_height="300dp"
-            android:scaleType="fitCenter"
-            android:layout_centerInParent="true"/>
+            android:layout_centerInParent="true"
+            android:scaleType="fitCenter" />
+        <TextView android:id="@+id/tvMessage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/touch"
+            android:layout_below="@id/imgQR"
+            android:gravity="center_horizontal"
+            android:textStyle="italic"
+            android:textSize="14sp"/>
 
     </RelativeLayout>
 

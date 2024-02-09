@@ -15,8 +15,22 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MenuGenerator"
         tools:targetApi="31">
+
+        <provider
+            android:authorities="com.far.menugenerator.fileprovider"
+            android:name="androidx.core.content.FileProvider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths"/>
+        </provider>
+
         <activity
-            android:name=".view.common.CropImage"
+            android:name=".view.QRPreview"
+            android:exported="false" />
+        <activity
+            android:name=".view.MenuList"
             android:exported="false" />
         <activity
             android:name=".view.CompanyActivity"

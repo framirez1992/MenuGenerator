@@ -226,14 +226,14 @@ class CreateMenuFragment : BaseFragment() {
                     .load(it)
                     .into(_binding.addMenuItemScreen.productData.imgProduct)
             }else{
-                _binding.addMenuItemScreen.productData.imgProduct.setImageResource(R.drawable.search_image)
+                _binding.addMenuItemScreen.productData.imgProduct.setImageResource(R.drawable.baseline_image_search_24)
             }
 
         }
         _viewModel.savedMenuUrl.observe(requireActivity()){
             //FINISH PROCESS
             Toast.makeText(baseActivity,"Completado", Toast.LENGTH_SHORT).show()
-            screenNavigation.qrImagePreview(it)
+            screenNavigation.qrImagePreview(companyId = company.companyId,it)
         }
     }
 
