@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.far.menugenerator.R
 import com.far.menugenerator.databinding.FragmentMenuListBinding
 import com.far.menugenerator.model.database.model.CompanyFirebase
+import com.far.menugenerator.view.adapters.ImageOption
 import com.far.menugenerator.view.adapters.MenuAdapter
 import com.far.menugenerator.view.common.BaseActivity
 import com.far.menugenerator.view.common.DialogManager
@@ -65,7 +66,7 @@ class MenuList : BaseActivity() {
     }
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when(item.itemId){
-            R.id.add->screenNavigation.createMenuFragment(company = company!!,menuFirebase = null)
+            R.id.add->screenNavigation.menuActivity(company = company!!,menuFirebase = null)
             R.id.optionRefresh -> searchMenus()
         }
         return true
@@ -82,16 +83,19 @@ class MenuList : BaseActivity() {
     private fun initObservers(){
         viewModel.menus.observe(this){
             val adapter = MenuAdapter(it){ menu->
-                dialogManager.showOptionDialog(resources.getString(R.string.options),
-                    arrayOf(resources.getString(R.string.preview),resources.getString(R.string.edit),resources.getString(R.string.delete))
-                ){ option->
-                    when(option){
-                        resources.getString(R.string.preview)-> screenNavigation.qrImagePreview(companyId = company?.companyId!!, firebaseRef = menu.fireBaseRef!!)
-                        resources.getString(R.string.edit) -> screenNavigation.createMenuFragment(company = company!!,menu)
-                        resources.getString(R.string.delete) -> viewModel.deleteMenu(LoginActivity.account?.email!!, companyId = company?.companyId!!, menuFirebase = menu)
+
+                val options = listOf(
+                    ImageOption(R.drawable.baseline_remove_red_eye_24,R.string.preview),
+                    ImageOption(R.drawable.round_edit_24,R.string.edit),
+                    ImageOption(R.drawable.rounded_delete_24,R.string.delete)
+                )
+                dialogManager.showImageBottomSheet(options){option->
+                    when(option.string){
+                        R.string.preview -> screenNavigation.qrImagePreview(companyId = company?.companyId!!, firebaseRef = menu.fireBaseRef!!)
+                        R.string.edit-> screenNavigation.menuActivity(company = company!!,menu)
+                        R.string.delete-> viewModel.deleteMenu(LoginActivity.account?.email!!, companyId = company?.companyId!!, menuFirebase = menu)
                     }
                 }
-
             }
             binding.rv.adapter = adapter
         }

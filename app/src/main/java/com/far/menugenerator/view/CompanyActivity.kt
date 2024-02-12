@@ -34,7 +34,6 @@ import javax.inject.Inject
  * create an instance of this fragment.
  */
 //private const val REQUEST_CODE_PICK_IMAGE = 100
-private const val REQUEST_CODE_CROP_IMAGE = 200
 class CompanyActivity : BaseActivity() {
     // TODO: Rename and change types of parameters
     private var company: CompanyFirebase? = null
@@ -134,14 +133,7 @@ class CompanyActivity : BaseActivity() {
 
     }
 
-    private fun callCropImage() {
-        val intent = Intent(this,CropImageActivity::class.java)
-        var options = CropImageOptions()
-        options.activityBackgroundColor = getColor(R.color.grey_900)
-        options.backgroundColor = getColor(R.color.grey_900)
-        intent.putExtra(CropImage.CROP_IMAGE_EXTRA_OPTIONS,options)
-        startActivityForResult(intent,REQUEST_CODE_CROP_IMAGE)
-    }
+
 
 
     private fun navigate(currentScreen:Int){

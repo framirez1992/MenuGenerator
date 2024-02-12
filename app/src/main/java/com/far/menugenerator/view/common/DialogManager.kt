@@ -1,11 +1,15 @@
 package com.far.menugenerator.view.common
 
-import android.R.id.message
 import android.app.AlertDialog
+import android.view.View
+import androidx.annotation.StringRes
+
 import androidx.fragment.app.DialogFragment
 import com.far.menugenerator.view.adapters.ImageOption
 import com.far.menugenerator.view.dialogs.DialogLoading
 import com.far.menugenerator.view.dialogs.DialogProductEdit
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+
 
 
 class DialogManager(private val baseActivity: BaseActivity) {
@@ -46,11 +50,19 @@ class DialogManager(private val baseActivity: BaseActivity) {
         fragmentManager.let { modal.show(it, ImageOptionBottomSheet.TAG) }
     }
 
+    fun getMaterialDialogBuilder(view: View):MaterialAlertDialogBuilder{
+        val dialog = MaterialAlertDialogBuilder(activity).apply {
+            setView(view)
+        }
+        return dialog
+    }
+
     private fun showDialog(){
         fragmentManager.let {
             currentDialog.show(it, "DialogFragment")
         }
     }
+
 
 
 }

@@ -52,8 +52,8 @@ class MenuPreviewAdapter(private val activity:BaseActivity,private val itemPrevi
         preview.clear()
         val headers = itemPreviewList.filter { it.itemStyle == ItemStyle.MENU_CATEGORY_HEADER }.sortedBy { it.position }
         headers.forEach{ categoryPreview->
-            val category = categoryPreview.item
-            var items = itemPreviewList.filter { it.itemStyle != ItemStyle.MENU_CATEGORY_HEADER && it.item.category ==  category.name}.sortedBy { it.position }
+            val category = categoryPreview.item.category
+            var items = itemPreviewList.filter { it.itemStyle != ItemStyle.MENU_CATEGORY_HEADER && it.item.category.id ==  category.id}.sortedBy { it.position }
             if(items.isNotEmpty()){//show only relevant data
                 preview.add(categoryPreview)
                 preview.addAll(items)
@@ -74,7 +74,7 @@ class MenuPreviewAdapter(private val activity:BaseActivity,private val itemPrevi
 
                 categories.forEach{ categoryPreview->
                     val category = categoryPreview.item
-                    var items = preview.filter { it.itemStyle != ItemStyle.MENU_CATEGORY_HEADER && it.item.category == category.name }
+                    var items = preview.filter { it.itemStyle != ItemStyle.MENU_CATEGORY_HEADER && it.item.category.id == category.id }
                     items.reversed().forEach{
                         if(preview.last() == categoryPreview){
                             preview.remove(it)
@@ -111,7 +111,7 @@ class MenuPreviewAdapter(private val activity:BaseActivity,private val itemPrevi
                 Collections.swap(preview,preview.indexOf(itemAfter),preview.indexOf(currentItem))
 
                 categories.forEach{ category->
-                    var items = preview.filter { it.itemStyle != ItemStyle.MENU_CATEGORY_HEADER && it.item.category == category.item.name }
+                    var items = preview.filter { it.itemStyle != ItemStyle.MENU_CATEGORY_HEADER && it.item.category.id == category.item.id }
                     items.reversed().forEach{
                         if(preview.last() == category){
                             preview.remove(it)

@@ -5,6 +5,7 @@ import com.far.menugenerator.view.CompanyActivity
 import com.far.menugenerator.view.CompanyList
 import com.far.menugenerator.view.CreateMenuFragment
 import com.far.menugenerator.view.LoginActivity
+import com.far.menugenerator.view.MenuActivity
 import com.far.menugenerator.view.MenuList
 import com.far.menugenerator.view.QRPreview
 import dagger.Subcomponent
@@ -20,5 +21,6 @@ interface PresentationComponent {
     fun inject(companyList:CompanyList)
     fun inject(menuList:MenuList)
     fun inject(qrPreview:QRPreview)
+    fun inject(menuActivity: MenuActivity)
     fun inject(createMenu:CreateMenuFragment)
 }

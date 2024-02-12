@@ -8,6 +8,7 @@ import com.far.menugenerator.model.database.model.MenuFirebase
 import com.far.menugenerator.view.CompanyActivity
 import com.far.menugenerator.view.CompanyList
 import com.far.menugenerator.view.CreateMenuFragment
+import com.far.menugenerator.view.MenuActivity
 import com.far.menugenerator.view.MenuList
 import com.far.menugenerator.view.QRPreview
 
@@ -17,9 +18,6 @@ class ScreenNavigation (private val baseActivity: BaseActivity) {
     private val fragmentManager get() = activity.supportFragmentManager
     private lateinit var currentFragment:BaseFragment
 
-    fun mainActivity(){
-        activity.startActivity(Intent(activity,MainActivity::class.java))
-    }
     fun companyActivity(company:CompanyFirebase?){
         val i= Intent(activity,CompanyActivity::class.java).apply {
             putExtra(CompanyActivity.ARG_COMPANY,company)
@@ -36,6 +34,13 @@ class ScreenNavigation (private val baseActivity: BaseActivity) {
         activity.startActivity(i)
     }
 
+    fun menuActivity(company: CompanyFirebase, menuFirebase: MenuFirebase?){
+        val i = Intent(activity,MenuActivity::class.java).apply {
+            putExtra(MenuActivity.ARG_COMPANY,company)
+            putExtra(MenuActivity.ARG_MENU,menuFirebase)
+        }
+        activity.startActivity(i)
+    }
 
     fun createMenuFragment(company: CompanyFirebase, menuFirebase: MenuFirebase?){
         currentFragment = CreateMenuFragment.newInstance(company,menuFirebase)
@@ -49,6 +54,9 @@ class ScreenNavigation (private val baseActivity: BaseActivity) {
         activity.startActivity(i)
     }
 
+    fun currentFragmentOnActivityResult(requestCode: Int, resultCode: Int, data: Intent?){
+        currentFragment?.onActivityResult(requestCode, resultCode, data)
+    }
     private fun setFragment(){
         val fragmentTransaction = fragmentManager.beginTransaction()
         fragmentTransaction.replace(R.id.frame,currentFragment)

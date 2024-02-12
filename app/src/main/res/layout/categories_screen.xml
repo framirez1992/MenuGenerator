@@ -2,8 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:paddingTop="@dimen/layout_padding">
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <TextView android:id="@+id/title"
         android:layout_width="match_parent"
@@ -12,59 +11,12 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         android:textSize="@dimen/titles"
-        android:paddingBottom="@dimen/title_padding"
+
+        android:paddingHorizontal="@dimen/title_padding"
+        android:paddingTop="@dimen/title_padding"
         android:textStyle="bold"
         android:text="@string/categories"
         android:gravity="center"/>
-
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/tilCategory"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/title"
-        android:layout_marginEnd="10dp">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etCategory"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/category_name"/>
-
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <androidx.appcompat.widget.LinearLayoutCompat
-        android:id="@+id/llButtons"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintStart_toStartOf="@id/tilCategory"
-        app:layout_constraintEnd_toEndOf="@id/tilCategory"
-        app:layout_constraintTop_toBottomOf="@id/tilCategory">
-
-        <Button android:id="@+id/btnAdd"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/add"
-            android:src="@drawable/baseline_add_24"/>
-
-        <Button android:id="@+id/btnEdit"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/edit"
-            android:src="@drawable/baseline_add_24"/>
-
-        <Button android:id="@+id/btnCancel"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/cancel"
-            android:src="@drawable/baseline_add_24"/>
-
-    </androidx.appcompat.widget.LinearLayoutCompat>
-
-
-
 
 
         <androidx.recyclerview.widget.RecyclerView
@@ -73,10 +25,25 @@
             android:layout_height="0dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/llButtons"
+            app:layout_constraintTop_toBottomOf="@id/title"
             app:layout_constraintBottom_toBottomOf="parent"
             android:layout_marginTop="10dp"
             android:background="@color/grey_500"/>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/btnAdd"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintVertical_bias="0.95"
+        app:layout_constraintHorizontal_bias="0.95"
+        android:src="@drawable/rounded_add_white_24"
+        app:tint="@color/white"
+        app:backgroundTint="@color/purple_500"/>
+
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

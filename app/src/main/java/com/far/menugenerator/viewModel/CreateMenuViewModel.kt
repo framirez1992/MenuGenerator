@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.far.menugenerator.R
+import com.far.menugenerator.model.Category
 import com.far.menugenerator.model.CreateMenuState
 import com.far.menugenerator.model.Item
 import com.far.menugenerator.model.ItemPreview
@@ -28,22 +29,20 @@ class CreateMenuViewModel @Inject constructor(
 ):ViewModel() {
 
     companion object{
-        const val NO_CATEGORY="NO_CATEGORY"
+        val noCategory = Category(id = "-1", name = "NO_CATEGORY", position = 0)
     }
     private val _state = MutableLiveData<CreateMenuState>()
-    private val _categories = MutableLiveData<MutableList<String>>()
+    private val _categories = MutableLiveData<MutableList<Category>>()
     private val _items = MutableLiveData<MutableList<Item>>()
     private val _itemsPreview = MutableLiveData<MutableList<ItemPreview>>()
-    private val _editCategory = MutableLiveData<String?>()
     private val _editItem = MutableLiveData<Item?>()
 
     private var _editMenu:MenuFirebase? = null
     val state:LiveData<CreateMenuState> get() = _state
-    val categories:LiveData<MutableList<String>> get() = _categories
+    val categories:LiveData<MutableList<Category>> get() = _categories
     val items:LiveData<MutableList<Item>> get() = _items
     val itemsPreview:LiveData<MutableList<ItemPreview>> get() = _itemsPreview
     val editItem:LiveData<Item?> get() = _editItem
-    val editCategory get() = _editCategory
 
 
 
@@ -53,13 +52,12 @@ class CreateMenuViewModel @Inject constructor(
 
     init {
 
-        _editCategory.value = null
         currentItemImage.value = null
         _editItem.value = null
         _itemsPreview.value = mutableListOf()
 
         _state.value = CreateMenuState(currentScreen = R.id.categoriesScreen)
-        _categories.value = mutableListOf(NO_CATEGORY)
+        _categories.value = mutableListOf(noCategory)
         _items.value = mutableListOf()
     }
 
@@ -67,54 +65,54 @@ class CreateMenuViewModel @Inject constructor(
         if (_editMenu != null || editMenu == null) return
 
         _editMenu = editMenu
-        val categories =  editMenu.items.filter { it.type == ItemStyle.MENU_CATEGORY_HEADER.name && it.categoryName == it.name && it.name != NO_CATEGORY }.sortedBy { it.position }.map { it.categoryName }
+        val categories =  editMenu.items.filter { it.type == ItemStyle.MENU_CATEGORY_HEADER.name && it.categoryName == it.name && it.name != noCategory.name }.sortedBy { it.position }.map { Category(id = UUID.randomUUID().toString(), name = it.categoryName, position = 0) }
         val c = _categories.value
         c?.addAll(categories)
         _categories.postValue(c!!)
-        val products = editMenu.items.filter { it.type != ItemStyle.MENU_CATEGORY_HEADER.name }.sortedBy { it.position }.map { Item(id = it.id, category = it.categoryName, name = it.name, description = it.description?:"", amount = it.price?.toDouble()?:0.0, remoteImage = if(it.imageUrl!= null) Uri.parse(it.imageUrl) else null) }
+        val products = editMenu.items.filter { it.type != ItemStyle.MENU_CATEGORY_HEADER.name }.sortedBy { it.position }.map { Item(id = it.id, category = Category(id = UUID.randomUUID().toString(), name = it.categoryName, position = 0), name = it.name, description = it.description?:"", amount = it.price?.toDouble()?:0.0, remoteImage = if(it.imageUrl!= null) Uri.parse(it.imageUrl) else null) }
         _items.value?.addAll(products)
         refreshMenuPreview()
 
     }
 
-    fun addCategory(category:String){
-       val foundCategory = _categories.value?.find { it.lowercase().trim() == category.lowercase().trim() }
-        if(!foundCategory.isNullOrEmpty())
+    fun addCategory(name:String){
+       val foundCategory = _categories.value?.find { it.name.lowercase().trim() == name.lowercase().trim() }
+        if(foundCategory != null)
             return
         val categories = _categories.value
-        categories?.add(category)
+        categories?.add(Category(id = UUID.randomUUID().toString(), name = name, position = categories.size +1))
         _categories.postValue(categories!!)
     }
-    fun setEditCategory(category:String?){
-        _editCategory.postValue(category)
-    }
-    fun saveEditCategory(editedCategory:String){
-        val categoryItems = _items.value?.filter { it.category == _editCategory.value }
+    fun saveEditCategory(editCategory:Category){
+        val categoryItems = _items.value?.filter { it.category.id == editCategory.id }
         categoryItems?.forEach {
-            it.category = editedCategory
+            it.category = editCategory
         }
+
         val categories = _categories.value!!
-        val index = categories.indexOf(_editCategory.value)
-        categories[index] = editedCategory
+        val oldCategory = _categories.value!!.find { it.id == editCategory.id }
+        val index = categories.indexOf(oldCategory)
+        categories?.remove(oldCategory)
+        categories?.add(index,editCategory)
+
         _categories.postValue(categories)
-        _editCategory.postValue(null)
         refreshMenuPreview()
 
     }
 
-    fun removeCategory(category:String){
+    fun removeCategory(category: Category){
         val categories = _categories.value
         categories?.remove(category)
 
         val categoryItems = _items.value?.filter { it.category == category }
         categoryItems?.forEach{
-            it.category = NO_CATEGORY
+            it.category = noCategory
         }
         _categories.postValue(categories!!)
         refreshMenuPreview()
     }
 
-    fun addProduct(category: String,name:String,description:String, amount:Double){
+    fun addProduct(category: Category,name:String,description:String, amount:Double){
         val products = _items.value
         products?.add(Item(id = UUID.randomUUID().toString(),category=category,name=name,description=description,amount=amount, localImage = currentItemImage.value))
         _items.postValue(products!!)
@@ -128,7 +126,7 @@ class CreateMenuViewModel @Inject constructor(
     fun editItem(itemPreview:ItemPreview){
         _editItem.postValue(itemPreview.item)
     }
-    fun saveEditItemChanges(category:String,name:String, description:String, price:Double){
+    fun saveEditItemChanges(category:Category,name:String, description:String, price:Double){
         val currentImage = currentItemImage.value
         val remoteImage = editItem.value?.remoteImage
         val item = _editItem.value?.copy(category = category, name = name, description = description, amount = price, localImage = currentItemImage.value, remoteImage = if(remoteImage == currentImage) remoteImage else null)
@@ -148,7 +146,7 @@ class CreateMenuViewModel @Inject constructor(
         var previewList = mutableListOf<ItemPreview>()
         val categories = _categories.value
         val items = _items.value
-        previewList.addAll(categories!!.map { ItemPreview(item=Item(id = UUID.randomUUID().toString(), category = it, name = it, description = it, amount = 0.0, localImage = null, remoteImage = null),itemStyle = ItemStyle.MENU_CATEGORY_HEADER, position = categories.indexOf(it)) })
+        previewList.addAll(categories!!.map { ItemPreview(item=Item(id = it.id, category = it, name = it.name, description = it.name, amount = 0.0, localImage = null, remoteImage = null),itemStyle = ItemStyle.MENU_CATEGORY_HEADER, position = categories.indexOf(it)) })
 
         previewList.addAll(items!!.map {
             var itemStyle: ItemStyle = if((it.localImage ?: it.remoteImage) != null){
@@ -234,7 +232,7 @@ class CreateMenuViewModel @Inject constructor(
         val firebaseItems = items.mapIndexed { i,preview->
             val item = preview.item
             val image =  if(item.localImage !=null) "*" else item.remoteImage?.toString()
-            ItemFirebase(id = item.id,type = preview.itemStyle.name,categoryName = item.category, name = item.name, description = item.description, price = item.amount.toString(),position = i, imageUrl = image)
+            ItemFirebase(id = item.id,type = preview.itemStyle.name,categoryName = item.category.name, name = item.name, description = item.description, price = item.amount.toString(),position = i, imageUrl = image)
         }
 
         firebaseItems.filter { it.type != ItemStyle.MENU_CATEGORY_HEADER.name && it.imageUrl.equals("*") }

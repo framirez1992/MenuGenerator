@@ -14,6 +14,7 @@ import com.far.menugenerator.model.ProcessState
 import com.far.menugenerator.model.State
 import com.far.menugenerator.model.database.model.CompanyFirebase
 import com.far.menugenerator.view.adapters.CompanyAdapter
+import com.far.menugenerator.view.adapters.ImageOption
 import com.far.menugenerator.view.common.BaseActivity
 import com.far.menugenerator.view.common.DialogManager
 import com.far.menugenerator.view.common.ScreenNavigation
@@ -83,15 +84,17 @@ class CompanyList : BaseActivity() {
             //TODO: si no hay companias, abrir navigation.companyActivity() automaticamente
 
             val adapters = CompanyAdapter(it){ comp->
-                dialogManager.showOptionDialog(resources.getString(R.string.options), arrayOf(
-                    resources.getString(R.string.show_menus),
-                    resources.getString(R.string.edit),
-                    resources.getString(R.string.delete))){option->
+                val options = listOf(
+                    ImageOption(R.drawable.baseline_menu_book_24,R.string.show_menus),
+                    ImageOption(R.drawable.round_edit_24,R.string.edit),
+                    ImageOption(R.drawable.rounded_delete_24,R.string.delete)
+                )
+                dialogManager.showImageBottomSheet(options){option->
 
-                    when(option){
-                        resources.getString(R.string.show_menus)-> navigation.menuListActivity(company = comp)
-                        resources.getString(R.string.edit)-> navigation.companyActivity(company = comp)
-                        resources.getString(R.string.delete)-> showDeleteCompanyConfirmationDialog(company = comp)
+                    when(option.string){
+                        R.string.show_menus -> navigation.menuListActivity(company = comp)
+                        R.string.edit-> navigation.companyActivity(company = comp)
+                        R.string.delete-> showDeleteCompanyConfirmationDialog(company = comp)
                     }
                 }
 

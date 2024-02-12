@@ -9,20 +9,27 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <ImageView
-            android:id="@+id/imgQR"
+
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cvQR"
             android:layout_width="300dp"
             android:layout_height="300dp"
+            android:layout_centerInParent="true">
+            <ImageView
+                android:id="@+id/imgQR"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="fitCenter" />
+
+        </androidx.cardview.widget.CardView>
+
+        <ProgressBar android:id="@+id/pb"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
             android:layout_centerInParent="true"
-            android:scaleType="fitCenter" />
-        <TextView android:id="@+id/tvMessage"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/touch"
-            android:layout_below="@id/imgQR"
-            android:gravity="center_horizontal"
-            android:textStyle="italic"
-            android:textSize="14sp"/>
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="50dp"/>
 
     </RelativeLayout>
 

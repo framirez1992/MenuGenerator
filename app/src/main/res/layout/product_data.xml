@@ -1,9 +1,91 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:paddingHorizontal="@dimen/layout_padding">
 
+    <RelativeLayout android:id="@+id/buttons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/rlImage"
+        android:paddingVertical="10dp">
+
+        <ImageButton android:id="@+id/btnAdd"
+            android:layout_width="70dp"
+            android:layout_height="30dp"
+            android:src="@drawable/outline_save_24"
+            app:tint="@color/white"
+            android:background="@drawable/rounded_corners"
+            android:backgroundTint="@color/purple_500"
+            android:layout_alignParentEnd="true"
+            android:layout_marginHorizontal="20dp"/>
+
+        <ImageButton android:id="@+id/btnEdit"
+            android:layout_width="70dp"
+            android:layout_height="30dp"
+            android:src="@drawable/round_edit_24"
+            app:tint="@color/white"
+            android:background="@drawable/rounded_corners"
+            android:backgroundTint="@color/purple_500"
+            android:layout_alignParentEnd="true"
+            android:layout_marginHorizontal="20dp"/>
+
+
+        <ImageButton android:id="@+id/btnCancel"
+            android:layout_width="70dp"
+            android:layout_height="30dp"
+            android:src="@drawable/baseline_clear_24"
+            app:tint="@color/black"
+            android:background="@drawable/rounded_corners"
+            android:backgroundTint="@color/grey_500"
+            android:layout_alignParentStart="true"
+            android:layout_marginHorizontal="20dp"/>
+
+    </RelativeLayout>
+
+    <RelativeLayout android:id="@+id/rlImage"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/buttons">
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/imgCard"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="75dp">
+
+            <ImageView android:id="@+id/imgProduct"
+                android:layout_width="150dp"
+                android:layout_height="150dp"
+                android:scaleType="centerCrop"
+                android:background="@color/grey_900"/>
+
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            app:cardCornerRadius="20dp"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentEnd="true"
+            android:layout_margin="5dp"
+            app:cardBackgroundColor="@color/white">
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/outline_add_photo_alternate_24"
+                android:padding="10dp"/>
+        </androidx.cardview.widget.CardView>
+
+
+    </RelativeLayout>
 
 
 
@@ -13,7 +95,8 @@
         android:minHeight="50dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"/>
+        app:layout_constraintTop_toBottomOf="@id/rlImage"
+        app:layout_constraintBottom_toTopOf="@id/tilProduct"/>
 
 
     <com.google.android.material.textfield.TextInputLayout
@@ -22,15 +105,20 @@
         android:layout_height="wrap_content"
         app:layout_constraintStart_toStartOf="@id/spnCategories"
         app:layout_constraintEnd_toEndOf="@id/spnCategories"
-        app:layout_constraintTop_toBottomOf="@id/spnCategories">
+        app:layout_constraintTop_toBottomOf="@id/spnCategories"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etProductName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/name"/>
+            android:hint="@string/name"
+            android:textSize="@dimen/body"
+            android:lines="1"
+            android:inputType="text"/>
 
     </com.google.android.material.textfield.TextInputLayout>
+
 
 
     <com.google.android.material.textfield.TextInputLayout
@@ -39,13 +127,16 @@
         android:layout_height="wrap_content"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tilProduct">
+        app:layout_constraintTop_toBottomOf="@id/tilProduct"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etProductPrice"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/price"
+            android:textSize="@dimen/body"
+            android:lines="1"
             android:inputType="number|numberDecimal"/>
 
     </com.google.android.material.textfield.TextInputLayout>
@@ -57,47 +148,17 @@
         android:layout_height="wrap_content"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tilProductPrice">
+        app:layout_constraintTop_toBottomOf="@id/tilProductPrice"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etProductDescription"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/description"/>
+            android:hint="@string/description"
+            android:textSize="@dimen/body"/>
 
     </com.google.android.material.textfield.TextInputLayout>
-
-
-
-    <ImageView android:id="@+id/imgProduct"
-        android:layout_width="200dp"
-        android:layout_height="150dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/btnAddProductImage"
-        app:layout_constraintTop_toBottomOf="@id/tilProductDescription"
-        android:background="@color/grey_500"
-        android:scaleType="centerCrop"/>
-
-    <Button android:id="@+id/btnAddProductImage"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="5dp"
-        android:text="@string/search"
-        app:layout_constraintStart_toEndOf="@id/imgProduct"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@id/imgProduct"
-        app:layout_constraintBottom_toTopOf="@id/btnClearProductImage"/>
-
-
-    <Button android:id="@+id/btnClearProductImage"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="5dp"
-        android:text="@string/clear"
-        app:layout_constraintStart_toEndOf="@id/imgProduct"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/btnAddProductImage"
-        app:layout_constraintBottom_toBottomOf="@id/imgProduct"/>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

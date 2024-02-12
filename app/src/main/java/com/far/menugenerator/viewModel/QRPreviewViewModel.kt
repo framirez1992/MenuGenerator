@@ -61,7 +61,6 @@ class QRPreviewViewModel(
         }
     }
 
-
     class QRPreviewViewModelFactory @Inject constructor(
         private val menuService: Provider<MenuService>,
         private val menuStorage: Provider<MenuStorage>

@@ -4,8 +4,9 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.far.menugenerator.databinding.RowItemCategoryBinding
+import com.far.menugenerator.model.Category
 
-class CategoriesAdapter(private val categories:MutableList<String>, private val onClick:(String)->Unit): RecyclerView.Adapter<CategoriesAdapter.CategoryViewHolder>() {
+class CategoriesAdapter(private val categories:MutableList<Category>, private val onClick:(Category)->Unit): RecyclerView.Adapter<CategoriesAdapter.CategoryViewHolder>() {
 
 
 
@@ -21,20 +22,20 @@ class CategoriesAdapter(private val categories:MutableList<String>, private val 
     override fun onBindViewHolder(holder: CategoryViewHolder, position: Int) {
         holder.bind(categories[position])
         holder.binding.btnDelete.setOnClickListener{
-            //remove(position)
+            //remove(id)
             onClick(categories[position])
         }
     }
 /*
-    private fun remove(position:Int){
-        categories.removeAt(position)
+    private fun remove(id:Int){
+        categories.removeAt(id)
         notifyDataSetChanged()
     }*/
 
     class CategoryViewHolder(val binding:RowItemCategoryBinding):RecyclerView.ViewHolder(binding.root){
 
-        fun bind(category: String){
-            binding.categoryName.text = category
+        fun bind(category: Category){
+            binding.categoryName.text = category.name
         }
     }
 }

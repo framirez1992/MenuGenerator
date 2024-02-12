@@ -2,13 +2,15 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <item android:id="@+id/optionShare"
-        android:icon="@drawable/round_share_white_24"
-        android:title="@string/share"
-        app:showAsAction="ifRoom"/>
-
     <item android:id="@+id/optionRefresh"
         android:icon="@drawable/baseline_refresh_white_24"
         android:title="@string/refresh"
         app:showAsAction="ifRoom"/>
+
+    <item android:id="@+id/optionMenu"
+        android:icon="@drawable/baseline_menu_24"
+        android:title="@string/share"
+        app:showAsAction="ifRoom"/>
+
+
 </menu>
