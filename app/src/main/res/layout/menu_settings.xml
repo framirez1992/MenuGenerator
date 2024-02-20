@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="20dp">
+
+        <TextView android:id="@+id/title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/menu_settings"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:paddingVertical="20dp"
+            android:textSize="25sp"
+            android:textStyle="bold"/>
+
+        <TextView android:id="@+id/tvBusinessLogoTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:paddingBottom="10dp"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/title"
+            android:text="@string/business_logo"
+            android:textColor="@color/purple_700"/>
+
+        <CheckBox android:id="@+id/cbLogo"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvBusinessLogoTitle"
+            android:text="@string/show_logo"/>
+
+
+        <ImageView android:id="@+id/imgShape"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/tvLabelShape"
+            app:layout_constraintTop_toBottomOf="@id/cbLogo"
+            android:src="@drawable/round_interests_24"/>
+
+        <TextView android:id="@+id/tvLabelShape"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toEndOf="@id/imgShape"
+            app:layout_constraintEnd_toStartOf="@id/spnShape"
+            app:layout_constraintTop_toTopOf="@id/imgShape"
+            app:layout_constraintBottom_toBottomOf="@id/imgShape"
+            android:text="@string/shape"
+            android:paddingHorizontal="10dp"/>
+
+        <Spinner android:id="@+id/spnShape"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toEndOf="@id/tvLabelShape"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/tvLabelShape"
+            app:layout_constraintBottom_toBottomOf="@id/tvLabelShape"/>
+
+
+
+
+
+
+        <TextView android:id="@+id/tvBusinessInfo"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:paddingVertical="10dp"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/imgShape"
+            android:text="@string/business_info"
+            android:textColor="@color/purple_700"/>
+
+        <CheckBox android:id="@+id/cbBusinessName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/cbAddress1"
+            app:layout_constraintTop_toBottomOf="@id/tvBusinessInfo"
+            android:text="@string/business_name"/>
+
+
+        <CheckBox android:id="@+id/cbAddress1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toEndOf="@id/cbBusinessName"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/cbBusinessName"
+            app:layout_constraintBottom_toBottomOf="@id/cbBusinessName"
+            android:text="@string/address_1"/>
+
+        <CheckBox android:id="@+id/cbAddress2"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/cbAddress3"
+            app:layout_constraintTop_toBottomOf="@id/cbBusinessName"
+            android:text="@string/address_2"/>
+
+        <CheckBox android:id="@+id/cbAddress3"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toEndOf="@id/cbAddress2"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/cbAddress2"
+            app:layout_constraintBottom_toBottomOf="@id/cbAddress2"
+            android:text="@string/address_3"/>
+
+        <CheckBox android:id="@+id/cbPhone1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/cbPhone2"
+            app:layout_constraintTop_toBottomOf="@id/cbAddress2"
+            android:text="@string/phone_1"/>
+
+        <CheckBox android:id="@+id/cbPhone2"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toEndOf="@id/cbPhone1"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/cbPhone1"
+            app:layout_constraintBottom_toBottomOf="@id/cbPhone1"
+            android:text="@string/phone_2"/>
+
+        <CheckBox android:id="@+id/cbPhone3"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/cbPhone1"
+            android:text="@string/phone_3"/>
+
+        <TextView android:id="@+id/tvSocialMedia"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:paddingBottom="10dp"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/cbPhone3"
+            android:text="@string/social_media"
+            android:textColor="@color/purple_700"/>
+
+        <CheckBox android:id="@+id/cbFacebook"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/cbInstagram"
+            app:layout_constraintTop_toBottomOf="@id/tvSocialMedia"
+            android:text="@string/facebook"/>
+
+        <CheckBox android:id="@+id/cbInstagram"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toEndOf="@id/cbFacebook"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/cbFacebook"
+            app:layout_constraintBottom_toBottomOf="@id/cbFacebook"
+            android:text="@string/instagram"/>
+
+        <CheckBox android:id="@+id/cbWhatsapp"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/cbFacebook"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:text="@string/whatsapp"/>
+
+
+        <Spinner android:id="@+id/spnStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/cbWhatsapp"
+            android:visibility="gone"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+</androidx.cardview.widget.CardView>

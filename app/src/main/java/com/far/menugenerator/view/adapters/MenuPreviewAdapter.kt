@@ -1,23 +1,24 @@
 package com.far.menugenerator.view.adapters
 
 
-import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.view.marginTop
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.far.menugenerator.R
-import com.far.menugenerator.common.utils.NumberUtils
+import com.far.menugenerator.common.utils.StringUtils
 import com.far.menugenerator.databinding.ItemMenuPreviewBinding
 import com.far.menugenerator.model.ItemPreview
+import com.far.menugenerator.model.ItemPreviewPosition
 import com.far.menugenerator.model.ItemStyle
 import com.far.menugenerator.view.common.BaseActivity
 import java.util.*
 
 
-class MenuPreviewAdapter(private val activity:BaseActivity,private val itemPreviewList:List<ItemPreview>, private val onclick:(ItemPreview)->Unit): RecyclerView.Adapter<MenuPreviewAdapter.MenuPreviewViewHolder>() {
+class MenuPreviewAdapter(private val activity:BaseActivity,
+                         private val itemPreviewList:List<ItemPreview>,
+                         private val onPositionChanged:(List<ItemPreviewPosition>)->Unit,
+                         private val onclick:(ItemPreview)->Unit): RecyclerView.Adapter<MenuPreviewAdapter.MenuPreviewViewHolder>() {
 
     private var preview:MutableList<ItemPreview> = mutableListOf()
     val currentPreview get() = preview
@@ -35,10 +36,10 @@ class MenuPreviewAdapter(private val activity:BaseActivity,private val itemPrevi
 
     override fun onBindViewHolder(holder: MenuPreviewViewHolder, position: Int) {
         holder.bind(activity,preview[position])
-        holder.binding.options.btnUp.setOnClickListener{
+        holder.binding.btnUp.setOnClickListener{
             moveUp(preview[position])
         }
-        holder.binding.options.btnDown.setOnClickListener{
+        holder.binding.btnDown.setOnClickListener{
             moveDown(preview[position])
         }
         holder.itemView.setOnClickListener {
@@ -46,14 +47,15 @@ class MenuPreviewAdapter(private val activity:BaseActivity,private val itemPrevi
             onclick(preview[position])
         }
 
+
     }
 
     private fun organizeArray(){
         preview.clear()
-        val headers = itemPreviewList.filter { it.itemStyle == ItemStyle.MENU_CATEGORY_HEADER }.sortedBy { it.position }
+        val headers = itemPreviewList.filter { it.itemStyle == ItemStyle.MENU_CATEGORY_HEADER }.sortedBy { it.item.position }
         headers.forEach{ categoryPreview->
             val category = categoryPreview.item.category
-            var items = itemPreviewList.filter { it.itemStyle != ItemStyle.MENU_CATEGORY_HEADER && it.item.category.id ==  category.id}.sortedBy { it.position }
+            var items = itemPreviewList.filter { it.itemStyle != ItemStyle.MENU_CATEGORY_HEADER && it.item.category.id ==  category.id}.sortedBy { it.item.position }
             if(items.isNotEmpty()){//show only relevant data
                 preview.add(categoryPreview)
                 preview.addAll(items)
@@ -71,6 +73,8 @@ class MenuPreviewAdapter(private val activity:BaseActivity,private val itemPrevi
 
                 var itemBefore = categories[categories.indexOf(currentItem) -1]
                 Collections.swap(preview,preview.indexOf(itemBefore),preview.indexOf(currentItem))
+
+
 
                 categories.forEach{ categoryPreview->
                     val category = categoryPreview.item
@@ -90,14 +94,16 @@ class MenuPreviewAdapter(private val activity:BaseActivity,private val itemPrevi
 
             }
             else -> {
-                var products = preview.filter { it.itemStyle != ItemStyle.MENU_CATEGORY_HEADER && it.item.category == currentItem.item.category }
+                var products = preview.filter { it.itemStyle != ItemStyle.MENU_CATEGORY_HEADER && it.item.category.id == currentItem.item.category.id }
                 if(products.first() == currentItem) return
 
                 var itemBefore = products[products.indexOf(currentItem) -1]
                 Collections.swap(preview,preview.indexOf(itemBefore),preview.indexOf(currentItem))
             }
+
         }
         notifyDataSetChanged()
+        updatePositions()
     }
 
 
@@ -127,7 +133,7 @@ class MenuPreviewAdapter(private val activity:BaseActivity,private val itemPrevi
 
             }
             else -> {
-                var products = preview.filter { it.itemStyle != ItemStyle.MENU_CATEGORY_HEADER && it.item.category == currentItem.item.category }
+                var products = preview.filter { it.itemStyle != ItemStyle.MENU_CATEGORY_HEADER && it.item.category.id == currentItem.item.category.id }
                 if(products.last() == currentItem) return
 
                 var itemAfter = products[products.indexOf(currentItem) +1]
@@ -135,8 +141,18 @@ class MenuPreviewAdapter(private val activity:BaseActivity,private val itemPrevi
             }
         }
         notifyDataSetChanged()
+        updatePositions()
     }
 
+
+    private fun updatePositions(){
+        //Update PreviewPositions value
+        preview.forEach {
+            it.item.position = preview.indexOf(it)
+        }
+        //Actualiza la propiedad Position de las categorias y productos a como se ordeno en el preview
+        onPositionChanged(preview.map { ItemPreviewPosition(id = it.item.id, position = it.item.position/* preview.indexOf(it)*/) })
+    }
 
     class MenuPreviewViewHolder(val binding:ItemMenuPreviewBinding):RecyclerView.ViewHolder(binding.root){
 
@@ -147,24 +163,30 @@ class MenuPreviewAdapter(private val activity:BaseActivity,private val itemPrevi
             binding.categoryTitle.root.visibility = if (itemPreview.itemStyle == ItemStyle.MENU_CATEGORY_HEADER) View.VISIBLE else View.GONE
 
             val item = itemPreview.item
+            val price = StringUtils.doubleToMoneyString(
+                amount = item.amount,
+                country = "US",
+                language = "en"
+            )
             when (itemPreview.itemStyle) {
                 ItemStyle.MENU_IMAGE_TITLE_DESCRIPTION_PRICE -> {
                     binding.imageTitleDescription.title.text = item.name
                     binding.imageTitleDescription.body.text = item.description
-                    binding.imageTitleDescription.price.text = item.amount.toString()
+                    binding.imageTitleDescription.price.text = price
                     Glide.with(activity)
                         .load(item.localImage?:item.remoteImage)
+                        .encodeQuality(80)
                         .into(binding.imageTitleDescription.image)
 
                 }
                 ItemStyle.MENU_TITLE_DESCRIPTION_PRICE -> {
                     binding.titleDescription.title.text = item.name
                     binding.titleDescription.body.text = item.description
-                    binding.titleDescription.price.text = item.amount.toString()
+                    binding.titleDescription.price.text = price
                 }
                 ItemStyle.MENU_TITLE_PRICE -> {
                     binding.titlePrice.title.text = item.name
-                    binding.titlePrice.price.text = item.amount.toString()
+                    binding.titlePrice.price.text = price
                 }
                 else -> {
                     binding.categoryTitle.title.text = item.name

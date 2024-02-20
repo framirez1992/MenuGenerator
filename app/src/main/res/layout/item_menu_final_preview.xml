@@ -16,18 +16,24 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
 
+
         <include android:id="@+id/imageTitleDescription"
-            layout="@layout/row_menu_item_image_title_description"
+            layout="@layout/row_menu_item_with_image_basic"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <include android:id="@+id/imageTitleDescriptionCatalog"
+            layout="@layout/row_menu_item_with_image_catalog"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
 
         <include android:id="@+id/titleDescription"
-            layout="@layout/row_menu_item_title_description"
+            layout="@layout/row_menu_item_title_description_price_basic"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
 
         <include android:id="@+id/titlePrice"
-            layout="@layout/row_menu_item_title"
+            layout="@layout/row_menu_item_title_price_basic"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 

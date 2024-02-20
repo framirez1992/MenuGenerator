@@ -6,45 +6,38 @@
     android:padding="@dimen/layout_padding">
 
 
-    <RelativeLayout
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/imgLogo"
         android:layout_width="300dp"
         android:layout_height="300dp"
-        app:layout_constraintStart_toStartOf="parent"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:background="@color/grey_900"
+        android:padding="10dp"
+        android:scaleType="centerCrop"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:shapeAppearanceOverlay="@style/Circular"
+        app:strokeColor="@color/grey_500"
+        app:strokeWidth="5dp" />
 
-        <androidx.cardview.widget.CardView
-            android:id="@+id/imgCard"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:cardCornerRadius="150dp">
-
-            <ImageView android:id="@+id/imgLogo"
-                android:layout_width="300dp"
-                android:layout_height="300dp"
-                android:scaleType="centerCrop"
-                android:background="@color/grey_900"/>
-
-        </androidx.cardview.widget.CardView>
-
-        <androidx.cardview.widget.CardView
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            app:cardCornerRadius="25dp"
-            android:layout_alignParentBottom="true"
-            android:layout_alignParentEnd="true"
-            android:layout_margin="25dp"
-            app:cardBackgroundColor="@color/white">
-
-            <ImageView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:src="@drawable/outline_add_photo_alternate_24"
-                android:padding="10dp"/>
-        </androidx.cardview.widget.CardView>
-
-
-    </RelativeLayout>
+        <com.google.android.material.imageview.ShapeableImageView
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:src="@drawable/outline_add_photo_alternate_24"
+            android:background="@color/grey_100"
+            app:contentPadding="10dp"
+            android:padding="10dp"
+            app:layout_constraintStart_toStartOf="@id/imgLogo"
+            app:layout_constraintEnd_toEndOf="@id/imgLogo"
+            app:layout_constraintTop_toTopOf="@id/imgLogo"
+            app:layout_constraintBottom_toBottomOf="@id/imgLogo"
+            app:layout_constraintVertical_bias="0.95"
+            app:layout_constraintHorizontal_bias="0.95"
+            android:layout_margin="15dp"
+            app:shapeAppearanceOverlay="@style/Circular"/>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

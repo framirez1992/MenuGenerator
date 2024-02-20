@@ -1,6 +1,7 @@
 package com.far.menugenerator.view
 
 
+import android.content.DialogInterface
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -115,10 +116,14 @@ class CompanyList : BaseActivity() {
         binding.rv.visibility = if(processState.state == State.LOADING) View.GONE else View.VISIBLE
 
         if(processState.state == State.SUCCESS && _viewModel.getCompanies().value!!.isEmpty()){
-            dialogManager.showOptionDialog(title = getString(R.string.do_you_want_to_add_a_new_company_now),
-                options =  arrayOf(getString(R.string.yes), getString(R.string.not_now))){
-                if(it == getString(R.string.yes))
-                    navigation.companyActivity(null)
+
+            dialogManager.showOptionDialog(
+                title= R.string.add_company,
+                message = R.string.do_you_want_to_add_a_new_company_now,
+                positiveText = R.string.yes,
+                negativeText = R.string.not_now){_,_->
+
+                navigation.companyActivity(null)
             }
         }else if(processState.state == State.ERROR)
             Snackbar.make(binding.root,
@@ -142,10 +147,14 @@ class CompanyList : BaseActivity() {
     }
 
     private fun showDeleteCompanyConfirmationDialog(company:CompanyFirebase){
-        dialogManager.showOptionDialog(getString(R.string.are_you_sure_you_want_to_delete_this_company),
-            arrayOf(getString(R.string.delete),getString(R.string.cancel))){
-            if(it == getString(R.string.delete))
-                _viewModel.deleteCompany(user = LoginActivity.account?.email!!, company = company)
+
+        dialogManager.showOptionDialog(
+            title= R.string.delete_company,
+            message = R.string.are_you_sure_you_want_to_delete_this_company,
+            positiveText = R.string.delete,
+            negativeText = R.string.cancel){_,_->
+
+            _viewModel.deleteCompany(user = LoginActivity.account?.email!!, company = company)
         }
     }
 

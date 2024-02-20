@@ -12,7 +12,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         android:textSize="@dimen/titles"
-        android:paddingBottom="@dimen/title_padding"
         android:textStyle="bold"
         android:text="@string/preview"
         android:gravity="center"/>

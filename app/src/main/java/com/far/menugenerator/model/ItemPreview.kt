@@ -3,7 +3,7 @@ package com.far.menugenerator.model
 import android.net.Uri
 import java.io.Serializable
 
-data class ItemPreview (val item:Item,val itemStyle:ItemStyle, val position:Int):Serializable
+data class ItemPreview (val item:Item,val itemStyle:ItemStyle):Serializable
 
 
 enum class ItemStyle{

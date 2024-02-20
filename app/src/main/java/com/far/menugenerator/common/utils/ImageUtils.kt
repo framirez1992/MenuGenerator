@@ -47,4 +47,6 @@ object ImageUtils {
         canvas.drawBitmap(image, matrix, null) // Draw the original image onto the new bitmap, scaled to the desired width and height
         return thumbnail
     }
+
+
 }

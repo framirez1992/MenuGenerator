@@ -1,16 +1,18 @@
 package com.far.menugenerator.view
 
 import android.app.Activity
-import android.app.AlertDialog
 import android.content.Intent
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.ArrayAdapter
 import android.widget.Toast
+import androidx.annotation.StyleRes
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -21,15 +23,21 @@ import com.canhub.cropper.CropImage
 import com.far.menugenerator.R
 import com.far.menugenerator.common.utils.FileUtils
 import com.far.menugenerator.common.utils.NumberUtils
+import com.far.menugenerator.common.utils.PixelUtils
 import com.far.menugenerator.common.utils.StringUtils
-import com.far.menugenerator.databinding.CategoriesScreenBinding
 import com.far.menugenerator.databinding.DialogCategoryBinding
 import com.far.menugenerator.databinding.FragmentCreateMenuBinding
 import com.far.menugenerator.databinding.ItemMenuFinalPreviewBinding
+import com.far.menugenerator.databinding.MenuNameDialogBinding
+import com.far.menugenerator.databinding.MenuSettingsBinding
 import com.far.menugenerator.model.Category
 import com.far.menugenerator.model.Item
 import com.far.menugenerator.model.ItemPreview
 import com.far.menugenerator.model.ItemStyle
+import com.far.menugenerator.model.LogoShape
+import com.far.menugenerator.model.MenuSettings
+import com.far.menugenerator.model.MenuStyle
+import com.far.menugenerator.model.State
 import com.far.menugenerator.model.database.model.CompanyFirebase
 import com.far.menugenerator.model.database.model.MenuFirebase
 import com.far.menugenerator.view.adapters.CategoriesAdapter
@@ -40,11 +48,13 @@ import com.far.menugenerator.view.common.BaseFragment
 import com.far.menugenerator.view.common.DialogManager
 import com.far.menugenerator.view.common.ScreenNavigation
 import com.far.menugenerator.viewModel.CreateMenuViewModel
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.shape.CornerFamily
+import com.google.android.material.shape.ShapeAppearanceModel
+import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.util.UUID
+import java.io.File
 import javax.inject.Inject
 
 
@@ -111,20 +121,18 @@ class CreateMenuFragment : BaseFragment() {
 
         _binding.btnNext.setOnClickListener { _viewModel.nextScreen() }
         _binding.btnBack.setOnClickListener { _viewModel.previousScreen() }
-        _binding.llGenerate.setOnClickListener {
-            val fileName = "some name"//selectec by the user
-            val pdfPath = "${FileUtils.getDownloadsPath()}/temp.pdf"
-            var height = _binding.menuPreviewFinalScreen.llCompany.measuredHeight + calculateTotalItemHeight(_binding.menuPreviewFinalScreen.llItems) + _binding.menuPreviewFinalScreen.llFooter.measuredHeight
-            lifecycleScope.launch(Dispatchers.Main) {
-                //SHOW LOADING AND LOCK NAVIGATION
-                Toast.makeText(baseActivity,"Generando...", Toast.LENGTH_SHORT).show()
-
-                FileUtils.layoutToPdf(_binding.menuPreviewFinalScreen.root,pdfPath,height)
-
-                val previewItems = (_binding.menuPreviewScreen.rvPreview.adapter as MenuPreviewAdapter).currentPreview
-                _viewModel.processMenu(user= LoginActivity.account?.email!!, companyId = company.companyId, fileName =  fileName, itemPreviews =  previewItems, pdfPath =   pdfPath)
+        _binding.btnOptions.setOnClickListener {
+            val options = listOf(
+                ImageOption(R.drawable.rounded_key_visualizer_24, R.string.menu_settings),
+                ImageOption(R.drawable.baseline_picture_as_pdf_24,R.string.generate)
+            )
+            dialogManager.showImageBottomSheet(options){
+                if(it.string == R.string.generate){
+                    showMenuNameDialog(_viewModel.getCurrentMenuName())
+                }else if(it.string == R.string.menu_settings){
+                    showMenuSettingsDialog()
+                }
             }
-
         }
 
         _binding.addMenuItemScreen.productData.imgProduct.setOnClickListener{
@@ -188,6 +196,69 @@ class CreateMenuFragment : BaseFragment() {
 
     }
 
+    private fun initObservers(){
+        _viewModel.state.observe(viewLifecycleOwner){
+            navigate(it.currentScreen)
+
+        }
+        _viewModel.editItem.observe(viewLifecycleOwner){
+
+            if(it != null){
+                _binding.btnNext.visibility = View.GONE
+                _binding.btnBack.visibility = View.GONE
+            }
+
+            _binding.addMenuItemScreen.productData.btnAdd.visibility = if(it != null) View.GONE else View.VISIBLE
+            _binding.addMenuItemScreen.productData.btnEdit.visibility = if(it == null) View.GONE else View.VISIBLE
+            _binding.addMenuItemScreen.productData.btnCancel.visibility = if(it == null) View.GONE else View.VISIBLE
+            _binding.addMenuItemScreen.title.text = resources.getString(if(it!=null) R.string.edit_product else R.string.products)
+
+            if (it != null) {
+                fillEditProductData(it)
+            }
+        }
+
+        _viewModel.getMenuSettings().observe(viewLifecycleOwner){
+            if(_viewModel.state.value?.currentScreen == R.id.menuPreviewFinalScreen){
+                fillCompany(it)
+                fillFinalPreview(it, (_binding.menuPreviewScreen.rvPreview.adapter as MenuPreviewAdapter).currentPreview)
+            }
+        }
+
+
+        _viewModel.categories.observe(viewLifecycleOwner){
+            setCategoryAdapter(it)
+            fillSpinnerCategoriesAddProductScreen(it)
+        }
+        _viewModel.itemsPreview.observe(viewLifecycleOwner){
+            fillPreviewAdapter(it)
+        }
+        _viewModel.currentItemImage.observe(viewLifecycleOwner){
+            if(it != null){
+                Glide.with(baseActivity)
+                    .load(it)
+                    .into(_binding.addMenuItemScreen.productData.imgProduct)
+            }else{
+                _binding.addMenuItemScreen.productData.imgProduct.setImageDrawable(null)
+            }
+
+        }
+        _viewModel.stateProcessMenu.observe(requireActivity()){
+            //FINISH PROCESS
+            //////////////////////////////////////////////////
+            //clear all files and finish
+            FileUtils.deleteAllFilesInFolder(baseActivity.applicationContext.filesDir)
+            ///////////////////////////////////////////////////
+            dialogManager.dismissLoadingDialog()
+            if(it.state == State.SUCCESS){
+                baseActivity.finish()
+            }else if(it.state == State.ERROR){
+                Snackbar.make(_binding.root,getText(R.string.operation_failed_please_retry),Snackbar.LENGTH_LONG).show()
+            }
+
+
+        }
+    }
     private fun showImageOptions() {
         val options = listOf(
             ImageOption(R.drawable.baseline_image_search_24,R.string.search),
@@ -247,6 +318,146 @@ class CreateMenuFragment : BaseFragment() {
 
     }
 
+
+
+    private fun showMenuNameDialog(menuName:String?) {
+        val dialogBinding = MenuNameDialogBinding.inflate(layoutInflater)
+        val dialogBuilder = dialogManager.getMaterialDialogBuilder(dialogBinding.root)
+        dialogBuilder.setPositiveButton(R.string.finish,null)
+
+        if(menuName != null){
+            dialogBinding.etMenuName.setText(menuName)
+            dialogBinding.etMenuName.selectAll()
+        }
+
+
+        dialogBuilder.setNegativeButton(R.string.cancel){dialog,_ ->
+            //dialog.dismiss() SE CIERRA SOLO
+        }
+        val d = dialogBuilder.create()
+
+        d.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
+        d.show()
+        val positive = d.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
+        //Poner los listener aqui para evitar que se cierre automaticamente
+        positive.setOnClickListener{
+            val menuName = dialogBinding.etMenuName.text.toString()
+            if(menuNameTextValidation(menuName,dialogBinding.tilMenuName)){
+                generateMenu(menuName)
+                d.dismiss()
+            }
+        }
+
+        dialogBinding.etMenuName.requestFocus()
+
+    }
+
+
+    private fun generateMenu(fileName:String){
+        dialogManager.showLoadingDialog()
+        val file = File(baseActivity.applicationContext.filesDir, "temp.pdf")
+        val pdfPath = file.path
+        val height = _binding.menuPreviewFinalScreen.llCompany.measuredHeight + calculateTotalItemHeight(_binding.menuPreviewFinalScreen.llItems) + _binding.menuPreviewFinalScreen.llFooter.measuredHeight
+        lifecycleScope.launch(Dispatchers.IO) {
+
+            _viewModel.items.value?.filter { item-> item.localImage != null }?.forEach{ item->
+                val bitmap  = FileUtils.getBitmapFromUri(context=baseActivity.applicationContext, imageUri = item.localImage!!)
+
+                val imageName = FileUtils.getFileName(item.localImage!!)
+                val imageFile = File(baseActivity.applicationContext.filesDir, imageName)
+                FileUtils.resizeAndSaveBitmap(baseActivity.applicationContext,bitmap,512f,imageFile)
+                item.localImage  = Uri.fromFile(imageFile)
+
+            }
+
+
+            FileUtils.layoutToPdf(_binding.menuPreviewFinalScreen.root,pdfPath,height)
+
+            val previewItems = (_binding.menuPreviewScreen.rvPreview.adapter as MenuPreviewAdapter).currentPreview
+            _viewModel.processMenu(user= LoginActivity.account?.email!!, companyId = company.companyId, fileName =  fileName, itemPreviews =  previewItems, pdfPath =   pdfPath)
+        }
+    }
+
+
+
+    private data class Shape(val shape:LogoShape, val name:String){
+        override fun toString(): String {
+            return name
+        }
+    }
+    private fun showMenuSettingsDialog() {
+        val dialogBinding = MenuSettingsBinding.inflate(layoutInflater)
+        val dialogBuilder = dialogManager.getMaterialDialogBuilder(dialogBinding.root)
+
+        dialogBuilder.setPositiveButton(getString(R.string.apply)){dialog,_->
+            val menuSettings = MenuSettings(
+                logoShape = (dialogBinding.spnShape.selectedItem as Shape).shape,
+                showLogo = dialogBinding.cbLogo.isChecked,
+                showBusinessName = dialogBinding.cbBusinessName.isChecked,
+                showAddress1 = dialogBinding.cbAddress1.isChecked,
+                showAddress2 = dialogBinding.cbAddress2.isChecked,
+                showAddress3 = dialogBinding.cbAddress3.isChecked,
+                showPhone1 = dialogBinding.cbPhone1.isChecked,
+                showPhone2 = dialogBinding.cbPhone2.isChecked,
+                showPhone3 = dialogBinding.cbPhone3.isChecked,
+                showFacebook = dialogBinding.cbFacebook.isChecked,
+                showInstagram = dialogBinding.cbInstagram.isChecked,
+                showWhatsapp =  dialogBinding.cbWhatsapp.isChecked,
+                menuStyle = if(dialogBinding.spnStyle.selectedItem as String == getString(R.string.basic)) MenuStyle.BASIC else MenuStyle.CATALOG
+            )
+            _viewModel.updateMenuSettings(menuSettings)
+        }
+        dialogBuilder.setNegativeButton(R.string.cancel){dialog,_ ->
+            //dialog.dismiss() SE CIERRA SOLO
+        }
+        val d = dialogBuilder.create()
+
+        d.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
+        d.show()
+
+        val menuSettings = _viewModel.getMenuSettings().value!!
+        val menuStyles = listOf(
+            getString(R.string.basic),
+            getString(R.string.catalog)
+        )
+        val logoStyles = listOf(
+            Shape(LogoShape.NONE,getString(R.string.none)),
+            Shape(LogoShape.CIRCULAR,getString(R.string.rounded)),
+            Shape(LogoShape.ROUNDED_CORNERS, getString(R.string.rounded_square))
+        )
+
+
+        dialogBinding.apply {
+            spnShape.adapter = ArrayAdapter(requireContext(),android.R.layout.simple_list_item_1,logoStyles)
+            cbLogo.isChecked = menuSettings.showLogo
+            cbBusinessName.isChecked = menuSettings.showBusinessName
+            cbAddress1.isChecked = menuSettings.showAddress1
+            cbAddress2.isChecked = menuSettings.showAddress2
+            cbAddress3.isChecked = menuSettings.showAddress3
+            cbPhone1.isChecked = menuSettings.showPhone1
+            cbPhone2.isChecked = menuSettings.showPhone2
+            cbPhone3.isChecked = menuSettings.showPhone3
+            cbFacebook.isChecked = menuSettings.showFacebook
+            cbInstagram.isChecked = menuSettings.showInstagram
+            cbWhatsapp.isChecked = menuSettings.showWhatsapp
+            spnStyle.adapter = ArrayAdapter<String>(requireContext(),android.R.layout.simple_list_item_1,menuStyles)
+            spnStyle.post {
+                spnStyle.setSelection(if(menuSettings.menuStyle == MenuStyle.BASIC)0 else 1)
+                spnShape.setSelection(logoStyles.indexOf(logoStyles.first{it.shape == menuSettings.logoShape}))
+            }
+
+        }
+
+
+
+    }
+
+
+
+
+
+
+
     private fun categoryTextValidation(category: String, textInputLayout: TextInputLayout):Boolean{
         if(category.isNullOrBlank() || category == CreateMenuViewModel.noCategory.name){
             textInputLayout.error = getString(R.string.invalid_value)
@@ -254,68 +465,15 @@ class CreateMenuFragment : BaseFragment() {
         }
         return true
     }
-
-    private fun initObservers(){
-        _viewModel.state.observe(viewLifecycleOwner){
-            navigate(it.currentScreen)
-
+    private fun menuNameTextValidation(menuName: String, textInputLayout: TextInputLayout):Boolean{
+        if(menuName.isBlank()){
+            textInputLayout.error = getString(R.string.invalid_value)
+            return false
         }
-        /*
-        _viewModel.editCategory.observe(viewLifecycleOwner){
-            if(it != null){
-                _binding.btnNext.visibility = View.GONE
-                _binding.btnBack.visibility = View.GONE
-                _binding.categoriesScreen.etCategory.setText(it)
-                _binding.categoriesScreen.btnAdd.visibility = View.GONE
-                _binding.categoriesScreen.btnEdit.visibility = View.VISIBLE
-                _binding.categoriesScreen.btnCancel.visibility = View.VISIBLE
-            }else{
-                _binding.categoriesScreen.btnAdd.visibility = View.VISIBLE
-                _binding.categoriesScreen.btnEdit.visibility = View.GONE
-                _binding.categoriesScreen.btnCancel.visibility = View.GONE
-            }
-        }*/
-        _viewModel.editItem.observe(viewLifecycleOwner){
-
-            if(it != null){
-                _binding.btnNext.visibility = View.GONE
-                _binding.btnBack.visibility = View.GONE
-            }
-
-            _binding.addMenuItemScreen.productData.btnAdd.visibility = if(it != null) View.GONE else View.VISIBLE
-            _binding.addMenuItemScreen.productData.btnEdit.visibility = if(it == null) View.GONE else View.VISIBLE
-            _binding.addMenuItemScreen.productData.btnCancel.visibility = if(it == null) View.GONE else View.VISIBLE
-            _binding.addMenuItemScreen.title.text = resources.getString(if(it!=null) R.string.edit_product else R.string.products)
-
-            if (it != null) {
-                fillEditProductData(it)
-            }
-        }
-
-
-        _viewModel.categories.observe(viewLifecycleOwner){
-            setCategoryAdapter(it)
-            fillSpinnerCategoriesAddProductScreen(it)
-        }
-        _viewModel.itemsPreview.observe(viewLifecycleOwner){
-            fillPreviewAdapter(it)
-        }
-        _viewModel.currentItemImage.observe(viewLifecycleOwner){
-            if(it != null){
-                Glide.with(baseActivity)
-                    .load(it)
-                    .into(_binding.addMenuItemScreen.productData.imgProduct)
-            }else{
-                _binding.addMenuItemScreen.productData.imgProduct.setImageDrawable(null)
-            }
-
-        }
-        _viewModel.savedMenuUrl.observe(requireActivity()){
-            //FINISH PROCESS
-            Toast.makeText(baseActivity,"Completado", Toast.LENGTH_SHORT).show()
-            screenNavigation.qrImagePreview(companyId = company.companyId,it)
-        }
+        return true
     }
+
+
 
     private fun fillSpinnerCategoriesAddProductScreen(categories: MutableList<Category>){
         var adapter = ArrayAdapter(requireContext(),android.R.layout.simple_list_item_1,categories)
@@ -326,7 +484,7 @@ class CreateMenuFragment : BaseFragment() {
     private fun navigate(currentView:Int){
         _binding.btnBack.visibility = if(currentView == R.id.categoriesScreen) View.GONE else View.VISIBLE
         _binding.btnNext.visibility = if(currentView == R.id.menuPreviewFinalScreen) View.GONE else View.VISIBLE
-        _binding.llGenerate.visibility = if(currentView == R.id.menuPreviewFinalScreen) View.VISIBLE else View.GONE
+        _binding.btnOptions.visibility = if(currentView == R.id.menuPreviewFinalScreen) View.VISIBLE else View.GONE
 
         _binding.categoriesScreen.root.visibility= if(currentView == R.id.categoriesScreen) View.VISIBLE else View.GONE
         _binding.addMenuItemScreen.root.visibility= if(currentView == R.id.addMenuItemScreen) View.VISIBLE else View.GONE
@@ -334,23 +492,33 @@ class CreateMenuFragment : BaseFragment() {
         _binding.menuPreviewFinalScreen.root.visibility = if(currentView == R.id.menuPreviewFinalScreen) View.VISIBLE else View.GONE
 
         if(currentView == R.id.menuPreviewFinalScreen){
-            fillCompany()
-            fillFinalPreview((_binding.menuPreviewScreen.rvPreview.adapter as MenuPreviewAdapter).currentPreview)
+            val menuSettings = _viewModel.getMenuSettings().value!!
+            fillCompany(menuSettings)
+            fillFinalPreview(menuSettings,(_binding.menuPreviewScreen.rvPreview.adapter as MenuPreviewAdapter).currentPreview)
         }
     }
 
 
     private fun fillPreviewAdapter(items:MutableList<ItemPreview>){
-        _binding.menuPreviewScreen.rvPreview.adapter = MenuPreviewAdapter(baseActivity,items){item->
-            dialogManager.showOptionDialog(resources.getString(R.string.options),
-                arrayOf(resources.getString(R.string.edit),getString(R.string.delete))){ option->
-                if(option == resources.getString(R.string.edit)){
-                   _viewModel.editItem(item)
-                   _viewModel.setScreen(R.id.addMenuItemScreen)
-                }else{
+        _binding.menuPreviewScreen.rvPreview.adapter = MenuPreviewAdapter(
+            baseActivity,
+            items,
+            onPositionChanged = {
+            _viewModel.updatePositions(it)
+        }){item->
+            val options = listOf(
+                ImageOption(R.drawable.round_edit_24,R.string.edit),
+                ImageOption(R.drawable.rounded_delete_24,R.string.delete),
+            )
+            dialogManager.showImageBottomSheet(options = options){ option->
+                if(option.string == R.string.edit){
+                    _viewModel.editItem(item)
+                    _viewModel.setScreen(R.id.addMenuItemScreen)
+                }else if(option.string == R.string.delete){
                     _viewModel.deleteItem(item)
                 }
             }
+
         }
     }
     private fun setCategoryAdapter(categories:MutableList<Category>){
@@ -440,14 +608,15 @@ class CreateMenuFragment : BaseFragment() {
 
 
 
-    private fun fillFinalPreview(items: List<ItemPreview>){
+    private fun fillFinalPreview(menuSettings: MenuSettings,items: List<ItemPreview>){
 
         _binding.menuPreviewFinalScreen.llItems.removeAllViews()
 
         items.forEach { itemPreview ->
             val binding = ItemMenuFinalPreviewBinding.inflate(LayoutInflater.from(baseActivity),_binding.menuPreviewFinalScreen.llItems,false)
 
-            binding.imageTitleDescription.root.visibility = if(itemPreview.itemStyle == ItemStyle.MENU_IMAGE_TITLE_DESCRIPTION_PRICE) View.VISIBLE else View.GONE
+            binding.imageTitleDescription.root.visibility = if(menuSettings.menuStyle == MenuStyle.BASIC && itemPreview.itemStyle == ItemStyle.MENU_IMAGE_TITLE_DESCRIPTION_PRICE) View.VISIBLE else View.GONE
+            binding.imageTitleDescriptionCatalog.root.visibility = if(menuSettings.menuStyle == MenuStyle.CATALOG && itemPreview.itemStyle == ItemStyle.MENU_IMAGE_TITLE_DESCRIPTION_PRICE) View.VISIBLE else View.GONE
             binding.titleDescription.root.visibility = if(itemPreview.itemStyle == ItemStyle.MENU_TITLE_DESCRIPTION_PRICE) View.VISIBLE else View.GONE
             binding.titlePrice.root.visibility = if(itemPreview.itemStyle == ItemStyle.MENU_TITLE_PRICE) View.VISIBLE else View.GONE
             binding.categoryTitle.root.visibility = if (itemPreview.itemStyle == ItemStyle.MENU_CATEGORY_HEADER) View.VISIBLE else View.GONE
@@ -461,12 +630,26 @@ class CreateMenuFragment : BaseFragment() {
 
             when (itemPreview.itemStyle) {
                 ItemStyle.MENU_IMAGE_TITLE_DESCRIPTION_PRICE -> {
-                    binding.imageTitleDescription.title.text = item.name
-                    binding.imageTitleDescription.body.text = item.description
-                    binding.imageTitleDescription.price.text = StringUtils.doubleToMoneyString(amount = item.amount, country = "US", language = "en")
-                    Glide.with(baseActivity)
-                        .load(item.localImage?:item.remoteImage)
-                        .into(binding.imageTitleDescription.image)
+
+                    if(menuSettings.menuStyle == MenuStyle.BASIC) {
+                        binding.imageTitleDescription.title.text = item.name
+                        binding.imageTitleDescription.body.text = item.description
+                        binding.imageTitleDescription.price.text = StringUtils.doubleToMoneyString(
+                            amount = item.amount,
+                            country = "US",
+                            language = "en"
+                        )
+                        Glide.with(baseActivity)
+                            .load(item.localImage ?: item.remoteImage)
+                            .into(binding.imageTitleDescription.image)
+                    }else if(menuSettings.menuStyle == MenuStyle.CATALOG){
+                        binding.imageTitleDescriptionCatalog.title.text = item.name
+                        binding.imageTitleDescriptionCatalog.body.text = item.description
+                        binding.imageTitleDescriptionCatalog.price.text = StringUtils.doubleToMoneyString(amount = item.amount, country = "US", language = "en")
+                        Glide.with(baseActivity)
+                            .load(item.localImage?:item.remoteImage)
+                            .into(binding.imageTitleDescriptionCatalog.image)
+                    }
 
                 }
                 ItemStyle.MENU_TITLE_DESCRIPTION_PRICE -> {
@@ -500,18 +683,35 @@ class CreateMenuFragment : BaseFragment() {
         _binding.menuPreviewFinalScreen.llItems.invalidate()
     }
 
-    private fun fillCompany(){
-        //val company = Company(companyId = "12345",businessName = "Cow Abunga Burgers", address1 = "4455 Landing Lange, APT 4", address2 = "Louisville, KY 40018-1234", address3 = "", phone1 = "", phone2 = "",phone3="", facebook = "https://cowabungaburgers.com", instagram = "@cowabungaburgers.com", whatsapp = "809-998-3580", localImage = null)
-        _binding.menuPreviewFinalScreen.logo.setImageResource(R.drawable.foodtruck_logo)
-        if(company.logoUrl == null){
+    private fun fillCompany(menuSettings: MenuSettings){
+        if(company.logoUrl.isNullOrEmpty() || !menuSettings.showLogo){
             _binding.menuPreviewFinalScreen.logo.visibility = View.GONE
         }else{
+            _binding.menuPreviewFinalScreen.logo.visibility = View.VISIBLE
             Glide.with(baseActivity)
                 .load(company.logoUrl)
                 .into(_binding.menuPreviewFinalScreen.logo)
+
+            val logoSize = requireContext().resources.getDimension(R.dimen.img_logo_size)
+            var shape:ShapeAppearanceModel = when(menuSettings.logoShape){
+                    LogoShape.CIRCULAR ->{
+                        _binding.menuPreviewFinalScreen.logo.shapeAppearanceModel.toBuilder()
+                            .setAllCorners(CornerFamily.ROUNDED,  (logoSize * 0.50f)) // Set corner radius
+                            .build()
+                    }
+                    LogoShape.ROUNDED_CORNERS->{
+                        _binding.menuPreviewFinalScreen.logo.shapeAppearanceModel.toBuilder()
+                            .setAllCorners(CornerFamily.ROUNDED, (logoSize * 0.1).toFloat())
+                            .build()
+                    }else->{
+                    ShapeAppearanceModel()
+                    }
+
+                }
+            _binding.menuPreviewFinalScreen.logo.shapeAppearanceModel = shape
         }
 
-        if(company.businessName.isNullOrBlank()){
+        if(company.businessName.isNullOrBlank() || !menuSettings.showBusinessName){
             _binding.menuPreviewFinalScreen.tvCompanyName.visibility = View.GONE
         }else{
             _binding.menuPreviewFinalScreen.tvCompanyName.text= company.businessName
@@ -519,21 +719,21 @@ class CreateMenuFragment : BaseFragment() {
         }
 
 
-        if(company.phone1.isNullOrBlank()){
+        if(company.phone1.isNullOrBlank() || !menuSettings.showPhone1){
             _binding.menuPreviewFinalScreen.tvPhone1.visibility = View.GONE
         }else{
             _binding.menuPreviewFinalScreen.tvPhone1.text= company.phone1
             _binding.menuPreviewFinalScreen.tvPhone1.visibility = View.VISIBLE
         }
 
-        if(company.phone2.isNullOrBlank()){
+        if(company.phone2.isNullOrBlank() || !menuSettings.showPhone2){
             _binding.menuPreviewFinalScreen.tvPhone2.visibility = View.GONE
         }else{
             _binding.menuPreviewFinalScreen.tvPhone2.text= company.phone2
             _binding.menuPreviewFinalScreen.tvPhone2.visibility = View.VISIBLE
         }
 
-        if(company.phone3.isNullOrBlank()){
+        if(company.phone3.isNullOrBlank() || !menuSettings.showPhone3){
             _binding.menuPreviewFinalScreen.tvPhone3.visibility = View.GONE
         }else{
             _binding.menuPreviewFinalScreen.tvPhone3.text= company.phone3
@@ -541,21 +741,21 @@ class CreateMenuFragment : BaseFragment() {
         }
 
 
-        if(company.address1.isNullOrBlank()){
+        if(company.address1.isNullOrBlank() || !menuSettings.showAddress1){
             _binding.menuPreviewFinalScreen.tvAddress1.visibility = View.GONE
         }else{
             _binding.menuPreviewFinalScreen.tvAddress1.text= company.address1
             _binding.menuPreviewFinalScreen.tvAddress1.visibility = View.VISIBLE
         }
 
-        if(company.address2.isNullOrBlank()){
+        if(company.address2.isNullOrBlank() || !menuSettings.showAddress2){
             _binding.menuPreviewFinalScreen.tvAddress2.visibility = View.GONE
         }else{
             _binding.menuPreviewFinalScreen.tvAddress2.text= company.address2
             _binding.menuPreviewFinalScreen.tvAddress2.visibility = View.VISIBLE
         }
 
-        if(company.address3.isNullOrBlank()){
+        if(company.address3.isNullOrBlank() || !menuSettings.showAddress3){
             _binding.menuPreviewFinalScreen.tvAddress3.visibility = View.GONE
         }else{
             _binding.menuPreviewFinalScreen.tvAddress3.text= company.address3
@@ -563,7 +763,7 @@ class CreateMenuFragment : BaseFragment() {
         }
 
 
-        if(company.facebook.isNullOrBlank()){
+        if(company.facebook.isNullOrBlank() || !menuSettings.showFacebook){
             _binding.menuPreviewFinalScreen.llFacebook.visibility = View.GONE
 
         }else{
@@ -571,7 +771,7 @@ class CreateMenuFragment : BaseFragment() {
             _binding.menuPreviewFinalScreen.tvFacebook.text= company.facebook
         }
 
-        if(company.instagram.isNullOrBlank()){
+        if(company.instagram.isNullOrBlank() || !menuSettings.showInstagram){
             _binding.menuPreviewFinalScreen.llInstagram.visibility = View.GONE
 
         }else{
@@ -579,7 +779,7 @@ class CreateMenuFragment : BaseFragment() {
             _binding.menuPreviewFinalScreen.tvInstagram.text= company.instagram
         }
 
-        if(company.whatsapp.isNullOrBlank()){
+        if(company.whatsapp.isNullOrBlank() || !menuSettings.showWhatsapp){
             _binding.menuPreviewFinalScreen.llWhatsapp.visibility = View.GONE
 
         }else{
@@ -587,8 +787,6 @@ class CreateMenuFragment : BaseFragment() {
             _binding.menuPreviewFinalScreen.tvWhatsapp.text= company.whatsapp
         }
     }
-
-
 
     companion object {
         private const val REQUEST_CODE_PICK_IMAGE = 100

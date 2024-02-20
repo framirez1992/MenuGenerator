@@ -11,7 +11,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/rlImage"
+        app:layout_constraintBottom_toTopOf="@id/imgProduct"
         android:paddingVertical="10dp">
 
         <ImageButton android:id="@+id/btnAdd"
@@ -24,68 +24,59 @@
             android:layout_alignParentEnd="true"
             android:layout_marginHorizontal="20dp"/>
 
-        <ImageButton android:id="@+id/btnEdit"
+        <com.google.android.material.imageview.ShapeableImageView android:id="@+id/btnEdit"
             android:layout_width="70dp"
             android:layout_height="30dp"
             android:src="@drawable/round_edit_24"
             app:tint="@color/white"
-            android:background="@drawable/rounded_corners"
-            android:backgroundTint="@color/purple_500"
+            android:background="@color/purple_500"
+            app:shapeAppearanceOverlay="@style/Circular"
+            app:contentPadding="5dp"
             android:layout_alignParentEnd="true"
             android:layout_marginHorizontal="20dp"/>
 
 
-        <ImageButton android:id="@+id/btnCancel"
+        <com.google.android.material.imageview.ShapeableImageView android:id="@+id/btnCancel"
             android:layout_width="70dp"
             android:layout_height="30dp"
             android:src="@drawable/baseline_clear_24"
-            app:tint="@color/black"
-            android:background="@drawable/rounded_corners"
-            android:backgroundTint="@color/grey_500"
+            android:background="@color/grey_500"
+            app:shapeAppearanceOverlay="@style/Circular"
+            app:contentPadding="5dp"
             android:layout_alignParentStart="true"
             android:layout_marginHorizontal="20dp"/>
 
     </RelativeLayout>
 
-    <RelativeLayout android:id="@+id/rlImage"
+
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/imgProduct"
         android:layout_width="150dp"
         android:layout_height="150dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/buttons">
+        app:layout_constraintTop_toBottomOf="@id/buttons"
+        android:padding="3dp"
+        android:scaleType="centerCrop"
+        android:background="@color/grey_900"
+        app:shapeAppearanceOverlay="@style/Circular"
+        app:strokeColor="@color/grey_500"
+        app:strokeWidth="5dp"/>
 
-        <androidx.cardview.widget.CardView
-            android:id="@+id/imgCard"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:cardCornerRadius="75dp">
+    <com.google.android.material.imageview.ShapeableImageView
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        app:layout_constraintStart_toStartOf="@id/imgProduct"
+        app:layout_constraintEnd_toEndOf="@id/imgProduct"
+        app:layout_constraintTop_toTopOf="@id/imgProduct"
+        app:layout_constraintBottom_toBottomOf="@id/imgProduct"
+        android:src="@drawable/outline_add_photo_alternate_24"
+        android:background="@color/grey_100"
+        app:contentPadding="10dp"
+        app:shapeAppearanceOverlay="@style/Circular"
+        app:layout_constraintHorizontal_bias="0.95"
+        app:layout_constraintVertical_bias="0.95"/>
 
-            <ImageView android:id="@+id/imgProduct"
-                android:layout_width="150dp"
-                android:layout_height="150dp"
-                android:scaleType="centerCrop"
-                android:background="@color/grey_900"/>
-
-        </androidx.cardview.widget.CardView>
-
-        <androidx.cardview.widget.CardView
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            app:cardCornerRadius="20dp"
-            android:layout_alignParentBottom="true"
-            android:layout_alignParentEnd="true"
-            android:layout_margin="5dp"
-            app:cardBackgroundColor="@color/white">
-
-            <ImageView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:src="@drawable/outline_add_photo_alternate_24"
-                android:padding="10dp"/>
-        </androidx.cardview.widget.CardView>
-
-
-    </RelativeLayout>
 
 
 
@@ -95,7 +86,7 @@
         android:minHeight="50dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/rlImage"
+        app:layout_constraintTop_toBottomOf="@id/imgProduct"
         app:layout_constraintBottom_toTopOf="@id/tilProduct"/>
 
 

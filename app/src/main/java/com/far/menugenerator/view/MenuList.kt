@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.far.menugenerator.R
 import com.far.menugenerator.databinding.FragmentMenuListBinding
 import com.far.menugenerator.model.database.model.CompanyFirebase
+import com.far.menugenerator.model.database.model.MenuFirebase
 import com.far.menugenerator.view.adapters.ImageOption
 import com.far.menugenerator.view.adapters.MenuAdapter
 import com.far.menugenerator.view.common.BaseActivity
@@ -56,10 +57,12 @@ class MenuList : BaseActivity() {
 
         initViews()
         initObservers()
-
-        searchMenus()
     }
 
+    override fun onResume() {
+        super.onResume()
+        searchMenus()
+    }
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_list, menu)
         return true
@@ -93,7 +96,7 @@ class MenuList : BaseActivity() {
                     when(option.string){
                         R.string.preview -> screenNavigation.qrImagePreview(companyId = company?.companyId!!, firebaseRef = menu.fireBaseRef!!)
                         R.string.edit-> screenNavigation.menuActivity(company = company!!,menu)
-                        R.string.delete-> viewModel.deleteMenu(LoginActivity.account?.email!!, companyId = company?.companyId!!, menuFirebase = menu)
+                        R.string.delete-> showDeleteMenuConfirmationDialog(menu = menu)
                     }
                 }
             }
@@ -108,6 +111,18 @@ class MenuList : BaseActivity() {
 
     private fun searchMenus(){
         viewModel.getMenus(user= LoginActivity.account?.email!!, companyId = company?.companyId!!)
+    }
+
+    private fun showDeleteMenuConfirmationDialog(menu:MenuFirebase){
+
+        dialogManager.showOptionDialog(
+            title= R.string.delete_menu,
+            message = R.string.are_you_sure_you_want_to_delete_this_menu,
+            positiveText = R.string.delete,
+            negativeText = R.string.cancel){_,_->
+
+            viewModel.deleteMenu(LoginActivity.account?.email!!, companyId = company?.companyId!!, menuFirebase = menu)
+        }
     }
 
 }

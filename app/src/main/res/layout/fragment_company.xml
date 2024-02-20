@@ -89,7 +89,8 @@
             app:layout_constraintTop_toBottomOf="@id/screens"
             android:text="@string/finish"
             android:layout_alignParentEnd="true"
-            android:visibility="visible"/>
+            android:visibility="visible"
+            android:background="@drawable/rounded_corners_button"/>
 
 
 

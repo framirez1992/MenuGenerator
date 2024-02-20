@@ -7,19 +7,20 @@
     <RelativeLayout android:id="@+id/rlParent"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/options"
+        app:layout_constraintStart_toEndOf="@id/btnDown"
+        app:layout_constraintEnd_toStartOf="@id/btnUp"
         app:layout_constraintTop_toTopOf="parent">
+
+        <include android:id="@+id/imageTitleDescription"
+            layout="@layout/row_menu_item_image_title_description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
 
         <include android:id="@+id/categoryTitle"
             layout="@layout/row_menu_item_category"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
 
-        <include android:id="@+id/imageTitleDescription"
-            layout="@layout/row_menu_item_image_title_description"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
 
         <include android:id="@+id/titleDescription"
             layout="@layout/row_menu_item_title_description"
@@ -35,15 +36,28 @@
     </RelativeLayout>
 
 
-    <include android:id="@+id/options"
-        layout="@layout/item_menu_preview_options"
-        android:layout_width="100dp"
+    <ImageView android:id="@+id/btnDown"
+        android:layout_width="wrap_content"
         android:layout_height="0dp"
+        android:paddingHorizontal="5dp"
+        android:src="@drawable/rounded_keyboard_double_arrow_down_24"
+        app:tint="@color/purple_500"
+        android:background="@color/white"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/rlParent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintHorizontal_chainStyle="spread"/>
+
+    <ImageView android:id="@+id/btnUp"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:paddingHorizontal="5dp"
+        android:src="@drawable/rounded_keyboard_double_arrow_up_24"
+        app:tint="@color/purple_500"
+        android:background="@color/white"
         app:layout_constraintStart_toEndOf="@id/rlParent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@id/rlParent"
-        app:layout_constraintBottom_toBottomOf="@id/rlParent"/>
-
-
-
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

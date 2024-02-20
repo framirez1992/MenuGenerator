@@ -1,6 +1,7 @@
 package com.far.menugenerator.view.common
 
 import android.app.AlertDialog
+import android.content.DialogInterface
 import android.view.View
 import androidx.annotation.StringRes
 
@@ -23,14 +24,21 @@ class DialogManager(private val baseActivity: BaseActivity) {
         showDialog()
     }
 
-    fun showOptionDialog(title:String,options:Array<String>,listener:(String)->Unit){
-        val builder: AlertDialog.Builder = AlertDialog.Builder(activity)
-        builder.setTitle(title)
-        builder.setItems(options){ dialog, which ->
-            listener(options[which])
-            dialog.dismiss()
+    fun showOptionDialog(@StringRes title:Int,
+                         @StringRes message:Int,
+                         @StringRes positiveText:Int,
+                         @StringRes negativeText:Int,
+                         positiveListener:DialogInterface.OnClickListener){
+
+        val dialog = MaterialAlertDialogBuilder(activity).apply {
+            setTitle(title)
+            setMessage(message)
+            setPositiveButton(positiveText,positiveListener)
+            setNegativeButton(negativeText){_,_->
+
+            }
         }
-        builder.show()
+        dialog.show()
     }
 
     fun showLoadingDialog(){

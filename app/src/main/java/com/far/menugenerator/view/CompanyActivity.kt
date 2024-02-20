@@ -126,6 +126,7 @@ class CompanyActivity : BaseActivity() {
                 Glide.with(this)
                     .load(it)
                     .into(_binding.layoutCompanyLogo.imgLogo)
+
             }else{
                 _binding.layoutCompanyLogo.imgLogo.setImageDrawable(null)
             }

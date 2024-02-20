@@ -22,6 +22,8 @@
 
     <dimen name="text_input_field_height">60dp</dimen>
 
+    <dimen name="img_logo_size">150dp</dimen>
+
 
     <dimen name="item_row_category_header_margin_top">5dp</dimen>
 </resources>
