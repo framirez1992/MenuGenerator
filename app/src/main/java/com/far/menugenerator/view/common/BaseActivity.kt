@@ -9,6 +9,7 @@ import com.canhub.cropper.CropImageActivity
 import com.canhub.cropper.CropImageOptions
 import com.far.menugenerator.R
 import com.far.menugenerator.common.helpers.ActivityHelper
+import com.far.menugenerator.common.helpers.NetworkUtils
 import com.far.menugenerator.model.denpendencyInjection.activity.ActivityComponent
 import com.far.menugenerator.model.denpendencyInjection.activity.ActivityModule
 import com.far.menugenerator.model.denpendencyInjection.presentation.PresentationComponent
@@ -40,5 +41,6 @@ open class BaseActivity :AppCompatActivity(){
     fun callCropImage() {
         ActivityHelper.callCropImage(this)
     }
+
 
 }

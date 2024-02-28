@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.far.menugenerator.common.helpers.NetworkUtils
 import com.far.menugenerator.model.ProcessState
 import com.far.menugenerator.model.State
 import com.far.menugenerator.model.database.CompanyService
@@ -16,6 +17,7 @@ import com.far.menugenerator.model.storage.MenuStorage
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.storage.StorageException
 import kotlinx.coroutines.launch
+import java.util.concurrent.TimeoutException
 import javax.inject.Inject
 import javax.inject.Provider
 
@@ -51,7 +53,7 @@ class CompanyListViewModel @Inject constructor (
                 searchCompaniesState.postValue(ProcessState(state =  State.SUCCESS))
             }catch (e:Exception){
                 e.printStackTrace()
-                searchCompaniesState.postValue(ProcessState(state =  State.ERROR,message= e.message))
+                searchCompaniesState.postValue(ProcessState(state =  State.GENERAL_ERROR,message= e.message))
             }
 
         }
@@ -61,6 +63,11 @@ class CompanyListViewModel @Inject constructor (
         deleteCompanyState.postValue(ProcessState(state =  State.LOADING))
         viewModelScope.launch {
             try {
+
+                if(!NetworkUtils.isConnectedToInternet()){
+                    throw TimeoutException()
+                }
+
                 if(company.logoUrl != null)
                     deleteCompanyLogo(user=user,company=company)
 
@@ -77,8 +84,11 @@ class CompanyListViewModel @Inject constructor (
 
                 deleteCompanyFromFirebaseDB(user= user, company= company)
                 deleteCompanyState.postValue(ProcessState(state =  State.SUCCESS))
-            }catch (e:Exception){
-                deleteCompanyState.postValue(ProcessState(state =  State.ERROR, message = e.message))
+            }catch (e:TimeoutException){
+                deleteCompanyState.postValue(ProcessState(state =  State.NETWORK_ERROR, message = e.message))
+            }
+            catch (e:Exception){
+                deleteCompanyState.postValue(ProcessState(state =  State.GENERAL_ERROR, message = e.message))
             }
 
             getCompanies(user = user)

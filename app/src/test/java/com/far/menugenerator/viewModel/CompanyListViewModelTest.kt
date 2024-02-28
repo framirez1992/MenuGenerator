@@ -105,7 +105,7 @@ class CompanyListViewModelTest {
         val companies = sut.getCompanies().value
 
         Assert.assertEquals(capturedStates.first()?.state,State.LOADING)
-        Assert.assertEquals(capturedStates.last()?.state, State.ERROR)
+        Assert.assertEquals(capturedStates.last()?.state, State.GENERAL_ERROR)
         Assert.assertEquals(capturedStates.last()?.message, FAILURE_MESSAGE)
         Assert.assertNull(companies)
     }
@@ -138,7 +138,7 @@ class CompanyListViewModelTest {
         dispatcher.scheduler.advanceUntilIdle()
         val companies = sut.getCompanies().value
         Assert.assertEquals(capturedStates.first()?.state,State.LOADING)
-        Assert.assertEquals(capturedStates.last()?.state, State.ERROR)
+        Assert.assertEquals(capturedStates.last()?.state, State.GENERAL_ERROR)
         Assert.assertEquals(capturedStates.last()?.message, FAILURE_MESSAGE)
         Assert.assertNull(companies)
     }
@@ -186,7 +186,7 @@ class CompanyListViewModelTest {
 
         coVerify { companyStorage.removeCompanyLogo(user = USER, companyId = company.companyId,company.logoFileName!!) }
         Assert.assertEquals(deleteStates.first()?.state,State.LOADING)
-        Assert.assertEquals(deleteStates.last()?.state,State.ERROR)
+        Assert.assertEquals(deleteStates.last()?.state,State.GENERAL_ERROR)
 
     }
 

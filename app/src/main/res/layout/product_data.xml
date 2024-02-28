@@ -79,6 +79,17 @@
 
 
 
+   <androidx.appcompat.widget.SwitchCompat
+       android:id="@+id/enabled"
+       android:layout_width="wrap_content"
+       android:layout_height="wrap_content"
+       android:text="@string/enabled"
+       app:layout_constraintStart_toStartOf="parent"
+       app:layout_constraintEnd_toEndOf="parent"
+       app:layout_constraintTop_toBottomOf="@id/imgProduct"
+       app:layout_constraintBottom_toTopOf="@id/spnCategories"
+       app:layout_constraintHorizontal_bias="0.98"
+       android:checked="true"/>
 
     <Spinner android:id="@+id/spnCategories"
         android:layout_width="match_parent"
@@ -86,7 +97,7 @@
         android:minHeight="50dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/imgProduct"
+        app:layout_constraintTop_toBottomOf="@id/enabled"
         app:layout_constraintBottom_toTopOf="@id/tilProduct"/>
 
 

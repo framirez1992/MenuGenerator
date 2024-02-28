@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.far.menugenerator.R
+import com.far.menugenerator.common.helpers.NetworkUtils
 import com.far.menugenerator.model.Company
 import com.far.menugenerator.model.ProcessState
 import com.far.menugenerator.model.State
@@ -17,6 +18,7 @@ import com.far.menugenerator.model.storage.CompanyStorage
 import com.far.menugenerator.model.storage.UploadResult
 import kotlinx.coroutines.launch
 import java.util.UUID
+import java.util.concurrent.TimeoutException
 import javax.inject.Inject
 import javax.inject.Provider
 
@@ -113,6 +115,10 @@ class CompanyViewModel @Inject constructor(
             _state.postValue(ProcessState(state = State.LOADING))
             try {
 
+                if(!NetworkUtils.isConnectedToInternet()){
+                    throw TimeoutException()
+                }
+
                 var uploadedFile:UploadResult? = null
                 if(currentImage.value != null) {
                     uploadedFile = companyStorage.uploadCompanyLogo(
@@ -129,9 +135,11 @@ class CompanyViewModel @Inject constructor(
                     logoUrl = uploadedFile?.fileUri?.toString(), logoFileName = uploadedFile?.name)
                 companyService.saveCompany(user = user,firebaseCompany)
                 _state.postValue(ProcessState(state = State.SUCCESS))
+            }catch (e:TimeoutException){
+                _state.postValue(ProcessState(state = State.NETWORK_ERROR, message = e.message))
             }catch (e:Exception){
                 e.printStackTrace()
-                _state.postValue(ProcessState(state = State.ERROR, message = e.message))
+                _state.postValue(ProcessState(state = State.GENERAL_ERROR, message = e.message))
             }
 
 
@@ -144,6 +152,9 @@ class CompanyViewModel @Inject constructor(
         viewModelScope.launch {
             _state.postValue(ProcessState(State.LOADING))
             try {
+                if(!NetworkUtils.isConnectedToInternet()){
+                    throw TimeoutException()
+                }
                 deleteUnusedImagesFromFireStore(user=user, companyId = company.companyId)
                 val uploadResult:UploadResult? = if(currentImage.value != null && editCompany?.logoUrl!=null &&  currentImage.value == Uri.parse(editCompany?.logoUrl )){//no se modifico la imagen que tenia (Dejar igual)
                     UploadResult(fileUri = Uri.parse(editCompany!!.logoUrl), name = editCompany?.logoFileName)
@@ -162,9 +173,13 @@ class CompanyViewModel @Inject constructor(
                     logoUrl = uploadResult?.fileUri?.toString(), logoFileName = uploadResult?.name, fireBaseRef = editCompany!!.fireBaseRef)
                 companyService.updateCompany(user = user, company =  firebaseCompany)
                 _state.postValue(ProcessState(State.SUCCESS))
-            }catch (e:Exception){
+            }
+            catch (e:TimeoutException){
+                _state.postValue(ProcessState(State.NETWORK_ERROR))
+            }
+            catch (e:Exception){
                 e.printStackTrace()
-                _state.postValue(ProcessState(State.ERROR))
+                _state.postValue(ProcessState(State.GENERAL_ERROR))
             }
 
 

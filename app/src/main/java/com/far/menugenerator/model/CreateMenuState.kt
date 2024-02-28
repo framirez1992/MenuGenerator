@@ -6,7 +6,7 @@ import java.io.Serializable
 
 data class CreateMenuState(val currentScreen:Int)
 
-data class Item(val id:String,var category:Category, val name:String, val description:String,val amount:Double,var position:Int,
+data class Item(val id:String,var enabled:Boolean,var categoryId:String, val name:String, val description:String,val amount:Double,var position:Int,
                 var localImage:Uri?=null, val remoteImage:Uri?=null)
 //tempImage la que se edita, localImage la que se llena si se esta editando un item que ya estaba en un menu existente, remoteImage la imagen de firebae storage
 

@@ -54,8 +54,8 @@ class MenuPreviewAdapter(private val activity:BaseActivity,
         preview.clear()
         val headers = itemPreviewList.filter { it.itemStyle == ItemStyle.MENU_CATEGORY_HEADER }.sortedBy { it.item.position }
         headers.forEach{ categoryPreview->
-            val category = categoryPreview.item.category
-            var items = itemPreviewList.filter { it.itemStyle != ItemStyle.MENU_CATEGORY_HEADER && it.item.category.id ==  category.id}.sortedBy { it.item.position }
+            val categoryId = categoryPreview.item.categoryId
+            var items = itemPreviewList.filter { it.itemStyle != ItemStyle.MENU_CATEGORY_HEADER && it.item.categoryId ==  categoryId}.sortedBy { it.item.position }
             if(items.isNotEmpty()){//show only relevant data
                 preview.add(categoryPreview)
                 preview.addAll(items)
@@ -78,7 +78,7 @@ class MenuPreviewAdapter(private val activity:BaseActivity,
 
                 categories.forEach{ categoryPreview->
                     val category = categoryPreview.item
-                    var items = preview.filter { it.itemStyle != ItemStyle.MENU_CATEGORY_HEADER && it.item.category.id == category.id }
+                    var items = preview.filter { it.itemStyle != ItemStyle.MENU_CATEGORY_HEADER && it.item.categoryId == category.id }
                     items.reversed().forEach{
                         if(preview.last() == categoryPreview){
                             preview.remove(it)
@@ -94,7 +94,7 @@ class MenuPreviewAdapter(private val activity:BaseActivity,
 
             }
             else -> {
-                var products = preview.filter { it.itemStyle != ItemStyle.MENU_CATEGORY_HEADER && it.item.category.id == currentItem.item.category.id }
+                var products = preview.filter { it.itemStyle != ItemStyle.MENU_CATEGORY_HEADER && it.item.categoryId == currentItem.item.categoryId }
                 if(products.first() == currentItem) return
 
                 var itemBefore = products[products.indexOf(currentItem) -1]
@@ -117,7 +117,7 @@ class MenuPreviewAdapter(private val activity:BaseActivity,
                 Collections.swap(preview,preview.indexOf(itemAfter),preview.indexOf(currentItem))
 
                 categories.forEach{ category->
-                    var items = preview.filter { it.itemStyle != ItemStyle.MENU_CATEGORY_HEADER && it.item.category.id == category.item.id }
+                    var items = preview.filter { it.itemStyle != ItemStyle.MENU_CATEGORY_HEADER && it.item.categoryId == category.item.id }
                     items.reversed().forEach{
                         if(preview.last() == category){
                             preview.remove(it)
@@ -133,7 +133,7 @@ class MenuPreviewAdapter(private val activity:BaseActivity,
 
             }
             else -> {
-                var products = preview.filter { it.itemStyle != ItemStyle.MENU_CATEGORY_HEADER && it.item.category.id == currentItem.item.category.id }
+                var products = preview.filter { it.itemStyle != ItemStyle.MENU_CATEGORY_HEADER && it.item.categoryId == currentItem.item.categoryId }
                 if(products.last() == currentItem) return
 
                 var itemAfter = products[products.indexOf(currentItem) +1]

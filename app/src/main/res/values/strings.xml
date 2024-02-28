@@ -88,4 +88,11 @@
     <string name="square">Square</string>
     <string name="rounded_square">Rounded square</string>
     <string name="menu_name">Menu name</string>
+    <string name="copy_link">Copy link</string>
+    <string name="text_copied_to_clipboard">Text copied to clipboard</string>
+    <string name="enabled">Enabled</string>
+    <string name="network_error">Network error</string>
+    <string name="check_your_network">Please check your internet connection and try again later</string>
+    <string name="close">Close</string>
+    <string name="no_category">No category</string>
 </resources>

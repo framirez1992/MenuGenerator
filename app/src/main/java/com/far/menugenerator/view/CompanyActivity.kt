@@ -8,8 +8,6 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
 import com.canhub.cropper.CropImage
-import com.canhub.cropper.CropImageActivity
-import com.canhub.cropper.CropImageOptions
 import com.far.menugenerator.R
 import com.far.menugenerator.databinding.FragmentCompanyBinding
 import com.far.menugenerator.model.Company
@@ -224,10 +222,14 @@ class CompanyActivity : BaseActivity() {
 
         if(processState.state == State.SUCCESS)
             finish()
-        else if(processState.state == State.ERROR)
+        else if(processState.state == State.GENERAL_ERROR)
             Snackbar.make(_binding.root,R.string.operation_failed_please_retry,Snackbar.LENGTH_LONG).show()
+        else if(processState.state == State.NETWORK_ERROR){
+            dialogManager.showInternetErrorDialog()
+        }
 
     }
+
 
 
 

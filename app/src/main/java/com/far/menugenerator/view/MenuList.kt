@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.far.menugenerator.R
 import com.far.menugenerator.databinding.FragmentMenuListBinding
+import com.far.menugenerator.model.State
 import com.far.menugenerator.model.database.model.CompanyFirebase
 import com.far.menugenerator.model.database.model.MenuFirebase
 import com.far.menugenerator.view.adapters.ImageOption
@@ -18,6 +19,7 @@ import com.far.menugenerator.view.common.BaseActivity
 import com.far.menugenerator.view.common.DialogManager
 import com.far.menugenerator.view.common.ScreenNavigation
 import com.far.menugenerator.viewModel.MenuListViewModel
+import com.google.android.material.snackbar.Snackbar
 import javax.inject.Inject
 
 // TODO: Rename parameter arguments, choose names that match
@@ -103,9 +105,25 @@ class MenuList : BaseActivity() {
             binding.rv.adapter = adapter
         }
 
-        viewModel.isLoading.observe(this){
-            binding.swipe.isRefreshing  = it
-            binding.rv.visibility = if(it) View.GONE else View.VISIBLE
+        viewModel.getSearchMenuProcess().observe(this){
+            binding.swipe.isRefreshing  = it.state == State.LOADING
+            binding.rv.visibility = if(it.state == State.LOADING) View.GONE else View.VISIBLE
+        }
+        viewModel.getDeleteMenuProcess().observe(this){
+            if(it.state  == State.LOADING){
+                dialogManager.showLoadingDialog()
+            }else{
+                dialogManager.dismissLoadingDialog()
+            }
+
+            if(it.state == State.SUCCESS){
+                searchMenus()
+            }else if(it.state == State.GENERAL_ERROR){
+                Snackbar.make(binding.root,getString(R.string.operation_failed_please_retry),Snackbar.LENGTH_LONG).show()
+                searchMenus()
+            }else if(it.state == State.NETWORK_ERROR){
+                dialogManager.showInternetErrorDialog()
+            }
         }
     }
 
@@ -120,7 +138,6 @@ class MenuList : BaseActivity() {
             message = R.string.are_you_sure_you_want_to_delete_this_menu,
             positiveText = R.string.delete,
             negativeText = R.string.cancel){_,_->
-
             viewModel.deleteMenu(LoginActivity.account?.email!!, companyId = company?.companyId!!, menuFirebase = menu)
         }
     }

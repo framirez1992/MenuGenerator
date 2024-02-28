@@ -1,15 +1,20 @@
 package com.far.menugenerator.view
 
 import android.content.ActivityNotFoundException
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.widget.Toast
 import androidx.core.content.FileProvider
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import com.far.menugenerator.R
 import com.far.menugenerator.databinding.FragmentQRPreviewBinding
 import com.far.menugenerator.model.ProcessState
@@ -19,6 +24,7 @@ import com.far.menugenerator.view.common.BaseActivity
 import com.far.menugenerator.view.common.DialogManager
 import com.far.menugenerator.viewModel.QRPreviewViewModel
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
 
@@ -106,6 +112,7 @@ class QRPreview : BaseActivity() {
     private fun showOptions(){
         val options = listOf(
             ImageOption(icon = R.drawable.baseline_remove_red_eye_24, R.string.preview),
+            ImageOption(icon = R.drawable.round_link_24, R.string.copy_link),
             ImageOption(icon = R.drawable.baseline_file_present_24,R.string.share_menu),
             ImageOption(icon = R.drawable.rounded_qr_code_2_24,R.string.share_qr_code)
         )
@@ -113,6 +120,7 @@ class QRPreview : BaseActivity() {
             optionSelected = it
             when (it.string) {
                 R.string.share_qr_code -> shareBitmap(binding.imgQR.drawable.toBitmap())
+                R.string.copy_link -> copyTextToClipboard(_viewModel.getMenu().value?.fileUrl!!)
                 R.string.share_menu ->  fileOperation()
                 R.string.preview -> fileOperation()
             }
@@ -122,7 +130,7 @@ class QRPreview : BaseActivity() {
 
     private fun fileOperation(){
         if(filePath == null){
-            filePath = File(applicationContext.filesDir, "menu.pdf") // adjust extension based on file type
+            filePath = File(applicationContext.filesDir, "doc.pdf") // adjust extension based on file type
             _viewModel.getFile(filePath!!)
         }else if(optionSelected?.string == R.string.share_menu){
             shareFile(filePath!!)
@@ -136,15 +144,23 @@ class QRPreview : BaseActivity() {
         binding.cvQR.visibility = if(process.state == State.SUCCESS) View.VISIBLE else View.GONE
         prepareMenuItems(process.state == State.SUCCESS)
 
-        if(process.state == State.ERROR)
+        if(process.state == State.GENERAL_ERROR)
             Snackbar.make(binding.root,R.string.operation_failed_please_retry,Snackbar.LENGTH_LONG).show()
 
 
     }
     private fun processFileDownloadState(process:ProcessState){
-        binding.pb.visibility = if(process.state == State.LOADING) View.VISIBLE else View.GONE
-        if(process.state == State.ERROR){
+        if(process.state == State.LOADING){
+            dialogManager.showLoadingDialog()
+        }else{
+            dialogManager.dismissLoadingDialog()
+        }
+
+        if(process.state == State.GENERAL_ERROR){
             Snackbar.make(binding.root,R.string.operation_failed_please_retry,Snackbar.LENGTH_LONG).show()
+            filePath = null
+        }else if(process.state == State.NETWORK_ERROR){
+            dialogManager.showInternetErrorDialog()
             filePath = null
         }else if(process.state == State.SUCCESS){
             fileOperation()
@@ -211,6 +227,13 @@ class QRPreview : BaseActivity() {
     private fun prepareMenuItems(dataLoaded: Boolean){
         mainMenu?.findItem(R.id.optionRefresh)?.isVisible = !dataLoaded
         mainMenu?.findItem(R.id.optionMenu)?.isVisible = dataLoaded
+    }
+
+    private fun copyTextToClipboard(text: String) {
+        val clipboardManager = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clipData = ClipData.newPlainText("URL", text.split("&token")[0])//no agregar token de acceso
+        clipboardManager.setPrimaryClip(clipData)
+        Toast.makeText(this, getString(R.string.text_copied_to_clipboard), Toast.LENGTH_SHORT).show()
     }
 
 }

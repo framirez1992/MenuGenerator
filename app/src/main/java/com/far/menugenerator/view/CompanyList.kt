@@ -1,7 +1,6 @@
 package com.far.menugenerator.view
 
 
-import android.content.DialogInterface
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -125,7 +124,7 @@ class CompanyList : BaseActivity() {
 
                 navigation.companyActivity(null)
             }
-        }else if(processState.state == State.ERROR)
+        }else if(processState.state == State.GENERAL_ERROR)
             Snackbar.make(binding.root,
                 getString(R.string.operation_failed_please_retry),
                 Snackbar.LENGTH_LONG).show()
@@ -139,10 +138,12 @@ class CompanyList : BaseActivity() {
         }else{
             dialogManager.dismissLoadingDialog()
         }
-        if(processState.state == State.ERROR){
+        if(processState.state == State.GENERAL_ERROR){
             Snackbar.make(binding.root,
                 getString(R.string.operation_failed_please_retry),
                 Snackbar.LENGTH_LONG).show()
+        }else if(processState.state == State.NETWORK_ERROR){
+            dialogManager.showInternetErrorDialog()
         }
     }
 
@@ -153,7 +154,6 @@ class CompanyList : BaseActivity() {
             message = R.string.are_you_sure_you_want_to_delete_this_company,
             positiveText = R.string.delete,
             negativeText = R.string.cancel){_,_->
-
             _viewModel.deleteCompany(user = LoginActivity.account?.email!!, company = company)
         }
     }

@@ -6,6 +6,8 @@ import android.view.View
 import androidx.annotation.StringRes
 
 import androidx.fragment.app.DialogFragment
+import com.far.menugenerator.R
+import com.far.menugenerator.databinding.NoInternetConnectionBinding
 import com.far.menugenerator.view.adapters.ImageOption
 import com.far.menugenerator.view.dialogs.DialogLoading
 import com.far.menugenerator.view.dialogs.DialogProductEdit
@@ -63,6 +65,15 @@ class DialogManager(private val baseActivity: BaseActivity) {
             setView(view)
         }
         return dialog
+    }
+
+    fun showInternetErrorDialog(){
+        val binding = NoInternetConnectionBinding.inflate(baseActivity.layoutInflater)
+        val dialogBuilder = getMaterialDialogBuilder(binding.root)
+        dialogBuilder.setPositiveButton(R.string.close){ dialog, _->
+            dialog.dismiss()
+        }
+        dialogBuilder.show()
     }
 
     private fun showDialog(){
