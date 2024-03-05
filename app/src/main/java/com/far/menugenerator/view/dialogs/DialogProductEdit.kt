@@ -7,13 +7,9 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
-import com.bumptech.glide.Glide
-import com.far.menugenerator.R
-import com.far.menugenerator.model.ItemPreview
-import com.far.menugenerator.view.CreateMenuFragment
+import com.far.menugenerator.model.database.room.model.MenuItemsTemp
 import java.io.Serializable
 
 
@@ -83,5 +79,5 @@ class DialogProductEdit : DialogFragment() {
             }
     }
 
-    data class DialogProductEditItem(val item: ItemPreview, val categories:MutableList<String>):Serializable
+    data class DialogProductEditItem(val item: MenuItemsTemp, val categories:MutableList<String>):Serializable
 }

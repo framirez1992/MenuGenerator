@@ -1,6 +1,7 @@
 package com.far.menugenerator.model.database
 
 import com.far.menugenerator.model.database.model.CompanyFirebase
+import com.far.menugenerator.model.database.model.MenuFirebase
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
  class CompanyService(private val db: FirebaseFirestore) {
@@ -24,6 +25,13 @@ import kotlinx.coroutines.tasks.await
         }
         return companies
     }
+     suspend fun getCompany(user:String,companyRef:String):CompanyFirebase?{
+         val doc = db.collection(user).document("data").collection("company").document(companyRef).get().await()
+        val company = doc.toObject(CompanyFirebase::class.java)?.apply {
+            fireBaseRef = doc.reference.id
+        }
+         return company
+     }
 
      fun deleteCompany(user:String, company: CompanyFirebase){
         db.collection(user).document("data").collection("company").document(company.fireBaseRef!!)

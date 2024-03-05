@@ -8,10 +8,11 @@ import com.far.menugenerator.model.database.model.ItemFirebase
 
 @Entity(tableName = "menu_temp")
 data class MenuTemp(
-    @PrimaryKey(autoGenerate = false) val menuId:String,
+    @PrimaryKey(autoGenerate = false) val menuId:String="",
+    var fireBaseRef:String?=null,
     val name:String="",
-    val fileUri:String?=null,
-    val menuSettings: String? = null//json
+    val fileUrl:String="",
+    val menuSettings: String?
 )
 @Entity(tableName = "menu_items_temp")
 data class MenuItemsTemp(
@@ -24,7 +25,6 @@ data class MenuItemsTemp(
     var name:String="",
     val description:String="",
     val price:Double=0.0,
-    var localImageUri:String?=null,
-    var remoteImageUri:String?=null,
+    var imageUri:String?=null,
     var position:Int=0
 )

@@ -6,21 +6,22 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.far.menugenerator.R
 import com.far.menugenerator.common.utils.StringUtils
 import com.far.menugenerator.databinding.ItemMenuPreviewBinding
-import com.far.menugenerator.model.ItemPreview
 import com.far.menugenerator.model.ItemPreviewPosition
 import com.far.menugenerator.model.ItemStyle
+import com.far.menugenerator.model.database.room.model.MenuItemsTemp
 import com.far.menugenerator.view.common.BaseActivity
 import java.util.*
 
 
 class MenuPreviewAdapter(private val activity:BaseActivity,
-                         private val itemPreviewList:List<ItemPreview>,
+                         private val itemPreviewList:List<MenuItemsTemp>,
                          private val onPositionChanged:(List<ItemPreviewPosition>)->Unit,
-                         private val onclick:(ItemPreview)->Unit): RecyclerView.Adapter<MenuPreviewAdapter.MenuPreviewViewHolder>() {
+                         private val onclick:(MenuItemsTemp)->Unit): RecyclerView.Adapter<MenuPreviewAdapter.MenuPreviewViewHolder>() {
 
-    private var preview:MutableList<ItemPreview> = mutableListOf()
+    private var preview:MutableList<MenuItemsTemp> = mutableListOf()
     val currentPreview get() = preview
     init {
        organizeArray()
@@ -43,7 +44,7 @@ class MenuPreviewAdapter(private val activity:BaseActivity,
             moveDown(preview[position])
         }
         holder.itemView.setOnClickListener {
-            if(preview[position].itemStyle == ItemStyle.MENU_CATEGORY_HEADER) return@setOnClickListener
+            if(preview[position].type == ItemStyle.MENU_CATEGORY_HEADER.name) return@setOnClickListener
             onclick(preview[position])
         }
 
@@ -52,12 +53,11 @@ class MenuPreviewAdapter(private val activity:BaseActivity,
 
     private fun organizeArray(){
         preview.clear()
-        val headers = itemPreviewList.filter { it.itemStyle == ItemStyle.MENU_CATEGORY_HEADER }.sortedBy { it.item.position }
-        headers.forEach{ categoryPreview->
-            val categoryId = categoryPreview.item.categoryId
-            var items = itemPreviewList.filter { it.itemStyle != ItemStyle.MENU_CATEGORY_HEADER && it.item.categoryId ==  categoryId}.sortedBy { it.item.position }
+        val headers = itemPreviewList.filter { it.type == ItemStyle.MENU_CATEGORY_HEADER.name }.sortedBy { it.position }
+        headers.forEach{ category->
+            var items = itemPreviewList.filter { it.type != ItemStyle.MENU_CATEGORY_HEADER.name && it.categoryId ==  category.id}.sortedBy { it.position }
             if(items.isNotEmpty()){//show only relevant data
-                preview.add(categoryPreview)
+                preview.add(category)
                 preview.addAll(items)
             }
 
@@ -65,10 +65,10 @@ class MenuPreviewAdapter(private val activity:BaseActivity,
     }
 
 
-    private fun moveUp(currentItem: ItemPreview){
-        when(currentItem.itemStyle){
-            ItemStyle.MENU_CATEGORY_HEADER->{
-                var categories = preview.filter { it.itemStyle == ItemStyle.MENU_CATEGORY_HEADER }
+    private fun moveUp(currentItem: MenuItemsTemp){
+        when(currentItem.type){
+            ItemStyle.MENU_CATEGORY_HEADER.name->{
+                var categories = preview.filter { it.type == ItemStyle.MENU_CATEGORY_HEADER.name }
                 if(categories.first() == currentItem) return
 
                 var itemBefore = categories[categories.indexOf(currentItem) -1]
@@ -76,48 +76,8 @@ class MenuPreviewAdapter(private val activity:BaseActivity,
 
 
 
-                categories.forEach{ categoryPreview->
-                    val category = categoryPreview.item
-                    var items = preview.filter { it.itemStyle != ItemStyle.MENU_CATEGORY_HEADER && it.item.categoryId == category.id }
-                    items.reversed().forEach{
-                        if(preview.last() == categoryPreview){
-                            preview.remove(it)
-                            preview.add(it) // at the end
-                        }else{
-                            preview.remove(it)
-                            preview.add(preview.indexOf(categoryPreview)+1,it)// after current category
-                        }
-
-                    }
-                }
-
-
-            }
-            else -> {
-                var products = preview.filter { it.itemStyle != ItemStyle.MENU_CATEGORY_HEADER && it.item.categoryId == currentItem.item.categoryId }
-                if(products.first() == currentItem) return
-
-                var itemBefore = products[products.indexOf(currentItem) -1]
-                Collections.swap(preview,preview.indexOf(itemBefore),preview.indexOf(currentItem))
-            }
-
-        }
-        notifyDataSetChanged()
-        updatePositions()
-    }
-
-
-    private fun moveDown(currentItem: ItemPreview){
-        when(currentItem.itemStyle){
-            ItemStyle.MENU_CATEGORY_HEADER->{
-                var categories = preview.filter { it.itemStyle == ItemStyle.MENU_CATEGORY_HEADER }
-                if(categories.last() == currentItem) return
-
-                var itemAfter = categories[categories.indexOf(currentItem) +1]
-                Collections.swap(preview,preview.indexOf(itemAfter),preview.indexOf(currentItem))
-
                 categories.forEach{ category->
-                    var items = preview.filter { it.itemStyle != ItemStyle.MENU_CATEGORY_HEADER && it.item.categoryId == category.item.id }
+                    var items = preview.filter { it.type != ItemStyle.MENU_CATEGORY_HEADER.name && it.categoryId == category.id }
                     items.reversed().forEach{
                         if(preview.last() == category){
                             preview.remove(it)
@@ -133,7 +93,46 @@ class MenuPreviewAdapter(private val activity:BaseActivity,
 
             }
             else -> {
-                var products = preview.filter { it.itemStyle != ItemStyle.MENU_CATEGORY_HEADER && it.item.categoryId == currentItem.item.categoryId }
+                var products = preview.filter { it.type != ItemStyle.MENU_CATEGORY_HEADER.name && it.categoryId == currentItem.categoryId }
+                if(products.first() == currentItem) return
+
+                var itemBefore = products[products.indexOf(currentItem) -1]
+                Collections.swap(preview,preview.indexOf(itemBefore),preview.indexOf(currentItem))
+            }
+
+        }
+        notifyDataSetChanged()
+        updatePositions()
+    }
+
+
+    private fun moveDown(currentItem: MenuItemsTemp){
+        when(currentItem.type){
+            ItemStyle.MENU_CATEGORY_HEADER.name->{
+                var categories = preview.filter { it.type == ItemStyle.MENU_CATEGORY_HEADER.name }
+                if(categories.last() == currentItem) return
+
+                var itemAfter = categories[categories.indexOf(currentItem) +1]
+                Collections.swap(preview,preview.indexOf(itemAfter),preview.indexOf(currentItem))
+
+                categories.forEach{ category->
+                    var items = preview.filter { it.type != ItemStyle.MENU_CATEGORY_HEADER.name && it.categoryId == category.id }
+                    items.reversed().forEach{
+                        if(preview.last() == category){
+                            preview.remove(it)
+                            preview.add(it) // at the end
+                        }else{
+                            preview.remove(it)
+                            preview.add(preview.indexOf(category)+1,it)// after current category
+                        }
+
+                    }
+                }
+
+
+            }
+            else -> {
+                var products = preview.filter { it.type != ItemStyle.MENU_CATEGORY_HEADER.name && it.categoryId == currentItem.categoryId }
                 if(products.last() == currentItem) return
 
                 var itemAfter = products[products.indexOf(currentItem) +1]
@@ -148,48 +147,49 @@ class MenuPreviewAdapter(private val activity:BaseActivity,
     private fun updatePositions(){
         //Update PreviewPositions value
         preview.forEach {
-            it.item.position = preview.indexOf(it)
+            it.position = preview.indexOf(it)
         }
         //Actualiza la propiedad Position de las categorias y productos a como se ordeno en el preview
-        onPositionChanged(preview.map { ItemPreviewPosition(id = it.item.id, position = it.item.position/* preview.indexOf(it)*/) })
+        onPositionChanged(preview.map { ItemPreviewPosition(id = it.id, position = it.position) })
     }
 
     class MenuPreviewViewHolder(val binding:ItemMenuPreviewBinding):RecyclerView.ViewHolder(binding.root){
 
-        fun bind(activity: BaseActivity,itemPreview: ItemPreview){
-            binding.imageTitleDescription.root.visibility = if(itemPreview.itemStyle == ItemStyle.MENU_IMAGE_TITLE_DESCRIPTION_PRICE) View.VISIBLE else View.GONE
-            binding.titleDescription.root.visibility = if(itemPreview.itemStyle == ItemStyle.MENU_TITLE_DESCRIPTION_PRICE) View.VISIBLE else View.GONE
-            binding.titlePrice.root.visibility = if(itemPreview.itemStyle == ItemStyle.MENU_TITLE_PRICE) View.VISIBLE else View.GONE
-            binding.categoryTitle.root.visibility = if (itemPreview.itemStyle == ItemStyle.MENU_CATEGORY_HEADER) View.VISIBLE else View.GONE
+        fun bind(activity: BaseActivity,itemPreview: MenuItemsTemp){
+            binding.imageTitleDescription.root.visibility = if(itemPreview.type == ItemStyle.MENU_IMAGE_TITLE_DESCRIPTION_PRICE.name) View.VISIBLE else View.GONE
+            binding.titleDescription.root.visibility = if(itemPreview.type == ItemStyle.MENU_TITLE_DESCRIPTION_PRICE.name) View.VISIBLE else View.GONE
+            binding.titlePrice.root.visibility = if(itemPreview.type == ItemStyle.MENU_TITLE_PRICE.name) View.VISIBLE else View.GONE
+            binding.categoryTitle.root.visibility = if (itemPreview.type == ItemStyle.MENU_CATEGORY_HEADER.name) View.VISIBLE else View.GONE
+            binding.imgVisible.visibility = if(itemPreview.type == ItemStyle.MENU_CATEGORY_HEADER.name) View.GONE else View.VISIBLE
 
-            val item = itemPreview.item
+            binding.imgVisible.setImageResource(if(itemPreview.enabled) R.drawable.baseline_remove_red_eye_24 else R.drawable.baseline_visibility_off_24)
             val price = StringUtils.doubleToMoneyString(
-                amount = item.amount,
+                amount = itemPreview.price,
                 country = "US",
                 language = "en"
             )
-            when (itemPreview.itemStyle) {
-                ItemStyle.MENU_IMAGE_TITLE_DESCRIPTION_PRICE -> {
-                    binding.imageTitleDescription.title.text = item.name
-                    binding.imageTitleDescription.body.text = item.description
+            when (itemPreview.type) {
+                ItemStyle.MENU_IMAGE_TITLE_DESCRIPTION_PRICE.name -> {
+                    binding.imageTitleDescription.title.text = itemPreview.name
+                    binding.imageTitleDescription.body.text = itemPreview.description
                     binding.imageTitleDescription.price.text = price
                     Glide.with(activity)
-                        .load(item.localImage?:item.remoteImage)
+                        .load(itemPreview.imageUri)
                         .encodeQuality(80)
                         .into(binding.imageTitleDescription.image)
 
                 }
-                ItemStyle.MENU_TITLE_DESCRIPTION_PRICE -> {
-                    binding.titleDescription.title.text = item.name
-                    binding.titleDescription.body.text = item.description
+                ItemStyle.MENU_TITLE_DESCRIPTION_PRICE.name -> {
+                    binding.titleDescription.title.text = itemPreview.name
+                    binding.titleDescription.body.text = itemPreview.description
                     binding.titleDescription.price.text = price
                 }
-                ItemStyle.MENU_TITLE_PRICE -> {
-                    binding.titlePrice.title.text = item.name
+                ItemStyle.MENU_TITLE_PRICE.name -> {
+                    binding.titlePrice.title.text = itemPreview.name
                     binding.titlePrice.price.text = price
                 }
                 else -> {
-                    binding.categoryTitle.title.text = item.name
+                    binding.categoryTitle.title.text = itemPreview.name
                 }
             }
 
@@ -198,7 +198,7 @@ class MenuPreviewAdapter(private val activity:BaseActivity,
 
             // Get the layout parameters of the view.
             val layoutParams = binding.root.layoutParams as ViewGroup.MarginLayoutParams
-            if(itemPreview.itemStyle == ItemStyle.MENU_CATEGORY_HEADER)
+            if(itemPreview.type == ItemStyle.MENU_CATEGORY_HEADER.name)
                 layoutParams.setMargins(0, 20, 0, 0)
             else
                 layoutParams.setMargins(0, 0, 0, 0)

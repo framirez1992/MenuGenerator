@@ -10,6 +10,7 @@ import com.far.menugenerator.common.helpers.NetworkUtils
 import com.far.menugenerator.common.utils.FileUtils
 import com.far.menugenerator.model.ProcessState
 import com.far.menugenerator.model.State
+import com.far.menugenerator.model.common.MenuReference
 import com.far.menugenerator.model.database.MenuService
 import com.far.menugenerator.model.database.model.MenuFirebase
 import com.far.menugenerator.model.storage.MenuStorage
@@ -28,11 +29,17 @@ class QRPreviewViewModel(
     private val stateFileDownload = MutableLiveData<ProcessState>()
     private val qrBitmap = MutableLiveData<Bitmap>()
 
+    private lateinit var menuRef:MenuReference
+
     fun getState():LiveData<ProcessState> = state
     fun getQrBitmap():LiveData<Bitmap> = qrBitmap
     fun getStateFileDownload():LiveData<ProcessState> = stateFileDownload
     fun getMenu():LiveData<MenuFirebase?> = menuFirebase
 
+
+    fun setReference(menuReference: MenuReference) {
+        menuRef = menuReference
+    }
 
     fun getFile(destination:File){
         stateFileDownload.value = ProcessState(State.LOADING)
@@ -60,7 +67,8 @@ class QRPreviewViewModel(
             try{
                 val menu = menuService.getMenu(user = user, companyId = companyId, firebaseRef = fireBaseRef)
                 menuFirebase.postValue(menu)
-                val bm = FileUtils.generateQRCode(menu?.fileUrl!!)
+                val url = menu?.fileUrl!!.split("&token")[0]//SIN TOKEN
+                val bm = FileUtils.generateQRCode(url)
                 qrBitmap.postValue(bm)
                 state.postValue(ProcessState(State.SUCCESS))
             }catch (e:Exception){

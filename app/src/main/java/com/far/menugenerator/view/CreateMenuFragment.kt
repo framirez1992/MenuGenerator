@@ -9,6 +9,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.ArrayAdapter
+import android.widget.CompoundButton
+import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -21,18 +23,18 @@ import com.far.menugenerator.common.utils.FileUtils
 import com.far.menugenerator.common.utils.NumberUtils
 import com.far.menugenerator.common.utils.StringUtils
 import com.far.menugenerator.databinding.DialogCategoryBinding
+import com.far.menugenerator.databinding.DialogImageTitleDescriptionBinding
 import com.far.menugenerator.databinding.FragmentCreateMenuBinding
 import com.far.menugenerator.databinding.ItemMenuFinalPreviewBinding
 import com.far.menugenerator.databinding.MenuNameDialogBinding
 import com.far.menugenerator.databinding.MenuSettingsBinding
 import com.far.menugenerator.model.Category
-import com.far.menugenerator.model.Item
-import com.far.menugenerator.model.ItemPreview
 import com.far.menugenerator.model.ItemStyle
 import com.far.menugenerator.model.LogoShape
 import com.far.menugenerator.model.MenuSettings
 import com.far.menugenerator.model.MenuStyle
 import com.far.menugenerator.model.State
+import com.far.menugenerator.model.common.MenuReference
 import com.far.menugenerator.model.database.model.CompanyFirebase
 import com.far.menugenerator.model.database.model.MenuFirebase
 import com.far.menugenerator.model.database.room.model.MenuItemsTemp
@@ -48,8 +50,6 @@ import com.google.android.material.shape.CornerFamily
 import com.google.android.material.shape.ShapeAppearanceModel
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputLayout
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
 
@@ -63,8 +63,6 @@ private const val ARG_COMPANY = "company"
 private const val ARG_EDIT_MENU = "editMenu"
 class CreateMenuFragment : BaseFragment() {
     // TODO: Rename and change types of parameters
-    private lateinit var company: CompanyFirebase
-    private var editMenu: MenuFirebase? = null
 
     private lateinit var _binding:FragmentCreateMenuBinding
     private lateinit var _viewModel:CreateMenuViewModel
@@ -76,14 +74,16 @@ class CreateMenuFragment : BaseFragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        arguments?.let {
-            company = it.getSerializable(ARG_COMPANY) as CompanyFirebase
-            editMenu = it.getSerializable(ARG_EDIT_MENU) as MenuFirebase?
-        }
+
         presentationComponent.inject(this)
         _viewModel = ViewModelProvider(this,createMenuViewModelFactory)[CreateMenuViewModel::class.java]
-        _viewModel.prepareMenu(editMenu)
 
+        arguments?.let {
+            val companyReference = it.getString(ARG_COMPANY)
+            val menuReference = it.getSerializable(ARG_EDIT_MENU) as MenuReference?
+            _viewModel.setInitialValues(userId = LoginActivity.account?.email!!,companyReference = companyReference!!, menuReference = menuReference)
+            _viewModel.prepareMenu()
+        }
     }
 
     override fun onCreateView(
@@ -113,6 +113,19 @@ class CreateMenuFragment : BaseFragment() {
         }
     }
 
+    private fun generateValidations(): Boolean {
+        val enabledItems = _viewModel.items.value?.filter { it.enabled }
+        if(enabledItems == null ||  enabledItems.isEmpty()){
+            val binding = DialogImageTitleDescriptionBinding.inflate(layoutInflater)
+            binding.img.setImageResource(R.drawable.warning)
+            binding.title.setText(R.string.warning)
+            binding.body.setText(R.string.add_products_to_continue)
+            dialogManager.showSingleButtonDialog(binding.root)
+            return false
+        }
+        return true
+    }
+
     private fun initViews(){
 
         _binding.btnNext.setOnClickListener { _viewModel.nextScreen() }
@@ -124,6 +137,10 @@ class CreateMenuFragment : BaseFragment() {
             )
             dialogManager.showImageBottomSheet(options){
                 if(it.string == R.string.generate){
+                    if(!generateValidations()){
+                        return@showImageBottomSheet
+                    }
+
                     showMenuNameDialog(_viewModel.getCurrentMenuName())
                 }else if(it.string == R.string.menu_settings){
                     showMenuSettingsDialog()
@@ -138,25 +155,6 @@ class CreateMenuFragment : BaseFragment() {
         _binding.categoriesScreen.btnAdd.setOnClickListener{
            showCategoryDialog(null)
         }
-        /*
-        _binding.categoriesScreen.btnEdit.setOnClickListener{
-            val category = Category(
-                id = UUID.randomUUID().toString(),
-                name = _binding.categoriesScreen.etCategory.text.toString(),
-                position = 0)
-            _viewModel.saveEditCategory()
-            _viewModel.setScreen(R.id.categoriesScreen)
-            _binding.categoriesScreen.etCategory.text?.clear()
-        }
-        _binding.categoriesScreen.btnCancel.setOnClickListener{
-            _binding.categoriesScreen.etCategory.text?.clear()
-            _viewModel.setEditCategory(null)
-            _viewModel.setScreen(R.id.categoriesScreen)
-        }*/
-        //_binding.addMenuItemScreen.productData.btnAddProductImage.setOnClickListener {
-        //    val intent = Intent(Intent.ACTION_PICK).setType("image/*")
-        //    startActivityForResult(intent, REQUEST_CODE_PICK_IMAGE)
-        //}
 
         _binding.addMenuItemScreen.productData.btnAdd.setOnClickListener {
             if(!validateProductData()) return@setOnClickListener
@@ -186,6 +184,12 @@ class CreateMenuFragment : BaseFragment() {
             clearAddProductFields()
             _viewModel.setScreen(R.id.menuPreviewScreen)
         }
+        _binding.addMenuItemScreen.productData.enabled.setOnCheckedChangeListener(object :CompoundButton.OnCheckedChangeListener{
+            override fun onCheckedChanged(buttonView: CompoundButton?, isChecked: Boolean) {
+                _binding.addMenuItemScreen.productData.imgVisible.setImageResource(if(isChecked) R.drawable.baseline_remove_red_eye_24 else R.drawable.baseline_visibility_off_24)
+            }
+
+        })
 
 
         _binding.categoriesScreen.rvCategories.layoutManager = LinearLayoutManager(context,RecyclerView.VERTICAL,false)
@@ -242,21 +246,25 @@ class CreateMenuFragment : BaseFragment() {
             }
 
         }
-        _viewModel.stateProcessMenu.observe(requireActivity()){
-            //FINISH PROCESS
-            //////////////////////////////////////////////////
-            //clear all files and finish
-            FileUtils.deleteAllFilesInFolder(baseActivity.applicationContext.filesDir)
-            ///////////////////////////////////////////////////
-            dialogManager.dismissLoadingDialog()
-            if(it.state == State.SUCCESS){
-                baseActivity.finish()
-            }else if(it.state == State.GENERAL_ERROR){
-                Snackbar.make(_binding.root,getText(R.string.operation_failed_please_retry),Snackbar.LENGTH_LONG).show()
-            }else if(it.state == State.NETWORK_ERROR){
-                dialogManager.showInternetErrorDialog()
-            }
+        _viewModel.stateProcessMenu.observe(viewLifecycleOwner){
+            if (it.state == State.LOADING){
+                dialogManager.showLoadingDialog()
+            }else{
+                //FINISH PROCESS
+                //////////////////////////////////////////////////
+                //clear all files and finish
+                FileUtils.deleteAllFilesInFolder(baseActivity.applicationContext.filesDir)
+                ///////////////////////////////////////////////////
+                dialogManager.dismissLoadingDialog()
+                if(it.state == State.SUCCESS){
+                    baseActivity.finish()
+                }else if(it.state == State.GENERAL_ERROR){
+                    Snackbar.make(_binding.root,getText(R.string.operation_failed_please_retry),Snackbar.LENGTH_LONG).show()
+                }else if(it.state == State.NETWORK_ERROR){
+                    dialogManager.showInternetErrorDialog()
+                }
 
+            }
 
         }
     }
@@ -294,7 +302,7 @@ class CreateMenuFragment : BaseFragment() {
 
             positive.setOnClickListener{
                 val c = dialogBinding.etCategoryName.text.toString()
-                if(categoryTextValidation(c,dialogBinding.tilCategoryName)){
+                if(categoryTextValidation(name = c, categoryId = null, textInputLayout =  dialogBinding.tilCategoryName)){
                     _viewModel.addCategory(c)
                     d.dismiss()
                 }
@@ -303,7 +311,7 @@ class CreateMenuFragment : BaseFragment() {
 
             positive.setOnClickListener{
                 val c = dialogBinding.etCategoryName.text.toString()
-                if(categoryTextValidation(c,dialogBinding.tilCategoryName)){
+                if(categoryTextValidation(name = c, categoryId = category.id, textInputLayout =  dialogBinding.tilCategoryName)){
                     category.name = c
                     _viewModel.saveEditCategory(category)
                     d.dismiss()
@@ -318,8 +326,6 @@ class CreateMenuFragment : BaseFragment() {
         dialogBinding.etCategoryName.requestFocus()
 
     }
-
-
 
     private fun showMenuNameDialog(menuName:String?) {
         val dialogBinding = MenuNameDialogBinding.inflate(layoutInflater)
@@ -345,7 +351,10 @@ class CreateMenuFragment : BaseFragment() {
             val menuName = dialogBinding.etMenuName.text.toString()
             if(menuNameTextValidation(menuName,dialogBinding.tilMenuName)){
                 d.dismiss()
-                generateMenu(menuName)
+                (baseActivity as MenuActivity).showInterstitial {
+                    generateMenu(menuName)
+                }
+
 
             }
         }
@@ -356,29 +365,15 @@ class CreateMenuFragment : BaseFragment() {
 
 
     private fun generateMenu(fileName:String){
-        dialogManager.showLoadingDialog()
         val file = File(baseActivity.applicationContext.filesDir, "temp.pdf")
-        val pdfPath = file.path
         val height = _binding.menuPreviewFinalScreen.llCompany.measuredHeight + calculateTotalItemHeight(_binding.menuPreviewFinalScreen.llItems) + _binding.menuPreviewFinalScreen.llFooter.measuredHeight
-        lifecycleScope.launch(Dispatchers.IO) {
-
-            _viewModel.items.value?.filter { item-> item.localImageUri != null }?.forEach{ item->
-                val imageUri = Uri.parse(item.localImageUri)
-                val bitmap  = FileUtils.getBitmapFromUri(context=baseActivity.applicationContext, imageUri = imageUri)
-
-                val imageName = FileUtils.getFileName(imageUri)
-                val imageFile = File(baseActivity.applicationContext.filesDir, imageName)
-                FileUtils.resizeAndSaveBitmap(baseActivity.applicationContext,bitmap,512f,imageFile)
-                item.localImageUri  = Uri.fromFile(imageFile).toString()
-
-            }
-
-
-            FileUtils.layoutToPdf(_binding.menuPreviewFinalScreen.root,pdfPath,height)
-
-            val previewItems = (_binding.menuPreviewScreen.rvPreview.adapter as MenuPreviewAdapter).currentPreview
-            _viewModel.processMenu(user= LoginActivity.account?.email!!, companyId = company.companyId, fileName =  fileName, itemPreviews =  previewItems, pdfPath =   pdfPath)
-        }
+        _viewModel.generateMenu(
+            context = baseActivity,
+            referenceName = fileName,
+            view = _binding.menuPreviewFinalScreen.root,
+            fileHeight = height,
+            pdfFile = file
+        )
     }
 
 
@@ -461,9 +456,17 @@ class CreateMenuFragment : BaseFragment() {
 
 
 
-    private fun categoryTextValidation(category: String, textInputLayout: TextInputLayout):Boolean{
-        if(category.isBlank()){
+    private fun categoryTextValidation(name: String,categoryId:String? = null,textInputLayout: TextInputLayout):Boolean{
+        if(name.isBlank()){
             textInputLayout.error = getString(R.string.invalid_value)
+            return false
+        }
+        if(categoryId == null &&  _viewModel.getCategoriesByName(name).isNotEmpty()){//NUEVOS
+            textInputLayout.error = getString(R.string.name_in_use)
+            return false
+        }
+        if(categoryId != null &&  _viewModel.getCategoriesByName(name).filter { it.id != categoryId }.isNotEmpty()){
+            textInputLayout.error = getString(R.string.name_in_use)
             return false
         }
         return true
@@ -499,10 +502,14 @@ class CreateMenuFragment : BaseFragment() {
             fillCompany(menuSettings)
             fillFinalPreview(menuSettings,(_binding.menuPreviewScreen.rvPreview.adapter as MenuPreviewAdapter).currentPreview)
         }
+        if(currentView == R.id.menuPreviewScreen && _binding.menuPreviewScreen.root.windowToken!=null){
+            baseActivity.hideKeyboard(_binding.menuPreviewScreen.root.windowToken)
+        }
+
     }
 
 
-    private fun fillPreviewAdapter(items:MutableList<ItemPreview>){
+    private fun fillPreviewAdapter(items:MutableList<MenuItemsTemp>){
         _binding.menuPreviewScreen.rvPreview.adapter = MenuPreviewAdapter(
             baseActivity,
             items,
@@ -566,7 +573,7 @@ class CreateMenuFragment : BaseFragment() {
     }
 
     private fun fillEditProductData(menuItem:MenuItemsTemp){
-        val imageUri = menuItem.localImageUri?:menuItem.remoteImageUri
+        val imageUri = menuItem.imageUri
         _viewModel.updateCurrentItemImage(if(imageUri != null) Uri.parse(imageUri) else null)
 
         _binding.addMenuItemScreen.productData.enabled.isChecked = menuItem.enabled
@@ -615,66 +622,65 @@ class CreateMenuFragment : BaseFragment() {
 
 
 
-    private fun fillFinalPreview(menuSettings: MenuSettings,items: List<ItemPreview>){
+    private fun fillFinalPreview(menuSettings: MenuSettings,items: List<MenuItemsTemp>){
 
         _binding.menuPreviewFinalScreen.llItems.removeAllViews()
 
-        items.filter{it.item.enabled}.forEach{ itemPreview ->
+        items.filter{it.enabled}.forEach{ menuItem ->
 
-            if(itemPreview.itemStyle == ItemStyle.MENU_CATEGORY_HEADER //Si es una categoria y esta categoria no tiene items visibles(NO MOSTRAR)
-                && items.none { it.itemStyle != ItemStyle.MENU_CATEGORY_HEADER && it.item.categoryId == itemPreview.item.id
-                && it.item.enabled }) return@forEach
+            if(menuItem.type == ItemStyle.MENU_CATEGORY_HEADER.name //Si es una categoria y esta categoria no tiene items visibles(NO MOSTRAR)
+                && items.none { it.type != ItemStyle.MENU_CATEGORY_HEADER.name && it.categoryId == menuItem.id
+                && it.enabled }) return@forEach
 
             val binding = ItemMenuFinalPreviewBinding.inflate(LayoutInflater.from(baseActivity),_binding.menuPreviewFinalScreen.llItems,false)
 
-            binding.imageTitleDescription.root.visibility = if(menuSettings.menuStyle == MenuStyle.BASIC && itemPreview.itemStyle == ItemStyle.MENU_IMAGE_TITLE_DESCRIPTION_PRICE) View.VISIBLE else View.GONE
-            binding.imageTitleDescriptionCatalog.root.visibility = if(menuSettings.menuStyle == MenuStyle.CATALOG && itemPreview.itemStyle == ItemStyle.MENU_IMAGE_TITLE_DESCRIPTION_PRICE) View.VISIBLE else View.GONE
-            binding.titleDescription.root.visibility = if(itemPreview.itemStyle == ItemStyle.MENU_TITLE_DESCRIPTION_PRICE) View.VISIBLE else View.GONE
-            binding.titlePrice.root.visibility = if(itemPreview.itemStyle == ItemStyle.MENU_TITLE_PRICE) View.VISIBLE else View.GONE
-            binding.categoryTitle.root.visibility = if (itemPreview.itemStyle == ItemStyle.MENU_CATEGORY_HEADER) View.VISIBLE else View.GONE
+            binding.imageTitleDescription.root.visibility = if(menuSettings.menuStyle == MenuStyle.BASIC && menuItem.type == ItemStyle.MENU_IMAGE_TITLE_DESCRIPTION_PRICE.name) View.VISIBLE else View.GONE
+            binding.imageTitleDescriptionCatalog.root.visibility = if(menuSettings.menuStyle == MenuStyle.CATALOG && menuItem.type == ItemStyle.MENU_IMAGE_TITLE_DESCRIPTION_PRICE.name) View.VISIBLE else View.GONE
+            binding.titleDescription.root.visibility = if(menuItem.type == ItemStyle.MENU_TITLE_DESCRIPTION_PRICE.name) View.VISIBLE else View.GONE
+            binding.titlePrice.root.visibility = if(menuItem.type == ItemStyle.MENU_TITLE_PRICE.name) View.VISIBLE else View.GONE
+            binding.categoryTitle.root.visibility = if (menuItem.type == ItemStyle.MENU_CATEGORY_HEADER.name) View.VISIBLE else View.GONE
 
-            val item = itemPreview.item
 
             //Don`t show NO_CATEGORY ITEM
-            if(itemPreview.itemStyle == ItemStyle.MENU_CATEGORY_HEADER &&  item.id == CreateMenuViewModel.noCategoryId){
+            if(menuItem.type == ItemStyle.MENU_CATEGORY_HEADER.name &&  menuItem.id == CreateMenuViewModel.noCategoryId){
                 binding.root.visibility = View.GONE
             }
 
-            when (itemPreview.itemStyle) {
-                ItemStyle.MENU_IMAGE_TITLE_DESCRIPTION_PRICE -> {
+            when (menuItem.type) {
+                ItemStyle.MENU_IMAGE_TITLE_DESCRIPTION_PRICE.name -> {
 
                     if(menuSettings.menuStyle == MenuStyle.BASIC) {
-                        binding.imageTitleDescription.title.text = item.name
-                        binding.imageTitleDescription.body.text = item.description
+                        binding.imageTitleDescription.title.text = menuItem.name
+                        binding.imageTitleDescription.body.text = menuItem.description
                         binding.imageTitleDescription.price.text = StringUtils.doubleToMoneyString(
-                            amount = item.amount,
+                            amount = menuItem.price,
                             country = "US",
                             language = "en"
                         )
                         Glide.with(baseActivity)
-                            .load(item.localImage ?: item.remoteImage)
+                            .load(menuItem.imageUri)
                             .into(binding.imageTitleDescription.image)
                     }else if(menuSettings.menuStyle == MenuStyle.CATALOG){
-                        binding.imageTitleDescriptionCatalog.title.text = item.name
-                        binding.imageTitleDescriptionCatalog.body.text = item.description
-                        binding.imageTitleDescriptionCatalog.price.text = StringUtils.doubleToMoneyString(amount = item.amount, country = "US", language = "en")
+                        binding.imageTitleDescriptionCatalog.title.text = menuItem.name
+                        binding.imageTitleDescriptionCatalog.body.text = menuItem.description
+                        binding.imageTitleDescriptionCatalog.price.text = StringUtils.doubleToMoneyString(amount = menuItem.price, country = "US", language = "en")
                         Glide.with(baseActivity)
-                            .load(item.localImage?:item.remoteImage)
+                            .load(menuItem.imageUri)
                             .into(binding.imageTitleDescriptionCatalog.image)
                     }
 
                 }
-                ItemStyle.MENU_TITLE_DESCRIPTION_PRICE -> {
-                    binding.titleDescription.title.text = item.name
-                    binding.titleDescription.body.text = item.description
-                    binding.titleDescription.price.text = StringUtils.doubleToMoneyString(amount = item.amount, country = "US", language = "en")
+                ItemStyle.MENU_TITLE_DESCRIPTION_PRICE.name -> {
+                    binding.titleDescription.title.text = menuItem.name
+                    binding.titleDescription.body.text = menuItem.description
+                    binding.titleDescription.price.text = StringUtils.doubleToMoneyString(amount = menuItem.price, country = "US", language = "en")
                 }
-                ItemStyle.MENU_TITLE_PRICE -> {
-                    binding.titlePrice.title.text = item.name
-                    binding.titlePrice.price.text = StringUtils.doubleToMoneyString(amount = item.amount, country = "US", language = "en")
+                ItemStyle.MENU_TITLE_PRICE.name -> {
+                    binding.titlePrice.title.text = menuItem.name
+                    binding.titlePrice.price.text = StringUtils.doubleToMoneyString(amount = menuItem.price, country = "US", language = "en")
                 }
                 else -> {
-                    binding.categoryTitle.title.text = item.name
+                    binding.categoryTitle.title.text = menuItem.name
                 }
             }
 
@@ -683,7 +689,7 @@ class CreateMenuFragment : BaseFragment() {
 
             // Get the layout parameters of the view.
             val layoutParams = binding.root.layoutParams as ViewGroup.MarginLayoutParams
-            if(itemPreview.itemStyle == ItemStyle.MENU_CATEGORY_HEADER)
+            if(menuItem.type == ItemStyle.MENU_CATEGORY_HEADER.name)
                 layoutParams.setMargins(0, 20, 0, 0)
             else
                 layoutParams.setMargins(0, 0, 0, 0)
@@ -698,6 +704,8 @@ class CreateMenuFragment : BaseFragment() {
     }
 
     private fun fillCompany(menuSettings: MenuSettings){
+        val company = _viewModel.getCompany()!!
+
         if(company.logoUrl.isNullOrEmpty() || !menuSettings.showLogo){
             _binding.menuPreviewFinalScreen.logo.visibility = View.GONE
         }else{
@@ -803,21 +811,11 @@ class CreateMenuFragment : BaseFragment() {
     }
 
     companion object {
-        private const val REQUEST_CODE_PICK_IMAGE = 100
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment CreateMenuFragment.
-         */
-        // TODO: Rename and change types and number of parameters
         @JvmStatic
-        fun newInstance(company: CompanyFirebase, menu:MenuFirebase?) =
+        fun newInstance(companyReference: String, menu:MenuReference?) =
             CreateMenuFragment().apply {
                 arguments = Bundle().apply {
-                    putSerializable(ARG_COMPANY, company)
+                    putSerializable(ARG_COMPANY, companyReference)
                     putSerializable(ARG_EDIT_MENU, menu)
                 }
             }

@@ -14,17 +14,17 @@ import android.widget.Toast
 import androidx.core.content.FileProvider
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope
 import com.far.menugenerator.R
+import com.far.menugenerator.common.helpers.ActivityHelper
 import com.far.menugenerator.databinding.FragmentQRPreviewBinding
 import com.far.menugenerator.model.ProcessState
 import com.far.menugenerator.model.State
+import com.far.menugenerator.model.common.MenuReference
 import com.far.menugenerator.view.adapters.ImageOption
 import com.far.menugenerator.view.common.BaseActivity
 import com.far.menugenerator.view.common.DialogManager
 import com.far.menugenerator.viewModel.QRPreviewViewModel
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
 
@@ -35,9 +35,8 @@ import javax.inject.Inject
 
 class QRPreview : BaseActivity() {
     // TODO: Rename and change types of parameters
-    private var menuRef: String? = null
+    private var menuRef: MenuReference? = null
     private var companyId:String?=null
-    private var filePath:File? =null
 
     private lateinit var binding:FragmentQRPreviewBinding
     private lateinit var _viewModel: QRPreviewViewModel
@@ -60,17 +59,18 @@ class QRPreview : BaseActivity() {
 
         setContentView(binding.root)
 
-        menuRef = intent.extras?.getString(ARG_MENU_REF)
+        menuRef = intent.extras?.getSerializable(ARG_MENU_REF) as MenuReference
         companyId = intent.extras?.getString(ARG_COMPANY_ID)
 
-        if(menuRef.isNullOrEmpty() or companyId.isNullOrEmpty()){
+        if(menuRef == null || companyId.isNullOrEmpty()){
             finish()
         }
 
         initViews()
         initObservers()
 
-        searchMenu()
+        _viewModel.setReference(menuRef!!)
+        setInitialScreen()
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -82,8 +82,8 @@ class QRPreview : BaseActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
          if(item.itemId == R.id.optionMenu)
             showOptions()
-        else if(item.itemId == R.id.optionRefresh)
-            searchMenu()
+        else if(item.itemId == R.id.optionRefresh && menuRef?.online == true)
+            drawQRCode()
 
         return true
     }
@@ -100,44 +100,35 @@ class QRPreview : BaseActivity() {
         _viewModel.getQrBitmap().observe(this){
             binding.imgQR.setImageBitmap(it)
         }
-        _viewModel.getStateFileDownload().observe(this){
-            processFileDownloadState(it)
+
+    }
+    private fun setInitialScreen(){
+        if(menuRef?.online == true){
+           drawQRCode()
         }
 
     }
-    private fun searchMenu(){
-        _viewModel.drawMenu(user = LoginActivity.account?.email!!, companyId = companyId!!, fireBaseRef = menuRef!!)
+
+    private fun drawQRCode(){
+        _viewModel.drawMenu(user = LoginActivity.account?.email!!, companyId = companyId!!, fireBaseRef = menuRef?.firebaseRef!!)
     }
 
     private fun showOptions(){
         val options = listOf(
-            ImageOption(icon = R.drawable.baseline_remove_red_eye_24, R.string.preview),
+            //ImageOption(icon = R.drawable.baseline_remove_red_eye_24, R.string.preview),
             ImageOption(icon = R.drawable.round_link_24, R.string.copy_link),
-            ImageOption(icon = R.drawable.baseline_file_present_24,R.string.share_menu),
+            //ImageOption(icon = R.drawable.baseline_file_present_24,R.string.share_menu),
             ImageOption(icon = R.drawable.rounded_qr_code_2_24,R.string.share_qr_code)
         )
         dialogManager.showImageBottomSheet(options){
             optionSelected = it
             when (it.string) {
                 R.string.share_qr_code -> shareBitmap(binding.imgQR.drawable.toBitmap())
-                R.string.copy_link -> copyTextToClipboard(_viewModel.getMenu().value?.fileUrl!!)
-                R.string.share_menu ->  fileOperation()
-                R.string.preview -> fileOperation()
             }
 
         }
     }
 
-    private fun fileOperation(){
-        if(filePath == null){
-            filePath = File(applicationContext.filesDir, "doc.pdf") // adjust extension based on file type
-            _viewModel.getFile(filePath!!)
-        }else if(optionSelected?.string == R.string.share_menu){
-            shareFile(filePath!!)
-        }else if(optionSelected?.string == R.string.preview){
-            openFile(filePath!!)
-        }
-    }
 
     private fun loadState(process: ProcessState){
         binding.pb.visibility = if(process.state == State.LOADING) View.VISIBLE else View.GONE
@@ -149,72 +140,16 @@ class QRPreview : BaseActivity() {
 
 
     }
-    private fun processFileDownloadState(process:ProcessState){
-        if(process.state == State.LOADING){
-            dialogManager.showLoadingDialog()
-        }else{
-            dialogManager.dismissLoadingDialog()
-        }
-
-        if(process.state == State.GENERAL_ERROR){
-            Snackbar.make(binding.root,R.string.operation_failed_please_retry,Snackbar.LENGTH_LONG).show()
-            filePath = null
-        }else if(process.state == State.NETWORK_ERROR){
-            dialogManager.showInternetErrorDialog()
-            filePath = null
-        }else if(process.state == State.SUCCESS){
-            fileOperation()
-        }
-
-    }
 
     private fun shareBitmap(bitmap: Bitmap) {
         val file = File(applicationContext.filesDir, "qr_menu.png")
         file.outputStream().use { os ->
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, os)
         }
-        shareFile(file)
+        ActivityHelper.shareFile(this,file)
 
     }
-    private fun shareFile(file:File){
-        //crear xml/paths indicando las rutasde archivos a las que vamos a dar acceso
-        //Definir provider en el manifest con nuestro authority (nombre.de.paquete.fileprovider)
-        //especificar en el metadata del provider las rutas a las que vamos a dar acceso
 
-        //com.far.menugenerator.fileprovider
-        val authority = "$packageName.fileprovider"
-        val uri = FileProvider.getUriForFile(applicationContext, authority, file)
-        val mime = contentResolver.getType(uri)
-
-        val intent = Intent(Intent.ACTION_SEND)
-            .setType(mime)
-            .putExtra(Intent.EXTRA_STREAM, uri)
-            //.putExtra(Intent.EXTRA_TEXT, "Check out this cool image!")
-
-        val chooser = Intent.createChooser(intent, /* title */ null)
-        try {
-            startActivity(chooser)
-        } catch (e: ActivityNotFoundException) {
-            // Define what your app should do if no activity can handle the intent.
-        }catch (e:Exception){
-            e.printStackTrace()
-        }
-    }
-
-    private fun openFile(file:File) {
-        val authority = "$packageName.fileprovider"
-        val uri = FileProvider.getUriForFile(applicationContext, authority, file)
-        val mime = contentResolver.getType(uri)
-
-// Prepare an implicit intent.
-        val intent = Intent().apply {
-            action = Intent.ACTION_VIEW
-            setDataAndType(uri, mime)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
-        startActivity(intent)
-
-    }
 
     //override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
     //    super.onActivityResult(requestCode, resultCode, data)
@@ -227,13 +162,6 @@ class QRPreview : BaseActivity() {
     private fun prepareMenuItems(dataLoaded: Boolean){
         mainMenu?.findItem(R.id.optionRefresh)?.isVisible = !dataLoaded
         mainMenu?.findItem(R.id.optionMenu)?.isVisible = dataLoaded
-    }
-
-    private fun copyTextToClipboard(text: String) {
-        val clipboardManager = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        val clipData = ClipData.newPlainText("URL", text.split("&token")[0])//no agregar token de acceso
-        clipboardManager.setPrimaryClip(clipData)
-        Toast.makeText(this, getString(R.string.text_copied_to_clipboard), Toast.LENGTH_SHORT).show()
     }
 
 }

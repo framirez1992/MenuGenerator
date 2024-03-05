@@ -11,7 +11,6 @@
         android:layout_height="80dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:src="@drawable/no_internet"
         app:layout_constraintTop_toTopOf="parent"/>
 
     <TextView android:id="@+id/title"
@@ -21,7 +20,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/img"
         android:gravity="center"
-        android:text="@string/network_error"
         android:textStyle="bold|italic"
         android:textSize="18sp"/>
 
@@ -33,7 +31,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/title"
         android:gravity="center"
-        android:text="@string/check_your_network"
         android:textStyle="italic"
         android:textSize="16sp"/>
 

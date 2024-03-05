@@ -1,7 +1,10 @@
 package com.far.menugenerator.viewModel
 
+import android.content.Context
 import android.net.Uri
+import android.view.View
 import androidx.annotation.IdRes
+import androidx.core.net.toUri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -9,10 +12,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.far.menugenerator.R
 import com.far.menugenerator.common.helpers.NetworkUtils
+import com.far.menugenerator.common.utils.FileUtils
+import com.far.menugenerator.common.utils.StringUtils
 import com.far.menugenerator.model.Category
 import com.far.menugenerator.model.CreateMenuState
-import com.far.menugenerator.model.Item
-import com.far.menugenerator.model.ItemPreview
 import com.far.menugenerator.model.ItemPreviewPosition
 import com.far.menugenerator.model.ItemStyle
 import com.far.menugenerator.model.LogoShape
@@ -20,14 +23,23 @@ import com.far.menugenerator.model.MenuSettings
 import com.far.menugenerator.model.MenuStyle
 import com.far.menugenerator.model.ProcessState
 import com.far.menugenerator.model.State
+import com.far.menugenerator.model.common.MenuReference
+import com.far.menugenerator.model.database.CompanyService
 import com.far.menugenerator.model.database.MenuService
+import com.far.menugenerator.model.database.model.CompanyFirebase
 import com.far.menugenerator.model.database.model.ItemFirebase
 import com.far.menugenerator.model.database.model.MenuFirebase
+import com.far.menugenerator.model.database.room.model.Menu
+import com.far.menugenerator.model.database.room.model.MenuItems
 import com.far.menugenerator.model.database.room.model.MenuItemsTemp
+import com.far.menugenerator.model.database.room.model.MenuTemp
+import com.far.menugenerator.model.database.room.services.MenuDS
 import com.far.menugenerator.model.database.room.services.MenuTempDS
 import com.far.menugenerator.model.storage.MenuStorage
+import com.far.menugenerator.view.LoginActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.io.File
 import java.util.UUID
 import java.util.concurrent.TimeoutException
 import javax.inject.Inject
@@ -37,32 +49,44 @@ import javax.inject.Provider
 class CreateMenuViewModel @Inject constructor(
     private val menuStorage: MenuStorage,
     private val menuService:MenuService,
-    private val menuTempDS:MenuTempDS
+    private val companyService:CompanyService,
+    private val menuTempDS:MenuTempDS,
+    private val menuDS:MenuDS
 ):ViewModel() {
 
     companion object{
         const val noCategoryId = "-1"
         const val noCategoryDescription="NO_CATEGORY"
     }
+
+    private lateinit var userId:String
+    private lateinit var companyReference:String
     private lateinit var menuId:String
+    private var menuReference: MenuReference?=null
+    private var company:CompanyFirebase?=null
+
     private val _state = MutableLiveData<CreateMenuState>()
     private val _stateProcessMenu = MutableLiveData<ProcessState>()
     private val _menuSettings= MutableLiveData<MenuSettings>()
-    private val _categories = MutableLiveData<MutableList<Category>>()
-    private val _items = MutableLiveData<MutableList<MenuItemsTemp>>()
-    private val _itemsPreview = MutableLiveData<MutableList<ItemPreview>>()
+    private val _categories = MutableLiveData<MutableList<Category>>()//SOLO CATEGORIAS
+    private val _items = MutableLiveData<MutableList<MenuItemsTemp>>()//SOLO PRODUCTOS
+    private val _itemsPreview = MutableLiveData<MutableList<MenuItemsTemp>>()
     private val _editItem = MutableLiveData<MenuItemsTemp?>()
 
-    private var _editMenu:MenuFirebase? = null
+    private var _editMenu:MenuTemp? = null
+    private var _editMenuItems:List<MenuItemsTemp>?=null
+    private var _editItemsOriginalImages:List<Pair<String,String>> = listOf()
 
     val state:LiveData<CreateMenuState> get() = _state
     val stateProcessMenu:LiveData<ProcessState> get() = _stateProcessMenu
     val categories:LiveData<MutableList<Category>> get() = _categories
     val items:LiveData<MutableList<MenuItemsTemp>> get() = _items
-    val itemsPreview:LiveData<MutableList<ItemPreview>> get() = _itemsPreview
+    val itemsPreview:LiveData<MutableList<MenuItemsTemp>> get() = _itemsPreview
     val editItem:LiveData<MenuItemsTemp?> get() = _editItem
 
+    fun getCompany() = company
     fun getMenuSettings():LiveData<MenuSettings> = _menuSettings
+
 
 
     val currentItemImage = MutableLiveData<Uri?>()
@@ -94,11 +118,26 @@ class CreateMenuViewModel @Inject constructor(
         return _editMenu?.name
     }
 
-    fun prepareMenu(editMenu:MenuFirebase?){
-        menuId = editMenu?.menuId?:UUID.randomUUID().toString()
+    fun setInitialValues(userId:String,companyReference: String,menuReference: MenuReference?){
+        this.userId = userId
+        this.companyReference = companyReference
+        this.menuReference = menuReference
+    }
+
+    fun prepareMenu(){
+        menuId = menuReference?.menuId?:UUID.randomUUID().toString()
         viewModelScope.launch(Dispatchers.IO) {
-            initCategories(editMenu)
-            initMenuData(editMenu)
+            if(company == null){
+                company = companyService.getCompany(user = userId, companyRef = companyReference)
+            }
+            if(_editMenu == null)//si no se esta editando actualmente ningun
+                menuTempDS.clearAll()//LIMPIAR LAS TABLAS
+
+            if(_editMenu == null && menuReference == null){//Nuevo menu desde 0
+                saveCategory(menuId, noCategoryId, noCategoryDescription, 0)
+            }
+
+            initMenuData()
 
             refreshCategories()
             refreshItems()
@@ -108,21 +147,45 @@ class CreateMenuViewModel @Inject constructor(
     }
 
 
-    private suspend fun initMenuData(menu:MenuFirebase?){
-        if (_editMenu != null || menu == null) return
+    private suspend fun initMenuData(){
+        if (_editMenu != null || menuReference == null) return
 
-        //TODO: Buscar el menu en la db o en firebase y no pasar por parametro serializable
-        _editMenu = menu
-        _menuSettings.postValue(menu.menuSettings)
+        val menuTemp:MenuTemp
+        val menuItemsTemp:List<MenuItemsTemp>
+        if(menuReference!!.online){
+            val firebaseMenu = menuService.getMenu(user = userId, companyId = company!!.companyId, menuReference!!.firebaseRef!!)
+            menuTemp = MenuTemp(
+                fireBaseRef = firebaseMenu!!.fireBaseRef,
+                menuId = firebaseMenu.menuId,
+                name = firebaseMenu.name,
+                fileUrl = firebaseMenu.fileUrl,
+                menuSettings = StringUtils.objectToJson(firebaseMenu.menuSettings))
 
-        val categories =  menu.items.filter { it.type == ItemStyle.MENU_CATEGORY_HEADER.name && it.id != noCategoryId }.map { Category(id = it.id, name = it.categoryName, position = it.position) }
-        categories.forEach{
-            saveCategory(menuId = menu.menuId,id = it.id, name = it.name, position = it.position)
-        }
-
-        val products = menu.items
-            .filter { it.type != ItemStyle.MENU_CATEGORY_HEADER.name }
-            .map {
+            menuItemsTemp = firebaseMenu.items.map {
+                MenuItemsTemp(
+                    id = it.id,
+                    menuId = menuReference!!.menuId,
+                    type = it.type,
+                    enabled = it.enabled,
+                    categoryId = it.categoryId,
+                    categoryName = it.categoryName,
+                    name = it.name,
+                    description = it.description?:"",
+                    price = (it.price?:"0.0").toDouble(),
+                    imageUri = it.imageUrl,
+                    position = it.position)
+            }
+        }else{
+            val menuLocal = menuDS.getMenuById(menuId = menuReference!!.menuId)
+            val menuItems = menuDS.getMenuItemsByMenuId(menuId = menuReference!!.menuId)
+            menuTemp = MenuTemp(
+                fireBaseRef = null,
+                menuId = menuLocal.menuId,
+                name = menuLocal.name,
+                fileUrl = menuLocal.fileUri!!,
+                menuSettings = menuLocal.menuSettings
+            )
+            menuItemsTemp = menuItems.map {
                 MenuItemsTemp(
                     id = it.id,
                     menuId = menuId,
@@ -133,27 +196,29 @@ class CreateMenuViewModel @Inject constructor(
                     categoryName = it.categoryName,
                     description = it.description?:"",
                     price = it.price?.toDouble()?:0.0,
-                    localImageUri = null,
-                    remoteImageUri = it.imageUrl,
+                    imageUri = it.imageUri,
                     position = it.position)
             }
-        menuTempDS.addMenuItems(products)
+        }
+
+        _editMenu = menuTemp
+        _editMenuItems = menuItemsTemp
+        _editItemsOriginalImages = menuItemsTemp.filter { !it.imageUri.isNullOrBlank() }.map { it.id to it.imageUri!! }
+
+        menuTempDS.addMenu(menuTemp)
+        menuTempDS.addMenuItems(menuItemsTemp)
     }
 
 
+    fun getCategoriesByName(name:String):List<Category>{
+      return  categories.value?.filter{it.name.lowercase() == name.lowercase()}?: listOf()
+    }
     fun addCategory(name:String){
         viewModelScope.launch {
-            val foundCategory = menuTempDS.findMenuItemByName(type = ItemStyle.MENU_CATEGORY_HEADER.name, name = name)
-            //val foundCategory = _categories.value?.find { it.name.lowercase().trim() == name.lowercase().trim() }
-            if(foundCategory != null)
+            val foundCategory = menuTempDS.findMenuItemsByName(type = ItemStyle.MENU_CATEGORY_HEADER.name, name = name)
+            if(foundCategory.isNotEmpty())
                 return@launch
 
-            //val categories = _categories.value!!
-            //categories.add(
-            //    Category(id = UUID.randomUUID().toString(),
-            //        name = name,
-            //        position = categories.size+1)//NUMERO ALTO PARA QUE SE ORDENE AL FINAL DE LAS CATEGORIAS
-            //)
 
             val id =  UUID.randomUUID().toString()
             val category = MenuItemsTemp(
@@ -167,7 +232,7 @@ class CreateMenuViewModel @Inject constructor(
                 description = name,
                 position = (categories.value?.size?:0) + 1
             )
-            menuTempDS.addCategory(category)
+            menuTempDS.addMenuItem(category)
             refreshCategories()
 
         }
@@ -176,6 +241,7 @@ class CreateMenuViewModel @Inject constructor(
     fun saveEditCategory(editCategory:Category){
         viewModelScope.launch(Dispatchers.IO) {
             val categoryItems = getMenuItems().filter { it.categoryId == editCategory.id }
+
             categoryItems.forEach {
                 it.categoryId = editCategory.id
                 it.categoryName = editCategory.name
@@ -230,8 +296,7 @@ class CreateMenuViewModel @Inject constructor(
                 name=name,
                 description=description,
                 price = amount,
-                localImageUri = currentItemImage.value?.toString(),
-                remoteImageUri = null,
+                imageUri = currentItemImage.value?.toString(),
                 position = (_items.value?.size?:0)+1,
             )
             menuTempDS.addMenuItem(menuItem)
@@ -244,11 +309,10 @@ class CreateMenuViewModel @Inject constructor(
         currentItemImage.postValue(imageUri)
     }
 
-    fun editItem(itemPreview:ItemPreview?){
+    fun editItem(menuItemsTemp: MenuItemsTemp?){
         viewModelScope.launch(Dispatchers.IO) {
-            if(itemPreview != null) {
-                val menuItem = menuTempDS.getMenuItemById(id = itemPreview!!.item.id)
-                _editItem.postValue(menuItem)
+            if(menuItemsTemp != null) {
+                _editItem.postValue(menuItemsTemp)
             }else{
                 _editItem.postValue(null)
             }
@@ -256,15 +320,30 @@ class CreateMenuViewModel @Inject constructor(
     }
     fun saveEditItemChanges(enabled: Boolean,category:Category,name:String, description:String, price:Double){
         viewModelScope.launch(Dispatchers.IO) {
-            val remoteImage = editItem.value?.remoteImageUri
-            //Si la imagen actual es la misma que la remota, no se selecciono una imagen local (no se cambio la imagen)
-            val currentImage = if(currentItemImage.value != null && currentItemImage.value.toString() != remoteImage) currentItemImage.value else null
+            val previousImage = editItem.value?.imageUri
+            val image:String?
+            if(currentItemImage.value == null){//NO IMAGE
+                image = null
+            }else if(currentItemImage.value.toString() == previousImage){//SAME IMAGE
+                image = previousImage
+            }else{
+                image = currentItemImage.value.toString() //IMAGE CHANGE
+            }
 
             val itemStyle: ItemStyle = getItemStyle(
-                hasImage = (currentImage ?: remoteImage) != null,
+                hasImage = image != null,
                 hasDescription =  description.isNotBlank())
 
-            val menuItem = _editItem.value?.copy(type = itemStyle.name,enabled = enabled, categoryId = category.id, categoryName = category.name, name = name, description = description, price = price, localImageUri = currentImage?.toString(), remoteImageUri =  remoteImage)
+            val menuItem = _editItem.value?.copy(
+                type = itemStyle.name,
+                enabled = enabled,
+                categoryId = category.id,
+                categoryName = category.name,
+                name = name,
+                description = description,
+                price = price,
+                imageUri = image)
+
             menuTempDS.updateMenuItem(menuItem!!)
             _editItem.postValue(null)
             refreshItems()
@@ -273,9 +352,10 @@ class CreateMenuViewModel @Inject constructor(
 
     }
 
-    fun deleteItem(itemPreview:ItemPreview){
+    fun deleteItem(menuItemsTemp: MenuItemsTemp){
         viewModelScope.launch {
-            menuTempDS.deleteMenuItemById(id = itemPreview.item.id)
+            menuTempDS.deleteMenuItemById(menuItemsTemp)
+            _editItem.postValue(null)
             refreshItems()
             refreshMenuPreview()
         }
@@ -285,6 +365,7 @@ class CreateMenuViewModel @Inject constructor(
     fun updateMenuSettings(ms: MenuSettings){
         _menuSettings.value = ms
     }
+
     private suspend fun refreshMenuPreview(){
         var previewList =  getItemPreviews().toMutableList()
         _itemsPreview.postValue(previewList)
@@ -311,13 +392,76 @@ class CreateMenuViewModel @Inject constructor(
         _state.value = _state.value?.copy(currentScreen = screen)
     }
 
-    fun processMenu(user:String,companyId: String,fileName:String,itemPreviews:List<ItemPreview>,pdfPath:String){
+
+    fun generateMenu(context:Context,referenceName:String,view: View,fileHeight:Int, pdfFile:File,){
+        val pdfPath = pdfFile.path
+        viewModelScope.launch(Dispatchers.IO) {
+            _stateProcessMenu.postValue(ProcessState(State.LOADING))
+
+            try{
+                val menuItems = menuTempDS.getMenuItemsByMenuId(menuId = menuId)
+                menuItems.filter { item-> item.imageUri != null }.forEach{ item->
+                    //Validar si es una edicion de item y el item no sufrio modificaciones en su imagen
+                    if(_editItemsOriginalImages.any{it.first == item.id && it.second == item.imageUri})
+                        return@forEach
+
+                    val imageUri = Uri.parse(item.imageUri)
+                    val bitmap  = FileUtils.getBitmapFromUri(context=context.applicationContext, imageUri = imageUri)
+                    val imageName = "${UUID.randomUUID()}.jpg"//usamos rowguid y no el nombre el file original para evitar problemas si 2 items tienen la misma imagen.
+                    ///Tamposo usamos la extension con el uri.ToFile() porque el cropper me da una uri de Content y el metodo toFile() no es aplicable
+                    val imageFile = File(context.applicationContext.filesDir, imageName)
+                    FileUtils.resizeAndSaveBitmap(context.applicationContext,bitmap,512f,imageFile)
+                    item.imageUri  = imageFile.toUri().toString()
+                    menuTempDS.updateMenuItem(item)
+
+                }
+
+                FileUtils.layoutToPdf(layout =  view, pdfPath = pdfPath, height = fileHeight)
+
+                //if(true){
+                    processMenuLocal(
+                        user = LoginActivity.account?.email!!,
+                        companyId = company!!.companyId,
+                        fileName = referenceName,
+                        pdfFile = pdfFile.toUri(),
+                        baseDirectory = context.applicationContext.filesDir
+                    )
+               /* }else {
+                    processMenu(
+                        user = LoginActivity.account?.email!!,
+                        companyId = companyId,
+                        fileName = referenceName,
+                        itemPreviews = mutableListOf(),
+                        pdfPath = pdfPath
+                    )
+                }*/
+
+                _stateProcessMenu.postValue(ProcessState(State.SUCCESS))
+
+            }catch (e:Exception){
+                e.printStackTrace()
+                _stateProcessMenu.postValue(ProcessState(State.GENERAL_ERROR))
+            }
+        }
+    }
+
+
+    private fun processMenu(user:String,companyId: String,fileName:String,itemPreviews:List<MenuItemsTemp>,pdfPath:String){
         val menuSettings = getMenuSettings().value!!
         if(_editMenu == null)
             saveMenu(user= user, companyId= companyId, menuSettings = menuSettings,fileName= fileName, itemPreviews= itemPreviews, pdfPath =  pdfPath)
         else
-            saveEditMenu(user = user, companyId = companyId, menuFirebase = _editMenu!!, menuSettings = menuSettings,fileName = fileName, pdfPath = pdfPath)
+            saveEditMenu(user = user, companyId = companyId, menuTemp = _editMenu!!, menuSettings = menuSettings,fileName = fileName, pdfPath = pdfPath)
     }
+
+    private suspend fun processMenuLocal(user:String,companyId: String,fileName:String,pdfFile:Uri, baseDirectory: File){
+        val menuSettings = getMenuSettings().value!!
+        if(_editMenu == null)
+            saveMenuLocal(user= user, companyId= companyId, menuSettings = menuSettings,fileName= fileName, pdfFile =  pdfFile, baseDirectory = baseDirectory)
+        else
+            saveEditMenuLocal(user = user, companyId = companyId, menuTemp = _editMenu!!, menuSettings = menuSettings,fileName = fileName, pdfFile = pdfFile, baseDirectory = baseDirectory)
+    }
+
 
      fun updatePositions(itemPreviewPositions:List<ItemPreviewPosition>){
          viewModelScope.launch(Dispatchers.IO) {
@@ -329,7 +473,9 @@ class CreateMenuViewModel @Inject constructor(
              refreshItems()
          }
     }
-    private fun saveMenu(user:String,companyId: String,menuSettings: MenuSettings,fileName:String,itemPreviews:List<ItemPreview>,pdfPath:String){
+
+
+    private fun saveMenu(user:String,companyId: String,menuSettings: MenuSettings,fileName:String,itemPreviews:List<MenuItemsTemp>,pdfPath:String){
         viewModelScope.launch {
             try {
                 if(!NetworkUtils.isConnectedToInternet()){
@@ -351,18 +497,19 @@ class CreateMenuViewModel @Inject constructor(
         }
     }
 
-    private fun saveEditMenu(user:String,companyId: String,menuFirebase: MenuFirebase,menuSettings: MenuSettings,fileName:String,pdfPath:String){
+    private fun saveEditMenu(user:String,companyId: String,menuTemp: MenuTemp,menuSettings: MenuSettings,fileName:String,pdfPath:String){
         viewModelScope.launch {
             try {
                 if(!NetworkUtils.isConnectedToInternet()){
                     throw TimeoutException()
                 }
+                val menuItemsTemp = menuTempDS.getMenuItemsByMenuId(menuId)
 
-                val menuStorageUrl = uploadMenuFile(user = user,menuId=menuFirebase.menuId, pdfPath = pdfPath).toString()
-                deleteUnusedImagesFromFireStore(user = user,_itemsPreview.value!!)
-                val items = prepareItemsFirebase(user = user, menuId=menuFirebase.menuId, items = _itemsPreview.value!!)
+                val menuStorageUrl = uploadMenuFile(user = user,menuId=menuTemp.menuId, pdfPath = pdfPath).toString()
+                deleteUnusedImages(userId = user, items = menuItemsTemp, online = true)
+                val items = prepareItemsFirebase(user = user, menuId=menuTemp.menuId, items = menuItemsTemp)
 
-                val savedMenu = editMenuFireBase(user =  user, companyId = companyId, menuFirebase = menuFirebase,fileName = fileName, fileUrl =  menuStorageUrl, items =  items, menuSettings = menuSettings)
+                val savedMenu = editMenuFireBase(user =  user, companyId = companyId, menuTemp = menuTemp,fileName = fileName, fileUrl =  menuStorageUrl, items =  items, menuSettings = menuSettings)
                 _stateProcessMenu.postValue(ProcessState(State.SUCCESS,savedMenu.fileUrl))
             }catch (e:TimeoutException){
                 _stateProcessMenu.postValue(ProcessState(State.NETWORK_ERROR))
@@ -373,79 +520,229 @@ class CreateMenuViewModel @Inject constructor(
         }
     }
 
-    private suspend fun uploadMenuFile(user:String,menuId: String, pdfPath:String):Uri {
+    private suspend fun saveMenuLocal(user:String,companyId: String,menuSettings: MenuSettings,fileName:String,pdfFile:Uri, baseDirectory: File){
+                val tempMenuId:String = menuId
+                val menuItemsTemp = menuTempDS.getMenuItemsByMenuId(menuId)
+
+                //VERIFY DIRECTORY CREATION
+                val menuDirectory = FileUtils.createDirectory(baseDirectory = baseDirectory, directoryName = menuId)
+                //MOVE PDF
+                val menuFileUri = saveMenuFile(user = user, menuId = tempMenuId, pdfFile = pdfFile, menuDirectory = menuDirectory).toString()
+                //MOVE IMAGES AND SET  URI to MenuItems
+                val items = prepareItemsLocal(user = user, menuId = tempMenuId, items = menuItemsTemp, menuDirectory = menuDirectory)
+                //SAVE IN DB
+                val savedMenu = saveMenuDB(
+                    user =  user,
+                    companyId = companyId,
+                    menuId = tempMenuId,
+                    fileName = fileName,
+                    fileUri =  menuFileUri,
+                    items =  items,
+                    menuSettings = menuSettings)
+
+    }
+
+
+    private suspend fun saveEditMenuLocal(user:String,companyId: String,menuTemp: MenuTemp,menuSettings: MenuSettings,fileName:String,pdfFile:Uri,baseDirectory:File){
+        val tempMenuId:String = menuId
+        val menuItemsTemp = menuTempDS.getMenuItemsByMenuId(menuId)
+
+        //VERIFY DIRECTORY CREATION
+        val menuDirectory = FileUtils.createDirectory(baseDirectory = baseDirectory, directoryName = menuId)
+
+        //MOVE PDF
+        val menuFileUri = saveMenuFile(user = user, menuId = tempMenuId, pdfFile = pdfFile, menuDirectory = menuDirectory).toString()
+
+        //REMOVE OLD IMAGES
+        deleteUnusedImages(userId= user, items =  menuItemsTemp, online = false)
+
+        val items = prepareItemsLocal(
+            user = user,
+            menuId=menuTemp.menuId,
+            items = menuItemsTemp,
+            menuDirectory = menuDirectory)
+        val savedMenu = updateMenuDB(
+            user =  user,
+            companyId = companyId,
+            menuId = tempMenuId,
+            fileName = fileName,
+            fileUri = menuFileUri,
+            items = items,
+            menuSettings = menuSettings)
+    }
+
+
+    private suspend fun uploadMenuFile(user:String,menuId:String, pdfPath:String):Uri {
       return menuStorage.uploadFile(user,menuId,pdfPath)
     }
-    private suspend fun prepareItemsFirebase(user:String,menuId: String, items:List<ItemPreview>):List<ItemFirebase>{
+    private fun saveMenuFile(user:String,menuId:String, pdfFile:Uri,menuDirectory: File):Uri? {
+        return FileUtils.moveFile(fileUri = pdfFile, directory =  menuDirectory, fileName = "document.pdf")
+    }
+    private suspend fun prepareItemsFirebase(user:String,menuId: String, items:List<MenuItemsTemp>):List<ItemFirebase>{
 
         //UPLOAD LOCAL IMAGES ONLY
-        val firebaseItems = items.mapIndexed { i,preview->
-            val item = preview.item
-            val menuItem = menuTempDS.getMenuItemById(item.id)
-            val image =  if(item.localImage !=null) "*" else item.remoteImage?.toString()
-            ItemFirebase(id = item.id,type = preview.itemStyle.name, categoryId = item.categoryId,categoryName = menuItem.categoryName, name = item.name, description = item.description, price = item.amount.toString(),position = item.position, imageUrl = image)
+        val firebaseItems = items.mapIndexed { _,menuItem->
+                val image =  if(menuItem.imageUri !=null
+                    && (_editItemsOriginalImages.isEmpty() || _editItemsOriginalImages.any { it.first == menuItem.id && it.second != menuItem.imageUri }))
+                    "*"
+                else menuItem.imageUri
+
+            ItemFirebase(
+                id = menuItem.id,
+                type = menuItem.type,
+                categoryId = menuItem.categoryId,
+                categoryName = menuItem.categoryName,
+                name = menuItem.name,
+                description = menuItem.description,
+                price = menuItem.price.toString(),
+                position = menuItem.position,
+                imageUrl = image)
         }
 
         firebaseItems.filter { it.type != ItemStyle.MENU_CATEGORY_HEADER.name && it.imageUrl.equals("*") }
             .forEach{
-                val itemPreview = items.first{ i-> i.item.id == it.id}
-                val url = menuStorage.uploadMenuItemsImages(user,menuId,itemPreview.item.localImage!!)
+                val menuItem = items.first{ i-> i.id == it.id}
+                val url = menuStorage.uploadMenuItemsImages(user,menuId,Uri.parse(menuItem.imageUri))
                 it.imageUrl = url.toString()
             }
         return firebaseItems
     }
 
-    private suspend fun deleteUnusedImagesFromFireStore(user:String,itemPreviews:List<ItemPreview>){
-        if(_editMenu != null){
-            //items de firebase con imagen
-            val fireBaseItems = _editMenu!!.items.filter { it.imageUrl != null }
 
+    private fun prepareItemsLocal(user:String,menuId: String, items:List<MenuItemsTemp>,menuDirectory: File):List<MenuItems>{
+
+        //UPLOAD LOCAL IMAGES ONLY
+        val menuItems = items.mapIndexed { _,menuItem->
+            val image =  if(menuItem.imageUri !=null
+                && (_editItemsOriginalImages.isEmpty() || _editItemsOriginalImages.any { it.first == menuItem.id && it.second != menuItem.imageUri }))
+                "*"
+            else menuItem.imageUri
+
+            MenuItems(
+                id = menuItem.id,
+                menuId = menuId,
+                type = menuItem.type,
+                enabled = menuItem.enabled,
+                categoryId = menuItem.categoryId,
+                categoryName = menuItem.categoryName,
+                name = menuItem.name,
+                description = menuItem.description,
+                price = menuItem.price.toString(),
+                imageUri = image,
+                position = menuItem.position)
+        }
+
+        menuItems.filter { it.type != ItemStyle.MENU_CATEGORY_HEADER.name && it.imageUri.equals("*") }
+            .forEach{
+                val menuItemTemp = items.first{ i-> i.id == it.id}
+                val uri = FileUtils.moveFile(
+                    fileUri =  Uri.parse(menuItemTemp.imageUri),
+                    directory = menuDirectory)
+                it.imageUri = uri.toString()
+            }
+        return menuItems
+    }
+
+    private suspend fun deleteUnusedImages(userId:String,items:List<MenuItemsTemp>, online:Boolean){
+        if(_editMenu != null){
             //removed items (items que estaban en la DB de firebase y en despues de la edicion ya no)
-            val deletedItems = fireBaseItems.filter {fbi->
-               fbi.id !in itemPreviews.map { it.item.id }
+            val deletedItems = _editItemsOriginalImages.filter {oi->
+                items.none { it.id == oi.first }
             }
             //existing items with removed images (Items guardados en firebase que TENIAN IMAGEN y ahora NO TIENEN)
-            val removedImages = fireBaseItems.filter { fbi->
-                fbi.id in itemPreviews.filter { it.item.localImage == null && it.item.remoteImage == null }.map { it.item.id }
+            val removedImages = _editItemsOriginalImages.filter { oi->
+                items.any { it.id == oi.first && it.imageUri == null  }
             }
+
             //images changed (items que tenian imagen remota y se la actualizaron)
-            val changedImages = fireBaseItems.filter {fbi->
-                fbi.id in itemPreviews.filter { it.item.localImage != null && it.item.remoteImage == null }.map { it.item.id }
+            val changedImages = _editItemsOriginalImages.filter { oi->
+                items.any { it.id == oi.first && it.imageUri != null && it.imageUri != oi.second  }
             }
 
             val imagesToRemove = mutableListOf<String?>()
-            imagesToRemove.addAll(deletedItems.map { it.imageUrl })
-            imagesToRemove.addAll(removedImages.map { it.imageUrl })
-            imagesToRemove.addAll(changedImages.map { it.imageUrl })
+            imagesToRemove.addAll(deletedItems.map { it.second })
+            imagesToRemove.addAll(removedImages.map { it.second })
+            imagesToRemove.addAll(changedImages.map { it.second })
             //DELETE ALL UNUSED IMAGES
             imagesToRemove.forEach{
-                    menuStorage.removeMenuItemsImages(user,_editMenu!!.menuId,Uri.parse(it))
+                val uri = Uri.parse(it)
+                if(online)
+                    menuStorage.removeMenuItemsImages(userId,_editMenu!!.menuId,uri)
+                else
+                    FileUtils.deleteFile(uri)
                 }
         }
     }
+
+    private fun deleteUnusedImagesLocal(menuItemsTemp:List<MenuItemsTemp>){
+        /*
+        if(_editMenu != null){
+            //items  con imagen
+            val localItems = _editMenuItems!!.filter { it.remoteImageUri != null }
+
+            //removed items (items que estaban en la DB y en despues de la edicion ya no)
+            val deletedItems = localItems.filter {fbi->
+                fbi.id !in menuItemsTemp.map { it.id }
+            }
+            //existing items with removed images (Items guardados que TENIAN IMAGEN y ahora NO TIENEN)
+            val removedImages = localItems.filter { fbi->
+                fbi.id in menuItemsTemp.filter { it.localImageUri == null && it.remoteImageUri == null }.map { it.id }
+            }
+            //images changed (items que tenian imagen y se la actualizaron)
+            val changedImages = localItems.filter {fbi->
+                fbi.id in menuItemsTemp.filter { it.localImageUri != null && it.remoteImageUri == null }.map { it.id }
+            }
+
+            val imagesToRemove = mutableListOf<String?>()
+            imagesToRemove.addAll(deletedItems.map { it.remoteImageUri })
+            imagesToRemove.addAll(removedImages.map { it.remoteImageUri })
+            imagesToRemove.addAll(changedImages.map { it.remoteImageUri })
+            //DELETE ALL UNUSED IMAGES
+            imagesToRemove.forEach{
+                FileUtils.deleteFile(Uri.parse(it))
+            }
+        }*/
+    }
+
+
      private fun saveMenuFireBase(user:String,companyId:String,menuId:String, fileName:String, fileUrl:String, items:List<ItemFirebase>,menuSettings: MenuSettings):MenuFirebase{
          val menu = MenuFirebase(menuId = menuId,name=fileName,fileUrl= fileUrl, items = items, menuSettings = menuSettings)
          menuService.saveMenu(user, companyId = companyId,menu)
          return menu
     }
 
-    private fun editMenuFireBase(user:String,companyId:String,menuFirebase: MenuFirebase, fileName:String, fileUrl:String, items:List<ItemFirebase>, menuSettings: MenuSettings):MenuFirebase{
-        val menu = MenuFirebase(fireBaseRef = menuFirebase.fireBaseRef,menuId = menuFirebase.menuId,name=fileName,fileUrl= fileUrl, items = items, menuSettings = menuSettings)
+    private fun editMenuFireBase(user:String,companyId:String,menuTemp: MenuTemp, fileName:String, fileUrl:String, items:List<ItemFirebase>, menuSettings: MenuSettings):MenuFirebase{
+        val menu = MenuFirebase(fireBaseRef = menuTemp.fireBaseRef,menuId = menuTemp.menuId,name=fileName,fileUrl= fileUrl, items = items, menuSettings = menuSettings)
         menuService.updateMenu(user, companyId = companyId,menu)
         return menu
     }
 
 
-
-
-    private suspend fun initCategories(menuFirebase: MenuFirebase?){
-        //reasignar valor inicial a la posicion de NO_CATEGORY
-        val position = menuFirebase?.items?.firstOrNull{it.id == noCategoryId}?.position?:0
-        if(_categories.value == null){
-            menuTempDS.clearAll()
-            saveCategory(menuId, noCategoryId, noCategoryDescription, position)
-        }
+    private suspend fun saveMenuDB(user:String,companyId:String,menuId:String, fileName:String, fileUri:String, items:List<MenuItems>,menuSettings: MenuSettings):Menu{
+        val menu = Menu(
+            menuId = menuId,
+            companyId = companyId,
+            name=fileName,
+            fileUri= fileUri,
+            menuSettings = StringUtils.objectToJson(menuSettings))
+        menuDS.addMenu(menu=menu)
+        menuDS.addOrUpdateMenuItems(menuItems = items)
+        return menu
     }
+
+    private suspend fun updateMenuDB(user:String,companyId:String,menuId:String, fileName:String, fileUri:String, items:List<MenuItems>,menuSettings: MenuSettings):Menu{
+        val menu = Menu(
+            menuId = menuId,
+            companyId = companyId,
+            name=fileName,
+            fileUri= fileUri,
+            menuSettings = StringUtils.objectToJson(menuSettings))
+        menuDS.updateMenu(menu=menu)
+        menuDS.deleteMenuItemsByMenuId(menuId = menuId)
+        menuDS.addOrUpdateMenuItems(menuItems = items)
+        return menu
+    }
+
 
     private suspend fun refreshCategories(){
         val categories = getCategories()
@@ -470,21 +767,17 @@ class CreateMenuViewModel @Inject constructor(
             ItemStyle.MENU_IMAGE_TITLE_DESCRIPTION_PRICE.name).toMutableList()
     }
 
-    private suspend fun getItemPreviews():List<ItemPreview>{
+    private suspend fun getItemPreviews():List<MenuItemsTemp>{
         return menuTempDS.getMenuItemsByType(
             ItemStyle.MENU_CATEGORY_HEADER.name,
             ItemStyle.MENU_TITLE_PRICE.name,
             ItemStyle.MENU_TITLE_DESCRIPTION_PRICE.name,
-            ItemStyle.MENU_IMAGE_TITLE_DESCRIPTION_PRICE.name).map {
-            ItemPreview(
-                item = Item(id = it.id,enabled = it.enabled, categoryId = it.categoryId, name = it.name, description = it.description, amount = it.price, position = it.position, localImage = if(!it.localImageUri.isNullOrBlank())Uri.parse(it.localImageUri) else null,remoteImage = if(!it.remoteImageUri.isNullOrBlank()) Uri.parse(it.remoteImageUri) else null),
-                itemStyle = ItemStyle.valueOf(it.type)
-            )
-        }.sortedBy { it.item.position }
+            ItemStyle.MENU_IMAGE_TITLE_DESCRIPTION_PRICE.name)
+            .sortedBy { it.position }
     }
 
     private fun orderCategoriesByName(categories:MutableList<Category>) {
-        val noCategory = categories.first{it.id == noCategoryId}
+        val noCategory = categories.firstOrNull{it.id == noCategoryId} ?: return
         categories.remove(noCategory)
         categories.sortBy { it.name }
         categories.add(0, noCategory)
@@ -502,7 +795,7 @@ class CreateMenuViewModel @Inject constructor(
             description = name,
             position = position
         )
-        menuTempDS.addCategory(category)
+        menuTempDS.addMenuItem(category)
     }
 
     private fun getItemStyle(hasImage: Boolean, hasDescription: Boolean) =  if(hasImage){
@@ -516,10 +809,16 @@ class CreateMenuViewModel @Inject constructor(
     class CreateMenuViewModelFactory @Inject constructor (
         private val menuStorageProvider: Provider<MenuStorage>, //usamos provider para eviar bugs (ver video)
         private val menuService:Provider<MenuService>,
-        private val menuTempDS:Provider<MenuTempDS>
+        private val companyService: Provider<CompanyService>,
+        private val menuTempDS:Provider<MenuTempDS>,
+        private val menuDS:Provider<MenuDS>
     ):ViewModelProvider.Factory{
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return CreateMenuViewModel(menuStorage = menuStorageProvider.get(), menuService = menuService.get(), menuTempDS = menuTempDS.get()) as T
+            return CreateMenuViewModel(
+                menuStorage = menuStorageProvider.get(),
+                menuService = menuService.get(), menuTempDS = menuTempDS.get(),
+                companyService = companyService.get(),
+                menuDS = menuDS.get()) as T
         }
 
     }

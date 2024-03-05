@@ -8,6 +8,8 @@ import android.graphics.pdf.PdfDocument
 import android.net.Uri
 import android.os.Environment
 import android.view.View
+import androidx.core.net.toFile
+import androidx.core.net.toUri
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.resource.bitmap.DownsampleStrategy
@@ -131,6 +133,37 @@ object FileUtils {
             directory.listFiles()?.forEach {
                 it.delete()
             }
+    }
+
+    fun moveFile(fileUri: Uri, directory: File, fileName:String?=null): Uri? {
+        val file = fileUri.toFile()
+        val newFile = File(directory, fileName?:file.name) // Create a new file object in the destination directory
+
+        if (file.exists()) {
+            if (file.renameTo(newFile)) {
+                return newFile.toUri()
+            } else {
+                throw Exception("Error moving file!")
+            }
+        } else {
+            throw Exception("File ${file.name} not found!")
+        }
+    }
+
+    fun createDirectory(baseDirectory:File,directoryName: String):File {
+
+        val directory = File(baseDirectory, directoryName)
+        if(!directory.exists()){
+            if(!directory.mkdirs()) throw Exception("Directory $directory could not be created")
+        }
+        return directory
+    }
+
+    fun deleteFile(fileUri: Uri) {
+        val file = fileUri.toFile()
+        if (file.exists()) {
+            file.delete()
+        }
     }
 
 

@@ -2,6 +2,8 @@
     <!--
     <string name="server_client_id">1025547524096-enpaob40mr9rk2ic1s6q1vvofk2f58ek.apps.googleusercontent.com</string>
     -->
+    <string name="interstitial_add_id_test" translatable="false">ca-app-pub-3940256099942544/1033173712</string>
+    <string name="interstitial_add_id" translatable="false">ca-app-pub-8775587472639334/9465721003</string>
     <string name="app_name">MenuGenerator</string>
     <string name="title_activity_login">LoginActivity</string>
     <string name="prompt_email">Email</string>
@@ -95,4 +97,9 @@
     <string name="check_your_network">Please check your internet connection and try again later</string>
     <string name="close">Close</string>
     <string name="no_category">No category</string>
+    <string name="warning">Warning</string>
+    <string name="add_products_to_continue">Add products to this menu to continue</string>
+    <string name="name_in_use">This name is in use</string>
+    <string name="qr_code">QR Code</string>
+    <string name="upload">Upload</string>
 </resources>

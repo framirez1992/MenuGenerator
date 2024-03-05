@@ -3,6 +3,7 @@ package com.far.menugenerator.view.common
 import android.content.Intent
 import com.far.menugenerator.MainActivity
 import com.far.menugenerator.R
+import com.far.menugenerator.model.common.MenuReference
 import com.far.menugenerator.model.database.model.CompanyFirebase
 import com.far.menugenerator.model.database.model.MenuFirebase
 import com.far.menugenerator.view.CompanyActivity
@@ -34,21 +35,21 @@ class ScreenNavigation (private val baseActivity: BaseActivity) {
         activity.startActivity(i)
     }
 
-    fun menuActivity(company: CompanyFirebase, menuFirebase: MenuFirebase?){
+    fun menuActivity(companyReference: String, menuFirebase: MenuReference?){
         val i = Intent(activity,MenuActivity::class.java).apply {
-            putExtra(MenuActivity.ARG_COMPANY,company)
+            putExtra(MenuActivity.ARG_COMPANY,companyReference)
             putExtra(MenuActivity.ARG_MENU,menuFirebase)
         }
         activity.startActivity(i)
     }
 
-    fun createMenuFragment(company: CompanyFirebase, menuFirebase: MenuFirebase?){
-        currentFragment = CreateMenuFragment.newInstance(company,menuFirebase)
+    fun createMenuFragment(companyReference: String, menuReference: MenuReference?){
+        currentFragment = CreateMenuFragment.newInstance(companyReference,menuReference)
         setFragment()
     }
-    fun qrImagePreview(companyId:String,firebaseRef:String){
+    fun qrImagePreview(companyId:String,menuReference: MenuReference){
         val i = Intent(activity, QRPreview::class.java).apply {
-            putExtra(QRPreview.ARG_MENU_REF,firebaseRef)
+            putExtra(QRPreview.ARG_MENU_REF,menuReference)
             putExtra(QRPreview.ARG_COMPANY_ID,companyId)
         }
         activity.startActivity(i)

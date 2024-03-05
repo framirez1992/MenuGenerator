@@ -7,7 +7,7 @@ import androidx.annotation.StringRes
 
 import androidx.fragment.app.DialogFragment
 import com.far.menugenerator.R
-import com.far.menugenerator.databinding.NoInternetConnectionBinding
+import com.far.menugenerator.databinding.DialogImageTitleDescriptionBinding
 import com.far.menugenerator.view.adapters.ImageOption
 import com.far.menugenerator.view.dialogs.DialogLoading
 import com.far.menugenerator.view.dialogs.DialogProductEdit
@@ -68,9 +68,17 @@ class DialogManager(private val baseActivity: BaseActivity) {
     }
 
     fun showInternetErrorDialog(){
-        val binding = NoInternetConnectionBinding.inflate(baseActivity.layoutInflater)
-        val dialogBuilder = getMaterialDialogBuilder(binding.root)
+        val binding = DialogImageTitleDescriptionBinding.inflate(baseActivity.layoutInflater)
+        binding.img.setImageResource(R.drawable.no_internet)
+        binding.title.setText(R.string.network_error)
+        binding.body.setText(R.string.check_your_network)
+        showSingleButtonDialog(binding.root)
+    }
+
+    fun showSingleButtonDialog(view:View,onButtonClick:()->Unit = {}){
+        val dialogBuilder = getMaterialDialogBuilder(view)
         dialogBuilder.setPositiveButton(R.string.close){ dialog, _->
+            onButtonClick()
             dialog.dismiss()
         }
         dialogBuilder.show()

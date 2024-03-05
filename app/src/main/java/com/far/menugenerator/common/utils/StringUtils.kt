@@ -1,5 +1,6 @@
 package com.far.menugenerator.common.utils
 
+import com.google.gson.Gson
 import java.text.DecimalFormat
 import java.text.NumberFormat
 import java.util.Locale
@@ -18,5 +19,9 @@ object StringUtils {
     =  NumberFormat.getCurrencyInstance(Locale(language, country)).format(amount)
 
 
+    fun objectToJson(obj:Any):String{
+        val gson = Gson()
+        return gson.toJson(obj)
+    }
 
 }
