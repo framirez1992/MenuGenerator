@@ -5,10 +5,19 @@ import android.view.Menu
 import android.view.MenuItem
 import androidx.fragment.app.Fragment
 import android.view.View
+import android.widget.Toast
 import androidx.core.net.toFile
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.android.billingclient.api.BillingClient
+import com.android.billingclient.api.BillingClient.BillingResponseCode
+import com.android.billingclient.api.BillingClientStateListener
+import com.android.billingclient.api.BillingFlowParams
+import com.android.billingclient.api.BillingResult
+import com.android.billingclient.api.ProductDetails
+import com.android.billingclient.api.PurchasesUpdatedListener
+import com.android.billingclient.api.QueryProductDetailsParams
 import com.far.menugenerator.R
 import com.far.menugenerator.common.helpers.ActivityHelper
 import com.far.menugenerator.databinding.FragmentMenuListBinding
@@ -23,6 +32,8 @@ import com.far.menugenerator.view.common.DialogManager
 import com.far.menugenerator.view.common.ScreenNavigation
 import com.far.menugenerator.viewModel.MenuListViewModel
 import com.google.android.material.snackbar.Snackbar
+import com.google.common.collect.ImmutableList
+import java.util.UUID
 import javax.inject.Inject
 
 // TODO: Rename parameter arguments, choose names that match
@@ -45,7 +56,19 @@ class MenuList : BaseActivity() {
     @Inject lateinit var screenNavigation: ScreenNavigation
     @Inject lateinit var dialogManager: DialogManager
 
+    private lateinit var productDetail:ProductDetails
 
+    private val purchasesUpdatedListener =
+        PurchasesUpdatedListener { billingResult, purchases ->
+            // To be implemented in a later section.
+            if(billingResult.responseCode == BillingResponseCode.OK){
+                Toast.makeText(this,"Purchased",Toast.LENGTH_LONG).show()
+            }else{
+                Toast.makeText(this,billingResult.debugMessage,Toast.LENGTH_LONG).show()
+            }
+
+        }
+    private lateinit var billingClient:BillingClient
 
     companion object {
          const val ARG_COMPANY = "company"
@@ -60,8 +83,15 @@ class MenuList : BaseActivity() {
         company = intent?.extras?.getSerializable(ARG_COMPANY) as CompanyFirebase
         viewModel = ViewModelProvider(this,factory)[MenuListViewModel::class.java]
 
+       billingClient = BillingClient.newBuilder(this)
+            .setListener(purchasesUpdatedListener)
+            .enablePendingPurchases()
+            .build()
+
         initViews()
         initObservers()
+
+
     }
 
     override fun onResume() {
@@ -86,6 +116,9 @@ class MenuList : BaseActivity() {
         binding.swipe.setOnRefreshListener {
             searchMenus()
         }
+        binding.btnItem.setOnClickListener{
+            launchPurchaseFlow(productDetail)
+        }
     }
 
     private fun initObservers(){
@@ -109,6 +142,7 @@ class MenuList : BaseActivity() {
 
                 dialogManager.showImageBottomSheet(options){option->
                     when(option.string){
+                        R.string.upload->{startGoogleBillingConnection()}
                         R.string.preview -> {
                             viewModel.searchPreviewUri(
                             user = LoginActivity.account?.email!!,
@@ -193,6 +227,73 @@ class MenuList : BaseActivity() {
             positiveText = R.string.delete,
             negativeText = R.string.cancel){_,_->
             viewModel.deleteMenu(LoginActivity.account?.email!!, companyId = company?.companyId!!, menuReference = menuReference)
+        }
+    }
+
+
+    private fun startGoogleBillingConnection(){
+
+        billingClient.startConnection(object : BillingClientStateListener {
+            override fun onBillingSetupFinished(billingResult: BillingResult) {
+                if (billingResult.responseCode ==  BillingClient.BillingResponseCode.OK) {
+                    // The BillingClient is ready. You can query purchases here.
+                    queryProductDetail()
+                }
+            }
+            override fun onBillingServiceDisconnected() {
+                // Try to restart the connection on the next request to
+                // Google Play by calling the startConnection() method.
+                startGoogleBillingConnection()
+            }
+        })
+    }
+
+    private fun queryProductDetail(){
+        val queryProductDetailsParams =
+            QueryProductDetailsParams.newBuilder()
+                .setProductList(
+                    ImmutableList.of(
+                        QueryProductDetailsParams.Product.newBuilder()
+                            .setProductId("test1")
+                            .setProductType(BillingClient.ProductType.INAPP)
+                            .build()))
+                .build()
+
+        billingClient.queryProductDetailsAsync(queryProductDetailsParams) {
+                billingResult,
+                productDetailsList ->
+            // check billingResult
+            // process returned productDetailsList
+            if(billingResult.responseCode == BillingResponseCode.OK) {
+                productDetail = productDetailsList[0]
+                binding.btnItem.text = productDetail.title
+            }else{
+                Toast.makeText(this,billingResult.debugMessage,Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    private fun launchPurchaseFlow(productDetails:ProductDetails){
+        val productDetailsParamsList = listOf(
+            BillingFlowParams.ProductDetailsParams.newBuilder()
+                // retrieve a value for "productDetails" by calling queryProductDetailsAsync()
+                .setProductDetails(productDetails)
+                // For One-time product, "setOfferToken" method shouldn't be called.
+                // For subscriptions, to get an offer token, call ProductDetails.subscriptionOfferDetails()
+                // for a list of offers that are available to the user
+                .build()
+        )
+
+        val billingFlowParams = BillingFlowParams.newBuilder()
+            .setProductDetailsParamsList(productDetailsParamsList)
+            .build()
+
+// Launch the billing flow
+        val billingResult = billingClient.launchBillingFlow(this, billingFlowParams)
+        if(billingResult.responseCode == BillingResponseCode.OK){
+            Toast.makeText(this,billingResult.debugMessage,Toast.LENGTH_LONG).show()
+        }else{
+            Toast.makeText(this,billingResult.debugMessage,Toast.LENGTH_LONG).show()
         }
     }
 

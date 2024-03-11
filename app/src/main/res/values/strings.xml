@@ -3,6 +3,7 @@
     <string name="server_client_id">1025547524096-enpaob40mr9rk2ic1s6q1vvofk2f58ek.apps.googleusercontent.com</string>
     -->
     <string name="interstitial_add_id_test" translatable="false">ca-app-pub-3940256099942544/1033173712</string>
+
     <string name="interstitial_add_id" translatable="false">ca-app-pub-8775587472639334/9465721003</string>
     <string name="app_name">MenuGenerator</string>
     <string name="title_activity_login">LoginActivity</string>
