@@ -10,10 +10,8 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.ArrayAdapter
 import android.widget.CompoundButton
-import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -35,8 +33,6 @@ import com.far.menugenerator.model.MenuSettings
 import com.far.menugenerator.model.MenuStyle
 import com.far.menugenerator.model.State
 import com.far.menugenerator.model.common.MenuReference
-import com.far.menugenerator.model.database.model.CompanyFirebase
-import com.far.menugenerator.model.database.model.MenuFirebase
 import com.far.menugenerator.model.database.room.model.MenuItemsTemp
 import com.far.menugenerator.view.adapters.CategoriesAdapter
 import com.far.menugenerator.view.adapters.ImageOption
@@ -81,7 +77,7 @@ class CreateMenuFragment : BaseFragment() {
         arguments?.let {
             val companyReference = it.getString(ARG_COMPANY)
             val menuReference = it.getSerializable(ARG_EDIT_MENU) as MenuReference?
-            _viewModel.setInitialValues(userId = LoginActivity.account?.email!!,companyReference = companyReference!!, menuReference = menuReference)
+            _viewModel.setInitialValues(userId = LoginActivity.userFirebase?.internalId!!,companyReference = companyReference!!, menuReference = menuReference)
             _viewModel.prepareMenu()
         }
     }
@@ -103,10 +99,6 @@ class CreateMenuFragment : BaseFragment() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        /*if (requestCode == REQUEST_CODE_PICK_IMAGE && resultCode == Activity.RESULT_OK) {
-            val imageUri: Uri? = data?.data
-            _viewModel.updateCurrentItemImage(imageUri)
-        }*/
         if(requestCode == BaseActivity.REQUEST_CODE_CROP_IMAGE && resultCode == Activity.RESULT_OK){
             val imageUri: CropImage.ActivityResult? = data?.extras?.getParcelable(CropImage.CROP_IMAGE_EXTRA_RESULT)
             _viewModel.updateCurrentItemImage(imageUri?.uriContent)
@@ -726,7 +718,7 @@ class CreateMenuFragment : BaseFragment() {
                             .setAllCorners(CornerFamily.ROUNDED, (logoSize * 0.1).toFloat())
                             .build()
                     }else->{
-                    ShapeAppearanceModel()
+                        ShapeAppearanceModel()
                     }
 
                 }

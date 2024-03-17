@@ -2,6 +2,8 @@ package com.far.menugenerator.model.denpendencyInjection.presentation
 
 import com.far.menugenerator.model.database.CompanyService
 import com.far.menugenerator.model.database.MenuService
+import com.far.menugenerator.model.database.PurchaseService
+import com.far.menugenerator.model.database.UserService
 import com.far.menugenerator.model.database.room.RoomDB
 import com.far.menugenerator.model.database.room.services.MenuDS
 import com.far.menugenerator.model.database.room.services.MenuTempDS
@@ -28,6 +30,13 @@ class PresentationModule(){
     @PresentationScope
     @Provides
     fun storageCompany(firebaseStorage:FirebaseStorage):CompanyStorage = CompanyStorage(firebaseStorage)
+
+    @PresentationScope
+    @Provides
+    fun userServiceFirebase(firebase:FirebaseFirestore):UserService = UserService(firebase)
+    @PresentationScope
+    @Provides
+    fun orderServiceFirebase(firebase:FirebaseFirestore):PurchaseService = PurchaseService(firebase)
 
     @PresentationScope
     @Provides

@@ -418,23 +418,24 @@ class CreateMenuViewModel @Inject constructor(
 
                 FileUtils.layoutToPdf(layout =  view, pdfPath = pdfPath, height = fileHeight)
 
-                //if(true){
+                if(menuReference != null && menuReference?.online!!){//(Solo se crean Locales, luego de comprados se mandan a firebase) Si es online Hacer por firebase
+                    processMenu(
+                        user = LoginActivity.userFirebase?.internalId!!,
+                        companyId = company!!.companyId,
+                        fileName = referenceName,
+                        itemPreviews = mutableListOf(),
+                        pdfPath = pdfPath
+                    )
+
+                }else {
                     processMenuLocal(
-                        user = LoginActivity.account?.email!!,
+                        user = LoginActivity.userFirebase?.internalId!!,
                         companyId = company!!.companyId,
                         fileName = referenceName,
                         pdfFile = pdfFile.toUri(),
                         baseDirectory = context.applicationContext.filesDir
                     )
-               /* }else {
-                    processMenu(
-                        user = LoginActivity.account?.email!!,
-                        companyId = companyId,
-                        fileName = referenceName,
-                        itemPreviews = mutableListOf(),
-                        pdfPath = pdfPath
-                    )
-                }*/
+                }
 
                 _stateProcessMenu.postValue(ProcessState(State.SUCCESS))
 

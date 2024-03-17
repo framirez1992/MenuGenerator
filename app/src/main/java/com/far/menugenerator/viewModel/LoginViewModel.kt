@@ -3,22 +3,65 @@ package com.far.menugenerator.viewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.far.menugenerator.model.LoggedInUser
-import com.far.menugenerator.model.LoginState
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import com.far.menugenerator.model.ProcessState
+import com.far.menugenerator.model.State
+import com.far.menugenerator.model.database.UserService
+import com.far.menugenerator.model.database.model.PLAN
+import com.far.menugenerator.model.database.model.UserFirebase
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import java.util.UUID
+import javax.inject.Inject
+import javax.inject.Provider
 
-class LoginViewModel:ViewModel() {
+class LoginViewModel(
+    val userService: UserService
+):ViewModel() {
 
-    private val _state = MutableLiveData<LoginState>()
-    val state:LiveData<LoginState> =_state
+    private val _state = MutableLiveData<ProcessState>()
+    val state:LiveData<ProcessState> =_state
+    private lateinit var _userFirebase:UserFirebase
 
-    //var user = MutableLiveData<LoggedInUser?>()
+    fun getUser()= _userFirebase
 
-    init {
-        _state.value = LoginState(false,"")
-        //user.value = null
+    fun loadUser(account: GoogleSignInAccount){
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                _state.postValue(ProcessState(State.LOADING))
+                var user = userService.getUser(account.email!!)
+                if(user == null) {
+                    user = UserFirebase(
+                        internalId = UUID.randomUUID().toString(),
+                        accountId = account.id,
+                        email = account.email!!,
+                        plan = PLAN.FREE.name,
+                        enabled = true
+                    )
+                    userService.registerUser(user = user)
+                    _userFirebase = user
+                }else{
+                   _userFirebase = user
+                }
+                _state.postValue(ProcessState(State.SUCCESS))
+
+            }catch (e:Exception){
+                _state.postValue(ProcessState(State.GENERAL_ERROR))
+            }
+        }
     }
 
 
+
+    class LoginViewModelFactory @Inject constructor(
+        private val userService: Provider<UserService>
+    ):ViewModelProvider.Factory{
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            return LoginViewModel(userService = userService.get()) as T
+        }
+    }
 
 
 }

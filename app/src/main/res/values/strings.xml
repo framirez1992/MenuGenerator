@@ -103,4 +103,20 @@
     <string name="name_in_use">This name is in use</string>
     <string name="qr_code">QR Code</string>
     <string name="upload">Upload</string>
+    <string name="upgrade">Upgrade</string>
+    <string name="buy">Buy</string>
+    <string name="subscribe">Subscribe</string>
+    <string name="show_demo">Show Demo</string>
+    <string name="menus_are_saved_online_msg">Menus are saved online. You can access them from any device.</string>
+    <string name="access_to_the_menu_qr_code_msg">Access to the menu QR code. You can print it and paste it on your business or your business cards so that your customers can scan it and see the menu.</string>
+    <string name="access_to_the_url_msg">Access to the URL of your menu. You can share the link on your social networks so that your clients can see it.</string>
+    <string name="pending_payment">Pending payment</string>
+    <string name="the_payment_is_being_processed">The payment is being processed. once it is applied you can return to this screen to complete the purchase.</string>
+    <string name="an_error_has_occurred_validating_the_purchase">An error has occurred validating the purchase.</string>
+    <string name="feature_not_supported">Feature not supported</string>
+    <string name="item_already_owned">Item already owned</string>
+    <string name="item_not_owned">Item not owned</string>
+    <string name="item_unavailable">Item unavailable</string>
+    <string name="service_disconnected">Service disconnected</string>
+    <string name="service_unavailable">Service unavailable</string>
 </resources>

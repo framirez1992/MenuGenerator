@@ -1,17 +1,10 @@
 package com.far.menugenerator.view
 
-import android.content.ActivityNotFoundException
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
-import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.Toast
-import androidx.core.content.FileProvider
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.ViewModelProvider
 import com.far.menugenerator.R
@@ -110,13 +103,13 @@ class QRPreview : BaseActivity() {
     }
 
     private fun drawQRCode(){
-        _viewModel.drawMenu(user = LoginActivity.account?.email!!, companyId = companyId!!, fireBaseRef = menuRef?.firebaseRef!!)
+        _viewModel.drawMenu(user = LoginActivity.userFirebase?.internalId!!, companyId = companyId!!, fireBaseRef = menuRef?.firebaseRef!!)
     }
 
     private fun showOptions(){
         val options = listOf(
             //ImageOption(icon = R.drawable.baseline_remove_red_eye_24, R.string.preview),
-            ImageOption(icon = R.drawable.round_link_24, R.string.copy_link),
+            //ImageOption(icon = R.drawable.round_link_24, R.string.copy_link),
             //ImageOption(icon = R.drawable.baseline_file_present_24,R.string.share_menu),
             ImageOption(icon = R.drawable.rounded_qr_code_2_24,R.string.share_qr_code)
         )

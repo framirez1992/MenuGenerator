@@ -52,8 +52,8 @@ class MenuListViewModel @Inject constructor(
         viewModelScope.launch {
             searchMenuProcess.postValue(ProcessState(State.LOADING))
             val menuList = mutableListOf<MenuReference?>()
-            val onlineMenus = menuService.getMenus(user,companyId).map {  MenuReference(menuId = it!!.menuId, firebaseRef = it.fireBaseRef!!, name = it.name, online = true)}
-            val localMenus = menuDS.getMenusByCompanyId(companyId).map { MenuReference(menuId = it.menuId, firebaseRef = null, name = it.name, online = false) }
+            val onlineMenus = menuService.getMenus(user,companyId).map {  MenuReference(menuId = it!!.menuId, firebaseRef = it.fireBaseRef!!, name = it.name, fileUri = it.fileUrl, online = true)}
+            val localMenus = menuDS.getMenusByCompanyId(companyId).map { MenuReference(menuId = it.menuId, firebaseRef = null, name = it.name,it.fileUri!!, online = false) }
 
             menuList.addAll(onlineMenus)
             menuList.addAll(localMenus)
@@ -129,9 +129,7 @@ class MenuListViewModel @Inject constructor(
                          menuReference: MenuReference,
                          ){
         viewModelScope.launch(Dispatchers.IO) {
-
             previewFileState.postValue(ProcessState(State.LOADING))
-
             try{
                 fileUri = getFilePath(
                     user =  user,

@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".view.PremiumActivity"
+    android:paddingHorizontal="50dp"
+    android:paddingVertical="30dp">
+
+    <ImageView android:id="@+id/logo"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:src="@drawable/upgrade"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/title"/>
+
+    <TextView android:id="@+id/title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/logo"
+        app:layout_constraintBottom_toTopOf="@id/tvOnline"
+        android:text="Upgrade"
+        android:gravity="center"
+        android:textSize="25sp"
+        android:textStyle="bold"
+        android:paddingVertical="10dp"/>
+
+    <ImageView
+        android:id="@+id/imgOnline"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:src="@drawable/outline_cloud_done_24"
+        app:layout_constraintEnd_toStartOf="@id/tvOnline"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@id/tvOnline"
+        app:layout_constraintBottom_toBottomOf="@id/tvOnline" />
+
+    <TextView
+        android:id="@+id/tvOnline"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="10dp"
+        android:paddingVertical="5dp"
+        android:text="@string/menus_are_saved_online_msg"
+        app:layout_constraintTop_toBottomOf="@id/title"
+        app:layout_constraintBottom_toTopOf="@id/tvQR"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/imgOnline" />
+
+    <ImageView
+        android:id="@+id/imgQR"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:src="@drawable/rounded_qr_code_2_24"
+        app:layout_constraintEnd_toStartOf="@id/tvQR"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@id/tvQR"
+        app:layout_constraintBottom_toBottomOf="@id/tvQR"/>
+
+    <TextView
+        android:id="@+id/tvQR"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="10dp"
+        android:paddingVertical="5dp"
+        android:text="@string/access_to_the_menu_qr_code_msg"
+        app:layout_constraintTop_toBottomOf="@id/tvQR"
+        app:layout_constraintBottom_toTopOf="@id/tvLink"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/imgQR" />
+
+
+    <ImageView
+        android:id="@+id/imgLink"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:src="@drawable/round_link_24"
+        app:layout_constraintTop_toTopOf="@id/tvLink"
+        app:layout_constraintBottom_toBottomOf="@id/tvLink"
+        app:layout_constraintEnd_toStartOf="@id/tvLink"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:id="@+id/tvLink"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="10dp"
+        android:paddingVertical="5dp"
+        android:text="@string/access_to_the_url_msg"
+        app:layout_constraintTop_toBottomOf="@id/tvQR"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/imgLink"/>
+
+
+    <LinearLayout android:id="@+id/llButtons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvLink"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <Button
+            android:id="@+id/btnBuy"
+            android:layout_width="250dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintVertical_chainStyle="packed"
+            android:text="@string/buy"/>
+
+        <Button
+            android:id="@+id/btnCompletePurchase"
+            android:layout_width="250dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintVertical_chainStyle="packed"
+            android:text="Complete Purchase"/>
+
+        <Button
+            android:id="@+id/btnShowDemo"
+            android:layout_width="250dp"
+            android:layout_height="wrap_content"
+            android:text="@string/show_demo"/>
+
+        <Button
+            android:id="@+id/btnBack"
+            android:layout_width="250dp"
+            android:layout_height="wrap_content"
+            android:text="@string/back"
+            android:backgroundTint="@color/grey_100"
+            android:textColor="@color/black"/>
+
+    </LinearLayout>
+
+
+
+    <ProgressBar
+        android:id="@+id/pb"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:visibility="visible"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvLink"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

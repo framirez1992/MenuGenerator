@@ -78,7 +78,7 @@ class CompanyActivity : BaseActivity() {
         }
         _binding.btnBack.setOnClickListener { _viewModel.previousScreen()}
         _binding.btnFinish.setOnClickListener {
-           _viewModel.saveChanges(user= LoginActivity.account?.email!!,
+           _viewModel.saveChanges(user= LoginActivity.userFirebase?.internalId!!,
                companyName = _binding.layoutCompanyName.etBusinessName.text.toString(),
                phone1 = "",
                phone2 = "",

@@ -6,4 +6,5 @@ data class MenuReference(
     val menuId:String,
     val firebaseRef:String?,
     val name:String,
+    val fileUri:String,
     val online:Boolean):Serializable

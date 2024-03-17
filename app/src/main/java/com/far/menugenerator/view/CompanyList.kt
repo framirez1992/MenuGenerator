@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.far.menugenerator.R
+import com.far.menugenerator.databinding.DialogImageTitleDescriptionBinding
 import com.far.menugenerator.databinding.FragmentCompanyListBinding
 import com.far.menugenerator.model.ProcessState
 import com.far.menugenerator.model.State
@@ -62,7 +63,7 @@ class CompanyList : BaseActivity() {
 
     override fun onResume() {
         super.onResume()
-        _viewModel.onResume(LoginActivity.account?.email!!)
+        _viewModel.onResume(LoginActivity.userFirebase?.internalId!!)
     }
 
     private fun initViews(){
@@ -105,7 +106,7 @@ class CompanyList : BaseActivity() {
 
 
     private fun getCompanies(){
-        _viewModel.getCompanies(LoginActivity.account?.email!!)
+        _viewModel.getCompanies(LoginActivity.userFirebase?.internalId!!)
     }
     private fun processCompanySearchState(processState: ProcessState?){
         if(processState == null)
@@ -115,19 +116,25 @@ class CompanyList : BaseActivity() {
         binding.rv.visibility = if(processState.state == State.LOADING) View.GONE else View.VISIBLE
 
         if(processState.state == State.SUCCESS && _viewModel.getCompanies().value!!.isEmpty()){
-
-            dialogManager.showOptionDialog(
-                title= R.string.add_company,
-                message = R.string.do_you_want_to_add_a_new_company_now,
-                positiveText = R.string.yes,
-                negativeText = R.string.not_now){_,_->
-
-                navigation.companyActivity(null)
-            }
+            showFirstCompanyDialog()
         }else if(processState.state == State.GENERAL_ERROR)
             Snackbar.make(binding.root,
                 getString(R.string.operation_failed_please_retry),
                 Snackbar.LENGTH_LONG).show()
+    }
+
+    private fun showFirstCompanyDialog(){
+        val dialogBinding = DialogImageTitleDescriptionBinding.inflate(layoutInflater)
+        dialogBinding.title.setText(R.string.add_company)
+        dialogBinding.body.setText(R.string.do_you_want_to_add_a_new_company_now)
+        dialogBinding.img.setImageResource(R.drawable.ask)
+        dialogManager.showTwoButtonsDialog(dialogBinding.root,
+            button1Label = R.string.yes,
+            onButton1Click = {
+                navigation.companyActivity(null)
+            },
+            button2Label = R.string.not_now,
+            onButton2Click = {})
     }
 
     private fun processDeleteCompanyState(processState: ProcessState?){
@@ -149,13 +156,18 @@ class CompanyList : BaseActivity() {
 
     private fun showDeleteCompanyConfirmationDialog(company:CompanyFirebase){
 
-        dialogManager.showOptionDialog(
-            title= R.string.delete_company,
-            message = R.string.are_you_sure_you_want_to_delete_this_company,
-            positiveText = R.string.delete,
-            negativeText = R.string.cancel){_,_->
-            _viewModel.deleteCompany(user = LoginActivity.account?.email!!, company = company)
-        }
+        val dialogBinding = DialogImageTitleDescriptionBinding.inflate(layoutInflater)
+        dialogBinding.title.setText(R.string.delete_company)
+        dialogBinding.body.setText(R.string.are_you_sure_you_want_to_delete_this_company)
+        dialogBinding.img.setImageResource(R.drawable.delete)
+        dialogManager.showTwoButtonsDialog( view = dialogBinding.root,
+            button1Label = R.string.delete,
+            onButton1Click = {
+                _viewModel.deleteCompany(user = LoginActivity.userFirebase?.internalId!!, company = company)
+            },
+            button2Label = R.string.cancel,
+            onButton2Click = {
+            })
     }
 
     private fun signOut() {

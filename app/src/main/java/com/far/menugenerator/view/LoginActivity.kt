@@ -5,16 +5,16 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import androidx.lifecycle.ViewModelProvider
-import com.far.menugenerator.MainActivity
+import com.far.menugenerator.R
 import com.far.menugenerator.databinding.ActivityLoginBinding
-import com.far.menugenerator.model.LoggedInUser
+import com.far.menugenerator.model.State
+import com.far.menugenerator.model.database.model.UserFirebase
 import com.far.menugenerator.view.common.BaseActivity
 import com.far.menugenerator.view.common.ScreenNavigation
 import com.far.menugenerator.viewModel.LoginViewModel
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.SignInButton
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.tasks.Task
@@ -26,20 +26,21 @@ class LoginActivity : BaseActivity() {
     private lateinit var _binding:ActivityLoginBinding
     private lateinit var viewModel:LoginViewModel
 
+    @Inject lateinit var factory:LoginViewModel.LoginViewModelFactory
     @Inject lateinit var screenNavigation:ScreenNavigation
     @Inject lateinit var mGoogleSignInClient:GoogleSignInClient
 
 
     companion object{
-        var account:GoogleSignInAccount?=null
+        var userFirebase:UserFirebase? =null
         private const val RC_SIGN_IN = 100
     }
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         _binding = ActivityLoginBinding.inflate(layoutInflater)
-        viewModel = ViewModelProvider(this)[LoginViewModel::class.java]
         presentationComponent.inject(this)
+        viewModel = ViewModelProvider(this,factory)[LoginViewModel::class.java]
 
         setContentView(_binding.root)
         initViews()
@@ -59,14 +60,15 @@ class LoginActivity : BaseActivity() {
         // Check for existing Google Sign In account, if the user is already signed in
         // the GoogleSignInAccount will be non-null.
         val account: GoogleSignInAccount? = GoogleSignIn.getLastSignedInAccount(this)
-        updateUI(account)
+        if(account != null) {
+            viewModel.loadUser(account)
+        }
+        //updateUI(account)
     }
 
     private fun updateUI(account:GoogleSignInAccount?){
         if(account != null){
-            LoginActivity.account = account
-            getAccountInfo()
-            screenNavigation.companyListActivity()
+            viewModel.loadUser(account)
         }
     }
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -104,9 +106,15 @@ class LoginActivity : BaseActivity() {
     }
     private fun initObservers(){
         viewModel.state.observe(this){
-            _binding.pbLoading?.visibility = if(it.loading) View.VISIBLE else View.GONE
-            enableViews(!it.loading)
-
+            _binding.pbLoading?.visibility = if(it.state == State.LOADING) View.VISIBLE else View.GONE
+            enableViews(it.state != State.LOADING)
+            if(it.state == State.GENERAL_ERROR)
+                Snackbar.make(_binding.root,getString(R.string.operation_failed_please_retry),Snackbar.LENGTH_LONG).show()
+            else if (it.state == State.SUCCESS){
+                //getAccountInfo()
+                userFirebase = viewModel.getUser()
+                screenNavigation.companyListActivity()
+            }
         }
     }
 
@@ -125,15 +133,15 @@ class LoginActivity : BaseActivity() {
 
 
     private fun getAccountInfo(){
-        if (LoginActivity.account != null) {
-            val acct = LoginActivity.account
-            val personName = acct!!.displayName
-            val personGivenName = acct.givenName
-            val personFamilyName = acct.familyName
-            val personEmail= acct.email
-            val personId = acct.id
-            val personPhoto = acct.photoUrl
-        }
+        //if (LoginActivity.userFirebase != null) {
+        //    val acct = LoginActivity.userFirebase
+        //    val personName = acct!!.displayName
+        //    val personGivenName = acct.givenName
+        //    val personFamilyName = acct.familyName
+        //    val personEmail= acct.email
+        //    val personId = acct.id
+        //    val personPhoto = acct.photoUrl
+        //}
     }
 
 

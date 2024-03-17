@@ -26,6 +26,7 @@ class DialogManager(private val baseActivity: BaseActivity) {
         showDialog()
     }
 
+    /*
     fun showOptionDialog(@StringRes title:Int,
                          @StringRes message:Int,
                          @StringRes positiveText:Int,
@@ -41,7 +42,7 @@ class DialogManager(private val baseActivity: BaseActivity) {
             }
         }
         dialog.show()
-    }
+    }*/
 
     fun showLoadingDialog(){
         if(currentLoadingDialog == null){
@@ -77,8 +78,27 @@ class DialogManager(private val baseActivity: BaseActivity) {
 
     fun showSingleButtonDialog(view:View,onButtonClick:()->Unit = {}){
         val dialogBuilder = getMaterialDialogBuilder(view)
+        dialogBuilder.setCancelable(false)
         dialogBuilder.setPositiveButton(R.string.close){ dialog, _->
             onButtonClick()
+            dialog.dismiss()
+        }
+        dialogBuilder.show()
+    }
+
+    fun showTwoButtonsDialog(view:View,
+                             @StringRes button1Label:Int,
+                             onButton1Click:()->Unit = {},
+                             @StringRes button2Label:Int,
+                             onButton2Click:()->Unit = {}){
+        val dialogBuilder = getMaterialDialogBuilder(view)
+        dialogBuilder.setCancelable(false)
+        dialogBuilder.setPositiveButton(button1Label){ dialog, _->
+            onButton1Click()
+            dialog.dismiss()
+        }
+        dialogBuilder.setNegativeButton(button2Label){ dialog, _->
+            onButton2Click()
             dialog.dismiss()
         }
         dialogBuilder.show()

@@ -8,23 +8,28 @@ import android.view.View
 import android.widget.Toast
 import androidx.core.net.toFile
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.android.billingclient.api.AcknowledgePurchaseParams
+import com.android.billingclient.api.AcknowledgePurchaseResponseListener
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClient.BillingResponseCode
 import com.android.billingclient.api.BillingClientStateListener
 import com.android.billingclient.api.BillingFlowParams
 import com.android.billingclient.api.BillingResult
 import com.android.billingclient.api.ProductDetails
+import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
 import com.far.menugenerator.R
 import com.far.menugenerator.common.helpers.ActivityHelper
+import com.far.menugenerator.databinding.DialogImageTitleDescriptionBinding
+import com.far.menugenerator.databinding.DialogSellProductsBinding
 import com.far.menugenerator.databinding.FragmentMenuListBinding
 import com.far.menugenerator.model.State
 import com.far.menugenerator.model.common.MenuReference
 import com.far.menugenerator.model.database.model.CompanyFirebase
-import com.far.menugenerator.model.database.model.MenuFirebase
 import com.far.menugenerator.view.adapters.ImageOption
 import com.far.menugenerator.view.adapters.MenuAdapter
 import com.far.menugenerator.view.common.BaseActivity
@@ -33,7 +38,9 @@ import com.far.menugenerator.view.common.ScreenNavigation
 import com.far.menugenerator.viewModel.MenuListViewModel
 import com.google.android.material.snackbar.Snackbar
 import com.google.common.collect.ImmutableList
-import java.util.UUID
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 // TODO: Rename parameter arguments, choose names that match
@@ -56,20 +63,6 @@ class MenuList : BaseActivity() {
     @Inject lateinit var screenNavigation: ScreenNavigation
     @Inject lateinit var dialogManager: DialogManager
 
-    private lateinit var productDetail:ProductDetails
-
-    private val purchasesUpdatedListener =
-        PurchasesUpdatedListener { billingResult, purchases ->
-            // To be implemented in a later section.
-            if(billingResult.responseCode == BillingResponseCode.OK){
-                Toast.makeText(this,"Purchased",Toast.LENGTH_LONG).show()
-            }else{
-                Toast.makeText(this,billingResult.debugMessage,Toast.LENGTH_LONG).show()
-            }
-
-        }
-    private lateinit var billingClient:BillingClient
-
     companion object {
          const val ARG_COMPANY = "company"
     }
@@ -82,11 +75,6 @@ class MenuList : BaseActivity() {
 
         company = intent?.extras?.getSerializable(ARG_COMPANY) as CompanyFirebase
         viewModel = ViewModelProvider(this,factory)[MenuListViewModel::class.java]
-
-       billingClient = BillingClient.newBuilder(this)
-            .setListener(purchasesUpdatedListener)
-            .enablePendingPurchases()
-            .build()
 
         initViews()
         initObservers()
@@ -110,15 +98,22 @@ class MenuList : BaseActivity() {
         return true
     }
 
-        private fun initViews(){
+    private fun initViews(){
         val manager = LinearLayoutManager(this,RecyclerView.VERTICAL,false)
         binding.rv.layoutManager = manager
         binding.swipe.setOnRefreshListener {
             searchMenus()
         }
-        binding.btnItem.setOnClickListener{
-            launchPurchaseFlow(productDetail)
-        }
+        showMenuList()
+    }
+
+    private fun showUpgrade(){
+
+    }
+
+    private fun showMenuList(){
+        binding.upgrade.root.visibility = View.GONE
+        binding.swipe.visibility = View.VISIBLE
     }
 
     private fun initObservers(){
@@ -128,7 +123,7 @@ class MenuList : BaseActivity() {
                 val options = mutableListOf<ImageOption>()
 
                 if(!menu.online)
-                    options.add(ImageOption(icon = R.drawable.baseline_cloud_upload_24,R.string.upload))
+                    options.add(ImageOption(icon = R.drawable.rounded_upgrade_24,R.string.upgrade))
 
                 options.add(ImageOption(R.drawable.baseline_remove_red_eye_24,R.string.preview))
                 options.add(ImageOption(icon = R.drawable.baseline_file_present_24,R.string.share_menu))
@@ -142,21 +137,29 @@ class MenuList : BaseActivity() {
 
                 dialogManager.showImageBottomSheet(options){option->
                     when(option.string){
-                        R.string.upload->{startGoogleBillingConnection()}
+                        R.string.upgrade->{
+                            screenNavigation.premiumActivity(
+                                userId = LoginActivity.userFirebase?.internalId!!,
+                                companyId = company?.companyId!!,
+                                menuId = menu.menuId
+                                )}
                         R.string.preview -> {
                             viewModel.searchPreviewUri(
-                            user = LoginActivity.account?.email!!,
+                            user = LoginActivity.userFirebase?.internalId!!,
                             companyId = company?.companyId!!,
                             downloadDirectory = applicationContext.filesDir,
                             menuReference = menu)}
                         R.string.share_menu -> {
                             viewModel.searchShareUri(
-                                user = LoginActivity.account?.email!!,
+                                user = LoginActivity.userFirebase?.internalId!!,
                                 companyId = company?.companyId!!,
                                 downloadDirectory = applicationContext.filesDir,
                                 menuReference = menu)
                         }
-                        R.string.copy_link->{}
+                        R.string.copy_link->{
+                            //TODO: Acortar URL
+                            //ActivityHelper.copyTextToClipboard(this,"url",menu.fileUri)
+                        }
                         R.string.qr_code->screenNavigation.qrImagePreview(companyId = company?.companyId!!, menuReference = menu)
                         R.string.edit-> screenNavigation.menuActivity(companyReference = company?.fireBaseRef!!,menu)
                         R.string.delete-> showDeleteMenuConfirmationDialog(menuReference = menu)
@@ -216,85 +219,23 @@ class MenuList : BaseActivity() {
     }
 
     private fun searchMenus(){
-        viewModel.getMenus(user= LoginActivity.account?.email!!, companyId = company?.companyId!!)
+        viewModel.getMenus(user= LoginActivity.userFirebase?.internalId!!, companyId = company?.companyId!!)
     }
 
     private fun showDeleteMenuConfirmationDialog(menuReference: MenuReference){
 
-        dialogManager.showOptionDialog(
-            title= R.string.delete_menu,
-            message = R.string.are_you_sure_you_want_to_delete_this_menu,
-            positiveText = R.string.delete,
-            negativeText = R.string.cancel){_,_->
-            viewModel.deleteMenu(LoginActivity.account?.email!!, companyId = company?.companyId!!, menuReference = menuReference)
-        }
-    }
-
-
-    private fun startGoogleBillingConnection(){
-
-        billingClient.startConnection(object : BillingClientStateListener {
-            override fun onBillingSetupFinished(billingResult: BillingResult) {
-                if (billingResult.responseCode ==  BillingClient.BillingResponseCode.OK) {
-                    // The BillingClient is ready. You can query purchases here.
-                    queryProductDetail()
-                }
-            }
-            override fun onBillingServiceDisconnected() {
-                // Try to restart the connection on the next request to
-                // Google Play by calling the startConnection() method.
-                startGoogleBillingConnection()
-            }
-        })
-    }
-
-    private fun queryProductDetail(){
-        val queryProductDetailsParams =
-            QueryProductDetailsParams.newBuilder()
-                .setProductList(
-                    ImmutableList.of(
-                        QueryProductDetailsParams.Product.newBuilder()
-                            .setProductId("test1")
-                            .setProductType(BillingClient.ProductType.INAPP)
-                            .build()))
-                .build()
-
-        billingClient.queryProductDetailsAsync(queryProductDetailsParams) {
-                billingResult,
-                productDetailsList ->
-            // check billingResult
-            // process returned productDetailsList
-            if(billingResult.responseCode == BillingResponseCode.OK) {
-                productDetail = productDetailsList[0]
-                binding.btnItem.text = productDetail.title
-            }else{
-                Toast.makeText(this,billingResult.debugMessage,Toast.LENGTH_LONG).show()
-            }
-        }
-    }
-
-    private fun launchPurchaseFlow(productDetails:ProductDetails){
-        val productDetailsParamsList = listOf(
-            BillingFlowParams.ProductDetailsParams.newBuilder()
-                // retrieve a value for "productDetails" by calling queryProductDetailsAsync()
-                .setProductDetails(productDetails)
-                // For One-time product, "setOfferToken" method shouldn't be called.
-                // For subscriptions, to get an offer token, call ProductDetails.subscriptionOfferDetails()
-                // for a list of offers that are available to the user
-                .build()
-        )
-
-        val billingFlowParams = BillingFlowParams.newBuilder()
-            .setProductDetailsParamsList(productDetailsParamsList)
-            .build()
-
-// Launch the billing flow
-        val billingResult = billingClient.launchBillingFlow(this, billingFlowParams)
-        if(billingResult.responseCode == BillingResponseCode.OK){
-            Toast.makeText(this,billingResult.debugMessage,Toast.LENGTH_LONG).show()
-        }else{
-            Toast.makeText(this,billingResult.debugMessage,Toast.LENGTH_LONG).show()
-        }
+        val dialogBinding = DialogImageTitleDescriptionBinding.inflate(layoutInflater)
+        dialogBinding.title.setText(R.string.delete_menu)
+        dialogBinding.body.setText(R.string.are_you_sure_you_want_to_delete_this_menu)
+        dialogBinding.img.setImageResource(R.drawable.delete)
+        dialogManager.showTwoButtonsDialog( view = dialogBinding.root,
+            button1Label = R.string.delete,
+            onButton1Click = {
+                viewModel.deleteMenu(LoginActivity.userFirebase?.internalId!!, companyId = company?.companyId!!, menuReference = menuReference)
+            },
+            button2Label = R.string.cancel,
+            onButton2Click = {
+            })
     }
 
 }
