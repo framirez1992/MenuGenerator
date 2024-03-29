@@ -12,7 +12,6 @@ import com.far.menugenerator.common.helpers.ActivityHelper
 import com.far.menugenerator.databinding.FragmentQRPreviewBinding
 import com.far.menugenerator.model.ProcessState
 import com.far.menugenerator.model.State
-import com.far.menugenerator.model.common.MenuReference
 import com.far.menugenerator.view.adapters.ImageOption
 import com.far.menugenerator.view.common.BaseActivity
 import com.far.menugenerator.view.common.DialogManager
@@ -28,11 +27,11 @@ import javax.inject.Inject
 
 class QRPreview : BaseActivity() {
     // TODO: Rename and change types of parameters
-    private var menuRef: MenuReference? = null
-    private var companyId:String?=null
+    //private var menuRef: MenuReference? = null
+    //private var companyId:String?=null
 
     private lateinit var binding:FragmentQRPreviewBinding
-    private lateinit var _viewModel: QRPreviewViewModel
+    private lateinit var viewModel: QRPreviewViewModel
 
     @Inject lateinit var factory:QRPreviewViewModel.QRPreviewViewModelFactory
     @Inject lateinit var dialogManager: DialogManager
@@ -41,29 +40,45 @@ class QRPreview : BaseActivity() {
     private var optionSelected:ImageOption? = null
 
     companion object {
-         const val ARG_MENU_REF = "menuRef"
-         const val ARG_COMPANY_ID = "companyId"
+        const val ARG_COMPANY_ID = "companyId"
+        const val ARG_MENU_FIREBASE_REF = "menuFirebaseRef"
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         presentationComponent.inject(this)
-        _viewModel = ViewModelProvider(this,factory)[QRPreviewViewModel::class.java]
+        viewModel = ViewModelProvider(this,factory)[QRPreviewViewModel::class.java]
         binding = FragmentQRPreviewBinding.inflate(layoutInflater)
 
         setContentView(binding.root)
 
-        menuRef = intent.extras?.getSerializable(ARG_MENU_REF) as MenuReference
-        companyId = intent.extras?.getString(ARG_COMPANY_ID)
-
-        if(menuRef == null || companyId.isNullOrEmpty()){
-            finish()
+        val companyId:String?
+        val menuFireBaseRef:String?
+        if(savedInstanceState == null){
+            companyId = intent.extras?.getString(ARG_COMPANY_ID)
+            menuFireBaseRef = intent.extras?.getString(ARG_MENU_FIREBASE_REF)
+        }else{
+            companyId = savedInstanceState.getString(ARG_COMPANY_ID)
+            menuFireBaseRef = savedInstanceState.getString(ARG_MENU_FIREBASE_REF)
         }
 
-        initViews()
-        initObservers()
+        if(LoginActivity.userFirebase == null || companyId.isNullOrEmpty() || menuFireBaseRef.isNullOrEmpty()){
+            finish()
+        }else {
 
-        _viewModel.setReference(menuRef!!)
-        setInitialScreen()
+            if(viewModel.companyId.isNullOrEmpty() || viewModel.menuFirebaseRef.isNullOrEmpty()){
+                viewModel.initialize(companyId = companyId, menuFireBaseRef = menuFireBaseRef)
+            }
+
+            initViews()
+            initObservers()
+            drawQRCode()
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putString(ARG_COMPANY_ID,viewModel.companyId)
+        outState.putString(ARG_MENU_FIREBASE_REF, viewModel.menuFirebaseRef)
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -75,7 +90,7 @@ class QRPreview : BaseActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
          if(item.itemId == R.id.optionMenu)
             showOptions()
-        else if(item.itemId == R.id.optionRefresh && menuRef?.online == true)
+        else if(item.itemId == R.id.optionRefresh)
             drawQRCode()
 
         return true
@@ -87,23 +102,17 @@ class QRPreview : BaseActivity() {
     }
 
     private fun initObservers(){
-        _viewModel.getState().observe(this){
+        viewModel.getState().observe(this){
             loadState(it)
         }
-        _viewModel.getQrBitmap().observe(this){
+        viewModel.getQrBitmap().observe(this){
             binding.imgQR.setImageBitmap(it)
-        }
-
-    }
-    private fun setInitialScreen(){
-        if(menuRef?.online == true){
-           drawQRCode()
         }
 
     }
 
     private fun drawQRCode(){
-        _viewModel.drawMenu(user = LoginActivity.userFirebase?.internalId!!, companyId = companyId!!, fireBaseRef = menuRef?.firebaseRef!!)
+        viewModel.drawMenu(user = LoginActivity.userFirebase?.internalId!!)
     }
 
     private fun showOptions(){

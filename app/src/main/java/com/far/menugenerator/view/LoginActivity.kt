@@ -7,6 +7,7 @@ import android.view.View
 import androidx.lifecycle.ViewModelProvider
 import com.far.menugenerator.R
 import com.far.menugenerator.databinding.ActivityLoginBinding
+import com.far.menugenerator.model.ProcessState
 import com.far.menugenerator.model.State
 import com.far.menugenerator.model.database.model.UserFirebase
 import com.far.menugenerator.view.common.BaseActivity
@@ -30,7 +31,6 @@ class LoginActivity : BaseActivity() {
     @Inject lateinit var screenNavigation:ScreenNavigation
     @Inject lateinit var mGoogleSignInClient:GoogleSignInClient
 
-
     companion object{
         var userFirebase:UserFirebase? =null
         private const val RC_SIGN_IN = 100
@@ -45,14 +45,6 @@ class LoginActivity : BaseActivity() {
         setContentView(_binding.root)
         initViews()
         initObservers()
-
-        /*
-        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestEmail()
-            .build()
-
-        // Build a GoogleSignInClient with the options specified by gso.
-        mGoogleSignInClient = GoogleSignIn.getClient(this, gso);*/
     }
 
     override fun onStart() {
@@ -62,8 +54,9 @@ class LoginActivity : BaseActivity() {
         val account: GoogleSignInAccount? = GoogleSignIn.getLastSignedInAccount(this)
         if(account != null) {
             viewModel.loadUser(account)
+        }else{
+            isLoading(false)
         }
-        //updateUI(account)
     }
 
     private fun updateUI(account:GoogleSignInAccount?){
@@ -73,10 +66,7 @@ class LoginActivity : BaseActivity() {
     }
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        // Result returned from launching the Intent from GoogleSignInClient.getSignInIntent(...);
         if (requestCode == RC_SIGN_IN) {
-            // The Task returned from this call is always completed, no need to attach
-            // a listener.
             val task: Task<GoogleSignInAccount> = GoogleSignIn.getSignedInAccountFromIntent(data)
             handleSignInResult(task)
         }
@@ -85,7 +75,6 @@ class LoginActivity : BaseActivity() {
     private fun handleSignInResult(completedTask: Task<GoogleSignInAccount>) {
         try {
             val account = completedTask.getResult(ApiException::class.java)
-            // Signed in successfully, show authenticated UI.
             updateUI(account)
         } catch (e: ApiException) {
             // The ApiException status code indicates the detailed failure reason.
@@ -99,30 +88,32 @@ class LoginActivity : BaseActivity() {
         }
     }
     private fun initViews(){
-        _binding.signInButton?.setSize(SignInButton.SIZE_STANDARD)
-        _binding.signInButton?.setOnClickListener {
+        _binding.signInButton.setSize(SignInButton.SIZE_STANDARD)
+        _binding.signInButton.setOnClickListener {
            signIn()
         }
     }
     private fun initObservers(){
-        viewModel.state.observe(this){
-            _binding.pbLoading?.visibility = if(it.state == State.LOADING) View.VISIBLE else View.GONE
-            enableViews(it.state != State.LOADING)
-            if(it.state == State.GENERAL_ERROR)
-                Snackbar.make(_binding.root,getString(R.string.operation_failed_please_retry),Snackbar.LENGTH_LONG).show()
-            else if (it.state == State.SUCCESS){
-                //getAccountInfo()
-                userFirebase = viewModel.getUser()
-                screenNavigation.companyListActivity()
-            }
+        viewModel.loadUserState.observe(this){
+            loadUserState(it)
         }
     }
 
-    private fun enableViews(enable:Boolean){
-        _binding.etUsername?.isEnabled = enable
-        _binding.etPassword?.isEnabled = enable
-        _binding.btnLogin?.isEnabled = enable
+    private fun loadUserState(processState:ProcessState){
+        if(processState.state == State.LOADING){
+            isLoading(true)
+        }else if(processState.state == State.GENERAL_ERROR){
+            isLoading(false)
+            Snackbar.make(_binding.root,getString(R.string.operation_failed_please_retry),Snackbar.LENGTH_LONG).show()
+        }else{//success
+            userFirebase = viewModel.getUser()
+            screenNavigation.companyListActivity()
+        }
+    }
 
+    private fun isLoading(loading: Boolean){
+        _binding.pb.visibility = if(loading) View.VISIBLE else View.GONE
+        _binding.signInButton.visibility = if(loading) View.GONE else View.VISIBLE
     }
 
 
@@ -130,7 +121,6 @@ class LoginActivity : BaseActivity() {
         val signInIntent: Intent = mGoogleSignInClient.signInIntent
         startActivityForResult(signInIntent, RC_SIGN_IN)
     }
-
 
     private fun getAccountInfo(){
         //if (LoginActivity.userFirebase != null) {

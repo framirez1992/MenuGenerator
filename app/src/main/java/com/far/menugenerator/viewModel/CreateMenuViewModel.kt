@@ -59,10 +59,20 @@ class CreateMenuViewModel @Inject constructor(
         const val noCategoryDescription="NO_CATEGORY"
     }
 
-    private lateinit var userId:String
-    private lateinit var companyReference:String
-    private lateinit var menuId:String
-    private var menuReference: MenuReference?=null
+    private lateinit var _userId:String
+    private var _companyReference:String?=null
+    private var _menuReferenceId:String?=null
+    private var _menuReferenceFirebaseRef:String?=null
+    private var _isMenuOnline:Boolean?=null
+
+    val companyReference get() = _companyReference
+    val menuReferenceId get() = _menuReferenceId
+    val menuReferenceFirebaseRef get() = _menuReferenceFirebaseRef
+    val isMenuOnline get() = _isMenuOnline
+
+    private var _menuId:String?=null
+    val menuId get() = _menuId
+
     private var company:CompanyFirebase?=null
 
     private val _state = MutableLiveData<CreateMenuState>()
@@ -87,6 +97,14 @@ class CreateMenuViewModel @Inject constructor(
     fun getCompany() = company
     fun getMenuSettings():LiveData<MenuSettings> = _menuSettings
 
+
+    fun initialize(userId:String,companyRef:String, menuReferenceId:String?, isOnlineMenu:Boolean?, menuReferenceFirebaseRef:String?){
+        _userId = userId
+        _companyReference = companyRef
+        _menuReferenceId = menuReferenceId
+        _isMenuOnline = isOnlineMenu
+        _menuReferenceFirebaseRef = menuReferenceFirebaseRef
+    }
 
 
     val currentItemImage = MutableLiveData<Uri?>()
@@ -118,23 +136,19 @@ class CreateMenuViewModel @Inject constructor(
         return _editMenu?.name
     }
 
-    fun setInitialValues(userId:String,companyReference: String,menuReference: MenuReference?){
-        this.userId = userId
-        this.companyReference = companyReference
-        this.menuReference = menuReference
-    }
+
 
     fun prepareMenu(){
-        menuId = menuReference?.menuId?:UUID.randomUUID().toString()
+        _menuId = _menuReferenceId?:UUID.randomUUID().toString()
         viewModelScope.launch(Dispatchers.IO) {
             if(company == null){
-                company = companyService.getCompany(user = userId, companyRef = companyReference)
+                company = companyService.getCompany(user = _userId, companyRef = _companyReference!!)
             }
-            if(_editMenu == null)//si no se esta editando actualmente ningun
-                menuTempDS.clearAll()//LIMPIAR LAS TABLAS
+            //if(_editMenu == null)//si no se esta editando actualmente ningun
+            //    menuTempDS.clearAll()//LIMPIAR LAS TABLAS
 
-            if(_editMenu == null && menuReference == null){//Nuevo menu desde 0
-                saveCategory(menuId, noCategoryId, noCategoryDescription, 0)
+            if(_editMenu == null && _menuReferenceId == null){//Nuevo menu desde 0
+                saveCategory(_menuId!!, noCategoryId, noCategoryDescription, 0)
             }
 
             initMenuData()
@@ -148,12 +162,12 @@ class CreateMenuViewModel @Inject constructor(
 
 
     private suspend fun initMenuData(){
-        if (_editMenu != null || menuReference == null) return
+        if (_editMenu != null || _menuReferenceId == null) return
 
         val menuTemp:MenuTemp
         val menuItemsTemp:List<MenuItemsTemp>
-        if(menuReference!!.online){
-            val firebaseMenu = menuService.getMenu(user = userId, companyId = company!!.companyId, menuReference!!.firebaseRef!!)
+        if(_isMenuOnline!!){
+            val firebaseMenu = menuService.getMenu(user = _userId, companyId = company!!.companyId, _menuReferenceFirebaseRef!!)
             menuTemp = MenuTemp(
                 fireBaseRef = firebaseMenu!!.fireBaseRef,
                 menuId = firebaseMenu.menuId,
@@ -164,7 +178,7 @@ class CreateMenuViewModel @Inject constructor(
             menuItemsTemp = firebaseMenu.items.map {
                 MenuItemsTemp(
                     id = it.id,
-                    menuId = menuReference!!.menuId,
+                    menuId = _menuReferenceId!!,
                     type = it.type,
                     enabled = it.enabled,
                     categoryId = it.categoryId,
@@ -176,8 +190,8 @@ class CreateMenuViewModel @Inject constructor(
                     position = it.position)
             }
         }else{
-            val menuLocal = menuDS.getMenuById(menuId = menuReference!!.menuId)
-            val menuItems = menuDS.getMenuItemsByMenuId(menuId = menuReference!!.menuId)
+            val menuLocal = menuDS.getMenuById(menuId = _menuReferenceId!!)
+            val menuItems = menuDS.getMenuItemsByMenuId(menuId = _menuReferenceId!!)
             menuTemp = MenuTemp(
                 fireBaseRef = null,
                 menuId = menuLocal.menuId,
@@ -188,7 +202,7 @@ class CreateMenuViewModel @Inject constructor(
             menuItemsTemp = menuItems.map {
                 MenuItemsTemp(
                     id = it.id,
-                    menuId = menuId,
+                    menuId = _menuId!!,
                     type = it.type,
                     enabled = it.enabled,
                     name = it.name,
@@ -223,7 +237,7 @@ class CreateMenuViewModel @Inject constructor(
             val id =  UUID.randomUUID().toString()
             val category = MenuItemsTemp(
                 id = id,
-                menuId = menuId,
+                menuId = _menuId!!,
                 type = ItemStyle.MENU_CATEGORY_HEADER.name,
                 enabled = true,
                 categoryId = id,
@@ -288,7 +302,7 @@ class CreateMenuViewModel @Inject constructor(
 
             val menuItem = MenuItemsTemp(
                 id = UUID.randomUUID().toString(),
-                menuId = menuId,
+                menuId = _menuId!!,
                 type = itemStyle.name,
                 enabled = enabled,
                 categoryId = category.id,
@@ -399,7 +413,7 @@ class CreateMenuViewModel @Inject constructor(
             _stateProcessMenu.postValue(ProcessState(State.LOADING))
 
             try{
-                val menuItems = menuTempDS.getMenuItemsByMenuId(menuId = menuId)
+                val menuItems = menuTempDS.getMenuItemsByMenuId(menuId = _menuId!!)
                 menuItems.filter { item-> item.imageUri != null }.forEach{ item->
                     //Validar si es una edicion de item y el item no sufrio modificaciones en su imagen
                     if(_editItemsOriginalImages.any{it.first == item.id && it.second == item.imageUri})
@@ -418,7 +432,7 @@ class CreateMenuViewModel @Inject constructor(
 
                 FileUtils.layoutToPdf(layout =  view, pdfPath = pdfPath, height = fileHeight)
 
-                if(menuReference != null && menuReference?.online!!){//(Solo se crean Locales, luego de comprados se mandan a firebase) Si es online Hacer por firebase
+                if(_menuReferenceId != null && isMenuOnline!!){//(Solo se crean Locales, luego de comprados se mandan a firebase) Si es online Hacer por firebase
                     processMenu(
                         user = LoginActivity.userFirebase?.internalId!!,
                         companyId = company!!.companyId,
@@ -439,15 +453,17 @@ class CreateMenuViewModel @Inject constructor(
 
                 _stateProcessMenu.postValue(ProcessState(State.SUCCESS))
 
-            }catch (e:Exception){
-                e.printStackTrace()
+            }catch (e:TimeoutException){
+                _stateProcessMenu.postValue(ProcessState(State.NETWORK_ERROR))
+            }
+            catch (e:Exception){
                 _stateProcessMenu.postValue(ProcessState(State.GENERAL_ERROR))
             }
         }
     }
 
 
-    private fun processMenu(user:String,companyId: String,fileName:String,itemPreviews:List<MenuItemsTemp>,pdfPath:String){
+    private suspend fun processMenu(user:String,companyId: String,fileName:String,itemPreviews:List<MenuItemsTemp>,pdfPath:String){
         val menuSettings = getMenuSettings().value!!
         if(_editMenu == null)
             saveMenu(user= user, companyId= companyId, menuSettings = menuSettings,fileName= fileName, itemPreviews= itemPreviews, pdfPath =  pdfPath)
@@ -476,9 +492,7 @@ class CreateMenuViewModel @Inject constructor(
     }
 
 
-    private fun saveMenu(user:String,companyId: String,menuSettings: MenuSettings,fileName:String,itemPreviews:List<MenuItemsTemp>,pdfPath:String){
-        viewModelScope.launch {
-            try {
+    private suspend fun saveMenu(user:String,companyId: String,menuSettings: MenuSettings,fileName:String,itemPreviews:List<MenuItemsTemp>,pdfPath:String){
                 if(!NetworkUtils.isConnectedToInternet()){
                     throw TimeoutException()
                 }
@@ -487,46 +501,27 @@ class CreateMenuViewModel @Inject constructor(
                 val menuStorageUrl = uploadMenuFile(user = user, menuId = tempMenuId, pdfPath = pdfPath).toString()
                 val items = prepareItemsFirebase(user = user, menuId = tempMenuId, items = itemPreviews)
                 val savedMenu = saveMenuFireBase(user =  user, companyId = companyId, menuId = tempMenuId,fileName = fileName, fileUrl =  menuStorageUrl, items =  items, menuSettings = menuSettings)
-                _stateProcessMenu.postValue(ProcessState(State.SUCCESS,savedMenu.fileUrl))
-            }catch (e:TimeoutException){
-                _stateProcessMenu.postValue(ProcessState(State.NETWORK_ERROR))
-            }
-            catch (e:Exception){
-                _stateProcessMenu.postValue(ProcessState(State.GENERAL_ERROR))
-            }
-
-        }
     }
 
-    private fun saveEditMenu(user:String,companyId: String,menuTemp: MenuTemp,menuSettings: MenuSettings,fileName:String,pdfPath:String){
-        viewModelScope.launch {
-            try {
+    private suspend fun saveEditMenu(user:String,companyId: String,menuTemp: MenuTemp,menuSettings: MenuSettings,fileName:String,pdfPath:String){
                 if(!NetworkUtils.isConnectedToInternet()){
                     throw TimeoutException()
                 }
-                val menuItemsTemp = menuTempDS.getMenuItemsByMenuId(menuId)
+                val menuItemsTemp = menuTempDS.getMenuItemsByMenuId(_menuId!!)
 
                 val menuStorageUrl = uploadMenuFile(user = user,menuId=menuTemp.menuId, pdfPath = pdfPath).toString()
                 deleteUnusedImages(userId = user, items = menuItemsTemp, online = true)
                 val items = prepareItemsFirebase(user = user, menuId=menuTemp.menuId, items = menuItemsTemp)
 
                 val savedMenu = editMenuFireBase(user =  user, companyId = companyId, menuTemp = menuTemp,fileName = fileName, fileUrl =  menuStorageUrl, items =  items, menuSettings = menuSettings)
-                _stateProcessMenu.postValue(ProcessState(State.SUCCESS,savedMenu.fileUrl))
-            }catch (e:TimeoutException){
-                _stateProcessMenu.postValue(ProcessState(State.NETWORK_ERROR))
-            }catch (e:Exception){
-                _stateProcessMenu.postValue(ProcessState(State.GENERAL_ERROR))
-            }
-
-        }
     }
 
     private suspend fun saveMenuLocal(user:String,companyId: String,menuSettings: MenuSettings,fileName:String,pdfFile:Uri, baseDirectory: File){
-                val tempMenuId:String = menuId
-                val menuItemsTemp = menuTempDS.getMenuItemsByMenuId(menuId)
+                val tempMenuId:String = _menuId!!
+                val menuItemsTemp = menuTempDS.getMenuItemsByMenuId(_menuId!!)
 
                 //VERIFY DIRECTORY CREATION
-                val menuDirectory = FileUtils.createDirectory(baseDirectory = baseDirectory, directoryName = menuId)
+                val menuDirectory = FileUtils.createDirectory(baseDirectory = baseDirectory, directoryName = _menuId!!)
                 //MOVE PDF
                 val menuFileUri = saveMenuFile(user = user, menuId = tempMenuId, pdfFile = pdfFile, menuDirectory = menuDirectory).toString()
                 //MOVE IMAGES AND SET  URI to MenuItems
@@ -545,11 +540,11 @@ class CreateMenuViewModel @Inject constructor(
 
 
     private suspend fun saveEditMenuLocal(user:String,companyId: String,menuTemp: MenuTemp,menuSettings: MenuSettings,fileName:String,pdfFile:Uri,baseDirectory:File){
-        val tempMenuId:String = menuId
-        val menuItemsTemp = menuTempDS.getMenuItemsByMenuId(menuId)
+        val tempMenuId:String = _menuId!!
+        val menuItemsTemp = menuTempDS.getMenuItemsByMenuId(_menuId!!)
 
         //VERIFY DIRECTORY CREATION
-        val menuDirectory = FileUtils.createDirectory(baseDirectory = baseDirectory, directoryName = menuId)
+        val menuDirectory = FileUtils.createDirectory(baseDirectory = baseDirectory, directoryName = _menuId!!)
 
         //MOVE PDF
         val menuFileUri = saveMenuFile(user = user, menuId = tempMenuId, pdfFile = pdfFile, menuDirectory = menuDirectory).toString()

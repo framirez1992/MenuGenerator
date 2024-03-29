@@ -21,8 +21,8 @@ class LoginViewModel(
     val userService: UserService
 ):ViewModel() {
 
-    private val _state = MutableLiveData<ProcessState>()
-    val state:LiveData<ProcessState> =_state
+    private val _loadUserState = MutableLiveData<ProcessState>()
+    val loadUserState:LiveData<ProcessState> =_loadUserState
     private lateinit var _userFirebase:UserFirebase
 
     fun getUser()= _userFirebase
@@ -30,7 +30,7 @@ class LoginViewModel(
     fun loadUser(account: GoogleSignInAccount){
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                _state.postValue(ProcessState(State.LOADING))
+                _loadUserState.postValue(ProcessState(State.LOADING))
                 var user = userService.getUser(account.email!!)
                 if(user == null) {
                     user = UserFirebase(
@@ -45,10 +45,10 @@ class LoginViewModel(
                 }else{
                    _userFirebase = user
                 }
-                _state.postValue(ProcessState(State.SUCCESS))
+                _loadUserState.postValue(ProcessState(State.SUCCESS))
 
             }catch (e:Exception){
-                _state.postValue(ProcessState(State.GENERAL_ERROR))
+                _loadUserState.postValue(ProcessState(State.GENERAL_ERROR))
             }
         }
     }

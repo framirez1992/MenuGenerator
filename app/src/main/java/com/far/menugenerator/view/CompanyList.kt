@@ -36,15 +36,21 @@ class CompanyList : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        presentationComponent.inject(this)
-        _viewModel = ViewModelProvider(this,companyListFactory)[CompanyListViewModel::class.java]
-        binding = FragmentCompanyListBinding.inflate(layoutInflater)
+        if(LoginActivity.userFirebase == null){
+            finish()
+        }else{
+            presentationComponent.inject(this)
+            _viewModel = ViewModelProvider(this,companyListFactory)[CompanyListViewModel::class.java]
+            binding = FragmentCompanyListBinding.inflate(layoutInflater)
 
-        setContentView(binding.root)
 
-        initViews()
-        initObservers()
+            setContentView(binding.root)
+
+            initViews()
+            initObservers()
+        }
     }
+
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.company_list_menu, menu)
@@ -64,6 +70,9 @@ class CompanyList : BaseActivity() {
     override fun onResume() {
         super.onResume()
         _viewModel.onResume(LoginActivity.userFirebase?.internalId!!)
+    }
+    override fun onBackPressed() {
+        //super.onBackPressed()
     }
 
     private fun initViews(){
@@ -93,7 +102,7 @@ class CompanyList : BaseActivity() {
                 dialogManager.showImageBottomSheet(options){option->
 
                     when(option.string){
-                        R.string.show_menus -> navigation.menuListActivity(company = comp)
+                        R.string.show_menus -> navigation.menuListActivity(companyId = comp.companyId, companyRef = comp.fireBaseRef!!)
                         R.string.edit-> navigation.companyActivity(company = comp)
                         R.string.delete-> showDeleteCompanyConfirmationDialog(company = comp)
                     }

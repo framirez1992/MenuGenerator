@@ -175,6 +175,7 @@ class MenuPreviewAdapter(private val activity:BaseActivity,
                     binding.imageTitleDescription.price.text = price
                     Glide.with(activity)
                         .load(itemPreview.imageUri)
+                        .error(R.drawable.loading)
                         .encodeQuality(80)
                         .into(binding.imageTitleDescription.image)
 

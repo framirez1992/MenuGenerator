@@ -27,7 +27,6 @@ class ImageOptionBottomSheet(val options:List<ImageOption>,val onclick:(ImageOpt
 
     private lateinit var binding:FragmentImageOptionBottomSheetBinding
 
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?

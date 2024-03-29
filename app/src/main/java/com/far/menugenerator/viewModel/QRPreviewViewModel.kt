@@ -10,7 +10,6 @@ import com.far.menugenerator.common.helpers.NetworkUtils
 import com.far.menugenerator.common.utils.FileUtils
 import com.far.menugenerator.model.ProcessState
 import com.far.menugenerator.model.State
-import com.far.menugenerator.model.common.MenuReference
 import com.far.menugenerator.model.database.MenuService
 import com.far.menugenerator.model.database.model.MenuFirebase
 import com.far.menugenerator.model.storage.MenuStorage
@@ -29,17 +28,18 @@ class QRPreviewViewModel(
     private val stateFileDownload = MutableLiveData<ProcessState>()
     private val qrBitmap = MutableLiveData<Bitmap>()
 
-    private lateinit var menuRef:MenuReference
+    //private lateinit var menuRef:MenuReference
+    private var _companyId:String?=null
+    private var _menuFireBaseRef:String?=null
+
+    val companyId get() = _companyId
+    val menuFirebaseRef get() = _menuFireBaseRef
 
     fun getState():LiveData<ProcessState> = state
     fun getQrBitmap():LiveData<Bitmap> = qrBitmap
     fun getStateFileDownload():LiveData<ProcessState> = stateFileDownload
     fun getMenu():LiveData<MenuFirebase?> = menuFirebase
 
-
-    fun setReference(menuReference: MenuReference) {
-        menuRef = menuReference
-    }
 
     fun getFile(destination:File){
         stateFileDownload.value = ProcessState(State.LOADING)
@@ -60,12 +60,12 @@ class QRPreviewViewModel(
 
     }
 
-    fun drawMenu(user:String, companyId:String, fireBaseRef:String){
+    fun drawMenu(user:String){
         state.value = ProcessState(State.LOADING)
 
         viewModelScope.launch {
             try{
-                val menu = menuService.getMenu(user = user, companyId = companyId, firebaseRef = fireBaseRef)
+                val menu = menuService.getMenu(user = user, companyId = _companyId!!, firebaseRef = _menuFireBaseRef!!)
                 menuFirebase.postValue(menu)
                 val url = menu?.fileUrl!!.split("&token")[0]//SIN TOKEN
                 val bm = FileUtils.generateQRCode(url)
@@ -76,6 +76,11 @@ class QRPreviewViewModel(
             }
 
         }
+    }
+
+    fun initialize(companyId: String, menuFireBaseRef:String) {
+        _companyId = companyId
+        _menuFireBaseRef = menuFireBaseRef
     }
 
     /*

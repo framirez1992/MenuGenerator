@@ -11,7 +11,7 @@ import com.far.menugenerator.model.database.room.model.MenuItems
 
 @Dao
 interface MenuDao {
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(entity: Menu)
     @Update
     suspend fun update(entity: Menu)

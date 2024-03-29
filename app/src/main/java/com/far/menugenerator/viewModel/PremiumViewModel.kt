@@ -54,9 +54,15 @@ class PremiumViewModel(
 
     private val TAG = "PREMIUM_ACTIVITY"
 
-    private lateinit var userId: String
-    private lateinit var companyId:String
-    private lateinit var menuId:String
+    private var _userId: String?=null
+    private var _companyId:String?=null
+    private var _menuId:String?=null
+
+    val userId get() = _userId
+    val companyId get() = _companyId
+    val menuId get() = _menuId
+
+
     private var _productDetails:List<ProductDetails>?=null
     private var _googlePaidPurchases:MutableList<Purchase>?=null
     private var _googlePendingPurchases:List<Purchase>?=null
@@ -77,9 +83,9 @@ class PremiumViewModel(
     val searchConfirmedPaymentsStatus = MutableLiveData<ProcessState>()
 
     fun initData(userId:String,companyId: String, menuId:String) {
-        this.userId = userId
-        this.companyId = companyId
-        this.menuId = menuId
+        this._userId = userId
+        this._companyId = companyId
+        this._menuId = menuId
     }
 
     fun initGoogleBillingData(billingClient: BillingClient){
@@ -140,14 +146,14 @@ class PremiumViewModel(
 
     private suspend fun registerPaidPurchasesToFirebase() {
         googlePaidPurchases.forEach {
-            var p = purchaseService.getPurchaseByToken(userId,it.purchaseToken)
+            var p = purchaseService.getPurchaseByToken(_userId!!,it.purchaseToken)
             if(p == null){
                 p = PurchaseFirebase(
                     status = PurchaseStatus.CONFIRMATION_PENDING.name,
                     orderId = it.orderId,
                     purchaseToken = it.purchaseToken,
-                    userId = userId,
-                    companyId = companyId,
+                    userId = _userId,
+                    companyId = _companyId,
                     createDate = Calendar.getInstance().time
                 )
                 purchaseService.savePurchase(p)
@@ -162,7 +168,7 @@ class PremiumViewModel(
     fun searchPurchaseToPay() {
         viewModelScope.launch(Dispatchers.IO) {
             searchConfirmedPaymentsStatus.postValue(ProcessState(State.LOADING))
-            val purchases =  purchaseService.getPurchases(user = userId)
+            val purchases =  purchaseService.getPurchases(user = _userId!!)
             _confirmedPurchases = purchases.filter { it?.status == PurchaseStatus.CONFIRMED.name }
             Log.d(TAG, "searchPurchaseToPay. CONFIRMED_PURCHASES:${confirmedPurchases.size}")
             searchConfirmedPaymentsStatus.postValue(ProcessState(State.SUCCESS))
@@ -208,30 +214,30 @@ class PremiumViewModel(
                 //PURCHASE PROCESSING
                 val purchase = confirmedPurchases.first()!!
                 //purchase.status = PurchaseStatus.PROCESSING.name
-                //purchaseService.updatePurchase(user = userId,purchase=purchase)
+                //purchaseService.updatePurchase(user = _userId,purchase=purchase)
                 //////////////////////////////////////////////////////////////
 
-                val localMenu = menuDS.getMenuById(menuId = menuId)
+                val localMenu = menuDS.getMenuById(menuId = _menuId!!)
 
-                val localMenuItems = menuDS.getMenuItemsByMenuId(menuId = menuId)
+                val localMenuItems = menuDS.getMenuItemsByMenuId(menuId = _menuId!!)
                 val localMenuSettings = Gson().fromJson(localMenu.menuSettings!!,MenuSettings::class.java)
 
                 //Upload PDF file
-                val menuStorageUrl = uploadMenuFile(user = userId, menuId = localMenu.menuId, pdfPath = Uri.parse(localMenu.fileUri).path!!).toString()
+                val menuStorageUrl = uploadMenuFile(user = _userId!!, menuId = localMenu.menuId, pdfPath = Uri.parse(localMenu.fileUri).path!!).toString()
                 //Upload Images
-                val items = prepareItemsFirebase(user = userId, menuId = localMenu.menuId, items = localMenuItems)
+                val items = prepareItemsFirebase(user = _userId!!, menuId = localMenu.menuId, items = localMenuItems)
                 //Save Menu in FireBase
-                val savedMenu = saveMenuFireBase(user =  userId, companyId = localMenu.companyId, menuId = localMenu.menuId,fileName = localMenu.name, fileUrl =  menuStorageUrl, items =  items, menuSettings = localMenuSettings)
+                val savedMenu = saveMenuFireBase(user =  _userId!!, companyId = localMenu.companyId, menuId = localMenu.menuId,fileName = localMenu.name, fileUrl =  menuStorageUrl, items =  items, menuSettings = localMenuSettings)
 
                 //Update purchase status
                 purchase.menuId = localMenu.menuId
                 purchase.status = PurchaseStatus.PURCHASED.name
-                purchaseService.updatePurchase(user = userId, purchase = purchase)
+                purchaseService.updatePurchase(user = _userId!!, purchase = purchase)
                 //Delete all local files
-                val menuFolder = File(filesDir,menuId)
+                val menuFolder = File(filesDir,_menuId!!)
                 FileUtils.deleteAllFilesInFolder(menuFolder)
                 //Delete local menu
-                menuDS.deleteMenuItemsByMenuId(menuId = menuId)
+                menuDS.deleteMenuItemsByMenuId(menuId = _menuId!!)
                 menuDS.deleteMenu(localMenu)
 
                 uploadMenuStatus.postValue(ProcessState(state = State.SUCCESS))
@@ -283,7 +289,7 @@ class PremiumViewModel(
             var errorCode:Int= BillingResponseCode.ERROR
             try {
                 updateConfirmPendingPurchasesStatus.postValue(ProcessState(State.LOADING))
-                val purchases = purchaseService.getPurchases(user = userId)
+                val purchases = purchaseService.getPurchases(user = _userId!!)
 
                 val confirmationPendingPurchases =  purchases.filter { it?.status == PurchaseStatus.CONFIRMATION_PENDING.name }
                 Log.d(TAG, "updateConfirmPendingPurchases. firebase confirmationPendingPurchases:${confirmationPendingPurchases.size}")
@@ -291,7 +297,7 @@ class PremiumViewModel(
                    val consumeResult =  confirmPurchase(billingClient=billingClient,it?.purchaseToken!!)
                     if(consumeResult.billingResult.responseCode == BillingResponseCode.OK){
                         it.status = PurchaseStatus.CONFIRMED.name
-                        purchaseService.updatePurchase(user = userId,purchase=it)
+                        purchaseService.updatePurchase(user = _userId!!,purchase=it)
                         Log.d(TAG, "Purchase CONFIRMED. OrderId:${it.orderId}, Token:${it.purchaseToken}")
                     }else{
                         Log.d(TAG, "Purchase CONFIRMATION ERROR. Error:${getBillingResponseErrorMessage(consumeResult.billingResult.responseCode)}")

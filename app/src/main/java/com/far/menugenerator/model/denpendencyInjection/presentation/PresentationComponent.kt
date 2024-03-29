@@ -3,7 +3,6 @@ package com.far.menugenerator.model.denpendencyInjection.presentation
 import com.far.menugenerator.MainActivity
 import com.far.menugenerator.view.CompanyActivity
 import com.far.menugenerator.view.CompanyList
-import com.far.menugenerator.view.CreateMenuFragment
 import com.far.menugenerator.view.LoginActivity
 import com.far.menugenerator.view.MenuActivity
 import com.far.menugenerator.view.MenuList
@@ -23,6 +22,5 @@ interface PresentationComponent {
     fun inject(menuList:MenuList)
     fun inject(qrPreview:QRPreview)
     fun inject(menuActivity: MenuActivity)
-    fun inject(createMenu:CreateMenuFragment)
     fun inject(premiumActivity: PremiumActivity)
 }

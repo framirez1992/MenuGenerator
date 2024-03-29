@@ -3,6 +3,7 @@ package com.far.menugenerator.model.database.room.dao
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.far.menugenerator.model.database.room.model.MenuItemsTemp
@@ -11,11 +12,11 @@ import com.far.menugenerator.model.database.room.model.MenuTemp
 @Dao
 interface MenuTempDao {
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(menu:MenuTemp)
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(entity: MenuItemsTemp)
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(vararg entity: MenuItemsTemp)
     @Update
     suspend fun update(entity: MenuItemsTemp)

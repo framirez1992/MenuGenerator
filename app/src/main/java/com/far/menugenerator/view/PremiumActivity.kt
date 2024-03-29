@@ -26,9 +26,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-const val EXTRA_COMPANY="COMPANY_ID"
-const val EXTRA_USER="USER_ID"
-const val EXTRA_MENU="MENU_ID"
 class PremiumActivity : BaseActivity() {
 
     private val TAG = "PREMIUM_ACTIVITY"
@@ -64,6 +61,11 @@ class PremiumActivity : BaseActivity() {
         }
     }
 
+    companion object{
+        const val ARG_COMPANY_ID="COMPANY_ID"
+        const val ARG_USER="USER_ID"
+        const val ARG_MENU_ID="MENU_ID"
+    }
 
     private lateinit var billingClient: BillingClient
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -74,21 +76,43 @@ class PremiumActivity : BaseActivity() {
         binding = ActivityPremiumBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        billingClient = BillingClient.newBuilder(this)
-            .setListener(purchasesUpdatedListener)
-            .enablePendingPurchases()
-            .build()
-
-        intent.extras?.let {
-            val userId = it.getString(EXTRA_USER)!!
-            val companyId = it.getString(EXTRA_COMPANY)!!
-            val menuId = it.getString(EXTRA_MENU)!!
-            viewModel.initData(userId = userId, companyId = companyId, menuId = menuId)
+        val userId:String?
+        val companyId:String?
+        val menuId:String?
+        if(savedInstanceState == null){
+            userId = intent.extras?.getString(ARG_USER)
+            companyId = intent.extras?.getString(ARG_COMPANY_ID)
+            menuId = intent.extras?.getString(ARG_MENU_ID)
+        }else{
+            userId = savedInstanceState.getString(ARG_USER)
+            companyId = savedInstanceState.getString(ARG_COMPANY_ID)
+            menuId = savedInstanceState.getString(ARG_MENU_ID)
         }
 
-        initViews()
-        initObservers()
-        startGoogleBillingConnection()
+        if(LoginActivity.userFirebase == null || userId.isNullOrEmpty() || companyId.isNullOrEmpty() || menuId.isNullOrEmpty()){
+            finish()
+        }else{
+
+            if(viewModel.userId.isNullOrEmpty() || viewModel.companyId.isNullOrEmpty() || viewModel.menuId.isNullOrEmpty()){
+                viewModel.initData(userId = userId, companyId = companyId, menuId = menuId)
+            }
+
+            billingClient = BillingClient.newBuilder(this)
+                .setListener(purchasesUpdatedListener)
+                .enablePendingPurchases()
+                .build()
+
+            initViews()
+            initObservers()
+            startGoogleBillingConnection()
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putString(ARG_USER,viewModel.userId)
+        outState.putString(ARG_COMPANY_ID,viewModel.companyId)
+        outState.putString(ARG_MENU_ID,viewModel.menuId)
     }
 
     private fun initViews() {

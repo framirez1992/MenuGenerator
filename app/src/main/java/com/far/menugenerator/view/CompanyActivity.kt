@@ -43,26 +43,29 @@ class CompanyActivity : BaseActivity() {
 
 
     companion object{
-        const val ARG_COMPANY = "ARG_COMPANY"
+        const val ARG_COMPANY = "ARG_COMPANY_ID"
     }
 
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        presentationComponent.inject(this)
-        _viewModel = ViewModelProvider(this,viewModelFactory)[CompanyViewModel::class.java]
-        _binding = FragmentCompanyBinding.inflate(layoutInflater)
-        setContentView(_binding.root)
+        if(LoginActivity.userFirebase == null){
+            finish()
+        }else{
+            presentationComponent.inject(this)
+            _viewModel = ViewModelProvider(this,viewModelFactory)[CompanyViewModel::class.java]
+            _binding = FragmentCompanyBinding.inflate(layoutInflater)
+            setContentView(_binding.root)
 
 
-        company = intent.getSerializableExtra(ARG_COMPANY) as CompanyFirebase?
-        _viewModel.prepareCompanyEdit(company)
+            company = intent.getSerializableExtra(ARG_COMPANY) as CompanyFirebase?
+            _viewModel.prepareCompanyEdit(company)
 
-        initViews()
-        initObservers()
-
-        hideActionBar()
+            initViews()
+            initObservers()
+            hideActionBar()
+        }
 
     }
 
@@ -73,7 +76,6 @@ class CompanyActivity : BaseActivity() {
         _binding.btnNext.setOnClickListener{
             if(!validateMandatoryFields(_viewModel.getCurrentScreen().value!!))
                 return@setOnClickListener
-
             _viewModel.nextScreen()
         }
         _binding.btnBack.setOnClickListener { _viewModel.previousScreen()}
@@ -123,6 +125,7 @@ class CompanyActivity : BaseActivity() {
             if(it != null){
                 Glide.with(this)
                     .load(it)
+                    //.error(R.drawable.loading)
                     .into(_binding.layoutCompanyLogo.imgLogo)
 
             }else{
@@ -229,8 +232,5 @@ class CompanyActivity : BaseActivity() {
         }
 
     }
-
-
-
 
 }
