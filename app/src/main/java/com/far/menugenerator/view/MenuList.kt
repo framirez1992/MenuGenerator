@@ -10,7 +10,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.far.menugenerator.R
+import com.far.menugenerator.common.global.Constants
 import com.far.menugenerator.common.helpers.ActivityHelper
+import com.far.menugenerator.common.utils.PreferenceUtils
 import com.far.menugenerator.databinding.DialogImageTitleDescriptionBinding
 import com.far.menugenerator.databinding.FragmentMenuListBinding
 import com.far.menugenerator.model.State
@@ -36,6 +38,8 @@ class MenuList : BaseActivity() {
     @Inject lateinit var factory: MenuListViewModel.MenuListViewModelFactory
     @Inject lateinit var screenNavigation: ScreenNavigation
     @Inject lateinit var dialogManager: DialogManager
+
+    private var menu:Menu?=null
 
     companion object {
          const val ARG_COMPANY_ID = "COMPANY_ID"
@@ -73,13 +77,18 @@ class MenuList : BaseActivity() {
 
     }
 
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_list, menu)
+        this.menu = menu
+        val showDemo = PreferenceUtils.getShowDemoPreference(context = this,true)
+        this.menu?.findItem(R.id.showDemo)?.setVisible(!showDemo)
+        this.menu?.findItem(R.id.hideDemo)?.setVisible(showDemo)
+        return true
+    }
+
     override fun onResume() {
         super.onResume()
         searchMenus()
-    }
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.menu_list, menu)
-        return true
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -98,6 +107,18 @@ class MenuList : BaseActivity() {
                 menuRef = null)
             }
             R.id.optionRefresh -> searchMenus()
+            R.id.showDemo -> {
+                PreferenceUtils.setShowDemoPreference(context = this,true)
+                menu?.findItem(R.id.showDemo)?.setVisible(false)
+                menu?.findItem(R.id.hideDemo)?.setVisible(true)
+                searchMenus()
+            }
+            R.id.hideDemo->{
+                PreferenceUtils.setShowDemoPreference(context = this,false)
+                menu?.findItem(R.id.showDemo)?.setVisible(true)
+                menu?.findItem(R.id.hideDemo)?.setVisible(false)
+                searchMenus()
+            }
         }
         return true
     }
@@ -122,35 +143,42 @@ class MenuList : BaseActivity() {
 
                 val options = mutableListOf<ImageOption>()
 
-                if(!menu.online)
+                if(!menu.online && !menu.isDemo)
                     options.add(ImageOption(icon = R.drawable.rounded_upgrade_24,R.string.upgrade))
 
                 options.add(ImageOption(R.drawable.baseline_remove_red_eye_24,R.string.preview))
                 options.add(ImageOption(icon = R.drawable.baseline_file_present_24,R.string.share_menu))
+
                 if(menu.online) {
                     //options.add(ImageOption(icon = R.drawable.round_link_24, R.string.copy_link))
                     options.add(ImageOption(icon = R.drawable.rounded_qr_code_2_24, R.string.qr_code))
                 }
 
-                options.add(ImageOption(R.drawable.round_edit_24,R.string.edit))
-                options.add(ImageOption(R.drawable.rounded_delete_24,R.string.delete))
+                if(!menu.isDemo){
+                    options.add(ImageOption(R.drawable.round_edit_24,R.string.edit))
+                    options.add(ImageOption(R.drawable.rounded_delete_24,R.string.delete))
+                }
 
                 dialogManager.showImageBottomSheet(options){option->
+                    val userId = if(menu.isDemo) Constants.USERID_DEMO else LoginActivity.userFirebase?.internalId!!
+                    val companyId = if(menu.isDemo) Constants.COMPANYID_DEMO else viewModel.companyId!!
                     when(option.string){
                         R.string.upgrade->{
                             screenNavigation.premiumActivity(
-                                userId = LoginActivity.userFirebase?.internalId!!,
-                                companyId = viewModel.companyId!!,
+                                userId = userId,
+                                companyId = companyId,
                                 menuId = menu.menuId
                                 )}
                         R.string.preview -> {
                             viewModel.searchPreviewUri(
-                            user = LoginActivity.userFirebase?.internalId!!,
+                            user = userId,
+                            companyId = companyId,
                             downloadDirectory = applicationContext.filesDir,
                             menuReference = menu)}
                         R.string.share_menu -> {
                             viewModel.searchShareUri(
-                                user = LoginActivity.userFirebase?.internalId!!,
+                                user = userId,
+                                companyId = companyId,
                                 downloadDirectory = applicationContext.filesDir,
                                 menuReference = menu)
                         }
@@ -158,7 +186,7 @@ class MenuList : BaseActivity() {
                             //TODO: Acortar URL
                             //ActivityHelper.copyTextToClipboard(this,"url",menu.fileUri)
                         }
-                        R.string.qr_code->screenNavigation.qrImagePreview(companyId = viewModel.companyId!!, menuFirebaseRef = menu.firebaseRef!!)
+                        R.string.qr_code->screenNavigation.qrImagePreview(userId = userId,companyId = companyId, menuFirebaseRef = menu.firebaseRef!!)
                         R.string.edit-> {
                             viewModel.clearMenuTempData()
                             screenNavigation.menuActivity(
@@ -215,6 +243,7 @@ class MenuList : BaseActivity() {
                 dialogManager.showLoadingDialog()
             else
                 dialogManager.dismissLoadingDialog()
+
             if(it.state == State.SUCCESS)
                 ActivityHelper.viewFile(this,viewModel.getFileUri().toFile())
             else if(it.state == State.GENERAL_ERROR)
@@ -225,7 +254,9 @@ class MenuList : BaseActivity() {
     }
 
     private fun searchMenus(){
-        viewModel.getMenus(user= LoginActivity.userFirebase?.internalId!!)
+        viewModel.getMenus(
+            user= LoginActivity.userFirebase?.internalId!!,
+            showDemo = PreferenceUtils.getShowDemoPreference(context = this,true))
     }
 
     private fun showDeleteMenuConfirmationDialog(menuReference: MenuReference){

@@ -27,6 +27,7 @@ import com.far.menugenerator.databinding.ItemMenuFinalPreviewBinding
 import com.far.menugenerator.databinding.MenuNameDialogBinding
 import com.far.menugenerator.databinding.MenuSettingsBinding
 import com.far.menugenerator.model.Category
+import com.far.menugenerator.model.ItemPreview
 import com.far.menugenerator.model.ItemStyle
 import com.far.menugenerator.model.LogoShape
 import com.far.menugenerator.model.MenuSettings
@@ -290,13 +291,11 @@ class MenuActivity : BaseActivity() {
             clearAddProductFields()
             viewModel.setScreen(R.id.menuPreviewScreen)
         }
-        _binding.addMenuItemScreen.productData.enabled.setOnCheckedChangeListener(object :
-            CompoundButton.OnCheckedChangeListener{
-            override fun onCheckedChanged(buttonView: CompoundButton?, isChecked: Boolean) {
-                _binding.addMenuItemScreen.productData.imgVisible.setImageResource(if(isChecked) R.drawable.baseline_remove_red_eye_24 else R.drawable.baseline_visibility_off_24)
-            }
-
-        })
+        _binding.addMenuItemScreen.productData.enabled.setOnCheckedChangeListener { buttonView, isChecked ->
+            _binding.addMenuItemScreen.productData.imgVisible.setImageResource(
+                if (isChecked) R.drawable.baseline_remove_red_eye_24 else R.drawable.baseline_visibility_off_24
+            )
+        }
 
 
         _binding.categoriesScreen.rvCategories.layoutManager = LinearLayoutManager(this,
@@ -349,7 +348,7 @@ class MenuActivity : BaseActivity() {
             if(it != null){
                 Glide.with(this)
                     .load(it)
-                    //.error(R.drawable.loading)
+                    //.error(R.drawable.baseline_broken_image_24)
                     .into(_binding.addMenuItemScreen.productData.imgProduct)
             }else{
                 _binding.addMenuItemScreen.productData.imgProduct.setImageDrawable(null)
@@ -621,10 +620,10 @@ class MenuActivity : BaseActivity() {
     }
 
 
-    private fun fillPreviewAdapter(items:MutableList<MenuItemsTemp>){
+    private fun fillPreviewAdapter(itemPreview: ItemPreview){
         _binding.menuPreviewScreen.rvPreview.adapter = MenuPreviewAdapter(
             this,
-            items,
+            itemPreview.menuItemsTemp,
             onPositionChanged = {
                 viewModel.updatePositions(it)
             }){item->
@@ -642,7 +641,12 @@ class MenuActivity : BaseActivity() {
             }
 
         }
+
+        val position =(_binding.menuPreviewScreen.rvPreview.adapter as MenuPreviewAdapter).getItemPosition(itemId = itemPreview.scrollToItemId)
+        _binding.menuPreviewScreen.rvPreview.scrollToPosition(position)
     }
+
+
     private fun setCategoryAdapter(categories:MutableList<Category>){
         val categoriesFiltered = mutableListOf<Category>()
         categoriesFiltered.addAll(categories.filter { it.id != CreateMenuViewModel.noCategoryId })
@@ -771,7 +775,7 @@ class MenuActivity : BaseActivity() {
                         )
                         Glide.with(this)
                             .load(menuItem.imageUri)
-                            //.error(R.drawable.loading)
+                            //.error(R.drawable.baseline_broken_image_24)
                             .into(binding.imageTitleDescription.image)
                     }else if(menuSettings.menuStyle == MenuStyle.CATALOG){
                         binding.imageTitleDescriptionCatalog.title.text = menuItem.name
@@ -779,7 +783,7 @@ class MenuActivity : BaseActivity() {
                         binding.imageTitleDescriptionCatalog.price.text = StringUtils.doubleToMoneyString(amount = menuItem.price, country = "US", language = "en")
                         Glide.with(this)
                             .load(menuItem.imageUri)
-                            //.error(R.drawable.loading)
+                            //.error(R.drawable.baseline_broken_image_24)
                             .into(binding.imageTitleDescriptionCatalog.image)
                     }
 
@@ -826,7 +830,7 @@ class MenuActivity : BaseActivity() {
             _binding.menuPreviewFinalScreen.logo.visibility = View.VISIBLE
             Glide.with(this)
                 .load(company.logoUrl)
-                //.error(R.drawable.loading)
+                //.error(R.drawable.baseline_broken_image_24)
                 .into(_binding.menuPreviewFinalScreen.logo)
 
             val logoSize = resources.getDimension(R.dimen.img_logo_size)

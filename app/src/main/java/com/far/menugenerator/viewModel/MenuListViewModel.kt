@@ -7,6 +7,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.far.menugenerator.common.global.Constants
 import com.far.menugenerator.common.helpers.NetworkUtils
 import com.far.menugenerator.common.utils.FileUtils
 import com.far.menugenerator.model.ProcessState
@@ -61,13 +62,15 @@ class MenuListViewModel @Inject constructor(
     }
 
 
-    fun getMenus(user:String){
+    fun getMenus(user:String, showDemo:Boolean){
         viewModelScope.launch {
             searchMenuProcess.postValue(ProcessState(State.LOADING))
             val menuList = mutableListOf<MenuReference?>()
-            val onlineMenus = menuService.getMenus(user,companyId!!).map {  MenuReference(menuId = it!!.menuId, firebaseRef = it.fireBaseRef!!, name = it.name, fileUri = it.fileUrl, online = true)}
-            val localMenus = menuDS.getMenusByCompanyId(companyId!!).map { MenuReference(menuId = it.menuId, firebaseRef = null, name = it.name,it.fileUri!!, online = false) }
+            val onlineDemo = if(showDemo) menuService.getMenus(user=Constants.USERID_DEMO, companyId = Constants.COMPANYID_DEMO).map { MenuReference(menuId = it!!.menuId, firebaseRef = it.fireBaseRef!!, name = it.name, fileUri = it.fileUrl, online = true, isDemo = true)  } else mutableListOf()
+            val onlineMenus = menuService.getMenus(user,companyId!!).map {  MenuReference(menuId = it!!.menuId, firebaseRef = it.fireBaseRef!!, name = it.name, fileUri = it.fileUrl, online = true, isDemo = false)}
+            val localMenus = menuDS.getMenusByCompanyId(companyId!!).map { MenuReference(menuId = it.menuId, firebaseRef = null, name = it.name,it.fileUri!!, online = false, isDemo = false) }
 
+            menuList.addAll(onlineDemo)
             menuList.addAll(onlineMenus)
             menuList.addAll(localMenus)
             menus.postValue(menuList)
@@ -137,6 +140,7 @@ class MenuListViewModel @Inject constructor(
     }
 
     fun searchPreviewUri(user:String,
+                         companyId:String,
                          downloadDirectory:File,
                          menuReference: MenuReference,
                          ){
@@ -145,6 +149,7 @@ class MenuListViewModel @Inject constructor(
             try{
                 fileUri = getFilePath(
                     user =  user,
+                    companyId = companyId,
                     downloadDirectory =  downloadDirectory,
                     menuReference =  menuReference)
 
@@ -159,7 +164,8 @@ class MenuListViewModel @Inject constructor(
 
     }
 
-    fun searchShareUri(user:String,
+    fun searchShareUri(  user:String,
+                         companyId: String,
                          downloadDirectory:File,
                          menuReference: MenuReference,
     ){
@@ -170,6 +176,7 @@ class MenuListViewModel @Inject constructor(
             try{
                 fileUri = getFilePath(
                     user =  user,
+                    companyId=companyId,
                     downloadDirectory =  downloadDirectory,
                     menuReference =  menuReference)
 
@@ -184,7 +191,8 @@ class MenuListViewModel @Inject constructor(
 
     }
 
-    private suspend fun getFilePath(user:String,
+    private suspend fun getFilePath( user:String,
+                                     companyId: String,
                                      downloadDirectory:File,
                                      menuReference: MenuReference):Uri{
         val fileUri:String
@@ -192,7 +200,7 @@ class MenuListViewModel @Inject constructor(
             if(!NetworkUtils.isConnectedToInternet()){
                 throw TimeoutException()
             }
-            val menu = menuService.getMenu(user = user, companyId = companyId!!, firebaseRef = menuReference.firebaseRef!!)
+            val menu = menuService.getMenu(user = user, companyId = companyId, firebaseRef = menuReference.firebaseRef!!)
             fileUri = menu!!.fileUrl
             return downloadFile(downloadDirectory = downloadDirectory, fileUrl = fileUri)
         }else{

@@ -13,7 +13,6 @@
             app:layout_constraintBottom_toTopOf="@id/productData"
             android:textSize="@dimen/titles"
             android:paddingHorizontal="@dimen/title_padding"
-            android:paddingTop="@dimen/title_padding"
             android:textStyle="bold"
             android:text="@string/products"
             android:gravity="center"/>

@@ -35,7 +35,7 @@ class CompanyAdapter(private val companies:List<CompanyFirebase?>,val onclick: (
             if(company.logoUrl != null)
             Glide.with(binding.root.context)
                 .load(company.logoUrl)
-                //.error(R.drawable.loading)
+                //.error(R.drawable.baseline_broken_image_24)
                 .into(binding.imgLogo)
             else
                 binding.imgLogo.setImageResource(R.drawable.baseline_image_24)

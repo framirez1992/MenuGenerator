@@ -122,12 +122,6 @@
             android:text="Complete Purchase"/>
 
         <Button
-            android:id="@+id/btnShowDemo"
-            android:layout_width="250dp"
-            android:layout_height="wrap_content"
-            android:text="@string/show_demo"/>
-
-        <Button
             android:id="@+id/btnBack"
             android:layout_width="250dp"
             android:layout_height="wrap_content"

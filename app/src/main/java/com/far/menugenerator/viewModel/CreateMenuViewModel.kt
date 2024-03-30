@@ -16,6 +16,7 @@ import com.far.menugenerator.common.utils.FileUtils
 import com.far.menugenerator.common.utils.StringUtils
 import com.far.menugenerator.model.Category
 import com.far.menugenerator.model.CreateMenuState
+import com.far.menugenerator.model.ItemPreview
 import com.far.menugenerator.model.ItemPreviewPosition
 import com.far.menugenerator.model.ItemStyle
 import com.far.menugenerator.model.LogoShape
@@ -23,7 +24,6 @@ import com.far.menugenerator.model.MenuSettings
 import com.far.menugenerator.model.MenuStyle
 import com.far.menugenerator.model.ProcessState
 import com.far.menugenerator.model.State
-import com.far.menugenerator.model.common.MenuReference
 import com.far.menugenerator.model.database.CompanyService
 import com.far.menugenerator.model.database.MenuService
 import com.far.menugenerator.model.database.model.CompanyFirebase
@@ -37,6 +37,8 @@ import com.far.menugenerator.model.database.room.services.MenuDS
 import com.far.menugenerator.model.database.room.services.MenuTempDS
 import com.far.menugenerator.model.storage.MenuStorage
 import com.far.menugenerator.view.LoginActivity
+import com.google.firebase.storage.StorageException
+import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
@@ -80,7 +82,8 @@ class CreateMenuViewModel @Inject constructor(
     private val _menuSettings= MutableLiveData<MenuSettings>()
     private val _categories = MutableLiveData<MutableList<Category>>()//SOLO CATEGORIAS
     private val _items = MutableLiveData<MutableList<MenuItemsTemp>>()//SOLO PRODUCTOS
-    private val _itemsPreview = MutableLiveData<MutableList<MenuItemsTemp>>()
+    private val _itemsPreview = MutableLiveData<ItemPreview>()
+
     private val _editItem = MutableLiveData<MenuItemsTemp?>()
 
     private var _editMenu:MenuTemp? = null
@@ -91,7 +94,7 @@ class CreateMenuViewModel @Inject constructor(
     val stateProcessMenu:LiveData<ProcessState> get() = _stateProcessMenu
     val categories:LiveData<MutableList<Category>> get() = _categories
     val items:LiveData<MutableList<MenuItemsTemp>> get() = _items
-    val itemsPreview:LiveData<MutableList<MenuItemsTemp>> get() = _itemsPreview
+    val itemsPreview:LiveData<ItemPreview> get() = _itemsPreview
     val editItem:LiveData<MenuItemsTemp?> get() = _editItem
 
     fun getCompany() = company
@@ -125,7 +128,7 @@ class CreateMenuViewModel @Inject constructor(
                 menuStyle = MenuStyle.BASIC
             )
             _state.value = CreateMenuState(currentScreen = R.id.categoriesScreen)
-            _itemsPreview.value = mutableListOf()
+            _itemsPreview.value = ItemPreview(menuItemsTemp = mutableListOf())
             _items.value = mutableListOf()
             _editItem.value = null
 
@@ -136,14 +139,14 @@ class CreateMenuViewModel @Inject constructor(
         return _editMenu?.name
     }
 
-
-
     fun prepareMenu(){
         _menuId = _menuReferenceId?:UUID.randomUUID().toString()
         viewModelScope.launch(Dispatchers.IO) {
             if(company == null){
                 company = companyService.getCompany(user = _userId, companyRef = _companyReference!!)
             }
+
+            //massiveLoad(_menuId!!,10,100)
             //if(_editMenu == null)//si no se esta editando actualmente ningun
             //    menuTempDS.clearAll()//LIMPIAR LAS TABLAS
 
@@ -218,6 +221,8 @@ class CreateMenuViewModel @Inject constructor(
         _editMenu = menuTemp
         _editMenuItems = menuItemsTemp
         _editItemsOriginalImages = menuItemsTemp.filter { !it.imageUri.isNullOrBlank() }.map { it.id to it.imageUri!! }
+        val menuSettings = Gson().fromJson(menuTemp.menuSettings,MenuSettings::class.java)
+        _menuSettings.postValue(menuSettings)
 
         menuTempDS.addMenu(menuTemp)
         menuTempDS.addMenuItems(menuItemsTemp)
@@ -300,6 +305,9 @@ class CreateMenuViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             val itemStyle: ItemStyle = getItemStyle(currentItemImage.value != null,description.isNotBlank())
 
+            //val uri = currentItemImage.value?.toString()
+            //massiveLoad(_menuId!!,10,100,itemStyle,uri)
+
             val menuItem = MenuItemsTemp(
                 id = UUID.randomUUID().toString(),
                 menuId = _menuId!!,
@@ -315,7 +323,7 @@ class CreateMenuViewModel @Inject constructor(
             )
             menuTempDS.addMenuItem(menuItem)
             refreshItems()
-            refreshMenuPreview()
+            refreshMenuPreview(scrollToItemId = menuItem.id)
         }
     }
 
@@ -361,7 +369,7 @@ class CreateMenuViewModel @Inject constructor(
             menuTempDS.updateMenuItem(menuItem!!)
             _editItem.postValue(null)
             refreshItems()
-            refreshMenuPreview()
+            refreshMenuPreview(scrollToItemId = menuItem.id)
         }
 
     }
@@ -371,7 +379,20 @@ class CreateMenuViewModel @Inject constructor(
             menuTempDS.deleteMenuItemById(menuItemsTemp)
             _editItem.postValue(null)
             refreshItems()
-            refreshMenuPreview()
+
+            //Al eliminar un productos buscar item con el position anterior.
+            val items = getMenuItems()
+            val sameCategoryItems = items.filter { it.categoryId == menuItemsTemp.categoryId }.sortedBy { it.position }
+
+            var itemId:String?=null
+            if(sameCategoryItems.isNotEmpty()){
+                val greater = sameCategoryItems.firstOrNull{it.position > menuItemsTemp.position}
+                val lower = sameCategoryItems.lastOrNull{ it.position < menuItemsTemp.position }
+                if(greater != null) itemId = greater.id
+                else if(lower != null) itemId = lower.id
+            }
+
+            refreshMenuPreview(scrollToItemId = itemId)//Si se elimina un producto, hacer scroll a su categoria
         }
 
     }
@@ -380,9 +401,9 @@ class CreateMenuViewModel @Inject constructor(
         _menuSettings.value = ms
     }
 
-    private suspend fun refreshMenuPreview(){
+    private suspend fun refreshMenuPreview(scrollToItemId:String?=null){
         var previewList =  getItemPreviews().toMutableList()
-        _itemsPreview.postValue(previewList)
+        _itemsPreview.postValue(ItemPreview(menuItemsTemp = previewList, scrollToItemId = scrollToItemId))
     }
 
     fun nextScreen(){
@@ -662,9 +683,14 @@ class CreateMenuViewModel @Inject constructor(
             //DELETE ALL UNUSED IMAGES
             imagesToRemove.forEach{
                 val uri = Uri.parse(it)
-                if(online)
-                    menuStorage.removeMenuItemsImages(userId,_editMenu!!.menuId,uri)
-                else
+                if(online) {
+                    try {
+                        menuStorage.removeMenuItemsImages(userId, _editMenu!!.menuId, uri)
+                    }catch (storageEx:StorageException){
+                        if(storageEx.errorCode != StorageException.ERROR_OBJECT_NOT_FOUND)
+                            throw storageEx
+                    }
+                }else
                     FileUtils.deleteFile(uri)
                 }
         }
@@ -801,6 +827,51 @@ class CreateMenuViewModel @Inject constructor(
         }else{
             ItemStyle.MENU_TITLE_PRICE
         }
+
+
+    private suspend fun massiveLoad(menuId:String,categories:Int,itemsPerCategory:Int,itemStyle:ItemStyle, image:String?){
+
+        (0..categories).forEach{ catIndex->
+            val catId = UUID.randomUUID().toString()
+            val categoryName="Category $catIndex"
+            val cat = MenuItemsTemp(
+                id = catId,
+                menuId = menuId,
+                type = ItemStyle.MENU_CATEGORY_HEADER.name,
+                enabled = true,
+                categoryId = catId,
+                categoryName = categoryName,
+                name = categoryName,
+                description = "",
+                price = 0.0,
+                imageUri = null,
+                position = catIndex
+            )
+
+            menuTempDS.addMenuItem(cat)
+
+            (0..itemsPerCategory).forEach { prodIndex->
+
+                val itemId = UUID.randomUUID().toString()
+                val item = MenuItemsTemp(
+                    id = itemId,
+                    menuId = menuId,
+                    type = itemStyle.name,
+                    enabled = true,
+                    categoryId = catId,
+                    categoryName = categoryName,
+                    name = "Item $catIndex - $prodIndex",
+                    description = "",
+                    price = (100..1000).random().toDouble(),
+                    imageUri = image,
+                    position = prodIndex
+                )
+                menuTempDS.addMenuItem(item)
+            }
+        }
+
+    }
+
 
     class CreateMenuViewModelFactory @Inject constructor (
         private val menuStorageProvider: Provider<MenuStorage>, //usamos provider para eviar bugs (ver video)

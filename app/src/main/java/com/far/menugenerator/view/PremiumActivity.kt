@@ -250,12 +250,10 @@ class PremiumActivity : BaseActivity() {
     }
     private fun showNewPaymentButtons(){
         binding.btnBuy.visibility = View.VISIBLE
-        binding.btnShowDemo.visibility = View.VISIBLE
         binding.btnCompletePurchase.visibility =  View.GONE
     }
     private fun showCompletePaymentButtons(){
         binding.btnBuy.visibility =  View.GONE
-        binding.btnShowDemo.visibility = View.GONE
         binding.btnCompletePurchase.visibility = View.VISIBLE
     }
     private fun showToastAndFinish(text:String){

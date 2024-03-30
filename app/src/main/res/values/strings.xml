@@ -119,4 +119,5 @@
     <string name="item_unavailable">Item unavailable</string>
     <string name="service_disconnected">Service disconnected</string>
     <string name="service_unavailable">Service unavailable</string>
+    <string name="hide_demo">Hide Demo</string>
 </resources>

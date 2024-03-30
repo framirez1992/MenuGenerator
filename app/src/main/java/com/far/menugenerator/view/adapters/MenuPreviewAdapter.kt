@@ -153,6 +153,11 @@ class MenuPreviewAdapter(private val activity:BaseActivity,
         onPositionChanged(preview.map { ItemPreviewPosition(id = it.id, position = it.position) })
     }
 
+    fun getItemPosition(itemId:String?):Int{
+        val item = preview.find { it.id == itemId }
+        return if(itemId != null) preview.indexOf(item) else 0
+    }
+
     class MenuPreviewViewHolder(val binding:ItemMenuPreviewBinding):RecyclerView.ViewHolder(binding.root){
 
         fun bind(activity: BaseActivity,itemPreview: MenuItemsTemp){
@@ -175,7 +180,7 @@ class MenuPreviewAdapter(private val activity:BaseActivity,
                     binding.imageTitleDescription.price.text = price
                     Glide.with(activity)
                         .load(itemPreview.imageUri)
-                        .error(R.drawable.loading)
+                        //.error(R.drawable.baseline_broken_image_24)
                         .encodeQuality(80)
                         .into(binding.imageTitleDescription.image)
 

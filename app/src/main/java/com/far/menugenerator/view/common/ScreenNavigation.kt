@@ -44,10 +44,11 @@ class ScreenNavigation (private val baseActivity: BaseActivity) {
         activity.startActivity(i)
     }
 
-    fun qrImagePreview(companyId:String,menuFirebaseRef: String){
+    fun qrImagePreview(userId: String,companyId:String,menuFirebaseRef: String){
         val i = Intent(activity, QRPreview::class.java).apply {
-            putExtra(QRPreview.ARG_MENU_FIREBASE_REF,menuFirebaseRef)
+            putExtra(QRPreview.ARG_USER_ID,userId)
             putExtra(QRPreview.ARG_COMPANY_ID,companyId)
+            putExtra(QRPreview.ARG_MENU_FIREBASE_REF,menuFirebaseRef)
         }
         activity.startActivity(i)
     }

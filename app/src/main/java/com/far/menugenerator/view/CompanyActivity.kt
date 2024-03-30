@@ -125,7 +125,7 @@ class CompanyActivity : BaseActivity() {
             if(it != null){
                 Glide.with(this)
                     .load(it)
-                    //.error(R.drawable.loading)
+                    //.error(R.drawable.baseline_broken_image_24)
                     .into(_binding.layoutCompanyLogo.imgLogo)
 
             }else{

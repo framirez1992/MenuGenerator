@@ -40,6 +40,7 @@ class QRPreview : BaseActivity() {
     private var optionSelected:ImageOption? = null
 
     companion object {
+        const val ARG_USER_ID="userId"
         const val ARG_COMPANY_ID = "companyId"
         const val ARG_MENU_FIREBASE_REF = "menuFirebaseRef"
     }
@@ -51,22 +52,25 @@ class QRPreview : BaseActivity() {
 
         setContentView(binding.root)
 
+        val userId:String?
         val companyId:String?
         val menuFireBaseRef:String?
         if(savedInstanceState == null){
+            userId = intent.extras?.getString(ARG_USER_ID)
             companyId = intent.extras?.getString(ARG_COMPANY_ID)
             menuFireBaseRef = intent.extras?.getString(ARG_MENU_FIREBASE_REF)
         }else{
+            userId = savedInstanceState.getString(ARG_USER_ID)
             companyId = savedInstanceState.getString(ARG_COMPANY_ID)
             menuFireBaseRef = savedInstanceState.getString(ARG_MENU_FIREBASE_REF)
         }
 
-        if(LoginActivity.userFirebase == null || companyId.isNullOrEmpty() || menuFireBaseRef.isNullOrEmpty()){
+        if(LoginActivity.userFirebase == null  || userId.isNullOrEmpty() || companyId.isNullOrEmpty() || menuFireBaseRef.isNullOrEmpty()){
             finish()
         }else {
 
-            if(viewModel.companyId.isNullOrEmpty() || viewModel.menuFirebaseRef.isNullOrEmpty()){
-                viewModel.initialize(companyId = companyId, menuFireBaseRef = menuFireBaseRef)
+            if(viewModel.userId.isNullOrEmpty() || viewModel.companyId.isNullOrEmpty() || viewModel.menuFirebaseRef.isNullOrEmpty()){
+                viewModel.initialize(userId = userId,companyId = companyId, menuFireBaseRef = menuFireBaseRef)
             }
 
             initViews()
@@ -77,6 +81,7 @@ class QRPreview : BaseActivity() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
+        outState.putString(ARG_USER_ID, viewModel.userId)
         outState.putString(ARG_COMPANY_ID,viewModel.companyId)
         outState.putString(ARG_MENU_FIREBASE_REF, viewModel.menuFirebaseRef)
     }
@@ -112,7 +117,7 @@ class QRPreview : BaseActivity() {
     }
 
     private fun drawQRCode(){
-        viewModel.drawMenu(user = LoginActivity.userFirebase?.internalId!!)
+        viewModel.drawMenu()
     }
 
     private fun showOptions(){

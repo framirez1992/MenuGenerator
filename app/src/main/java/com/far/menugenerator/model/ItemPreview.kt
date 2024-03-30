@@ -1,10 +1,10 @@
 package com.far.menugenerator.model
 
 import android.net.Uri
+import com.far.menugenerator.model.database.room.model.MenuItemsTemp
 import java.io.Serializable
 
-//data class ItemPreview (val item:Item,val itemStyle:ItemStyle):Serializable
-
+ class ItemPreview(val menuItemsTemp: MutableList<MenuItemsTemp>, val scrollToItemId:String?=null)
 
 enum class ItemStyle{
     MENU_CATEGORY_HEADER,

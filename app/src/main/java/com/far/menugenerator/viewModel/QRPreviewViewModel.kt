@@ -29,9 +29,11 @@ class QRPreviewViewModel(
     private val qrBitmap = MutableLiveData<Bitmap>()
 
     //private lateinit var menuRef:MenuReference
+    private var _userId:String?=null
     private var _companyId:String?=null
     private var _menuFireBaseRef:String?=null
 
+    val userId get() = _userId
     val companyId get() = _companyId
     val menuFirebaseRef get() = _menuFireBaseRef
 
@@ -60,12 +62,12 @@ class QRPreviewViewModel(
 
     }
 
-    fun drawMenu(user:String){
+    fun drawMenu(){
         state.value = ProcessState(State.LOADING)
 
         viewModelScope.launch {
             try{
-                val menu = menuService.getMenu(user = user, companyId = _companyId!!, firebaseRef = _menuFireBaseRef!!)
+                val menu = menuService.getMenu(user = _userId!!, companyId = _companyId!!, firebaseRef = _menuFireBaseRef!!)
                 menuFirebase.postValue(menu)
                 val url = menu?.fileUrl!!.split("&token")[0]//SIN TOKEN
                 val bm = FileUtils.generateQRCode(url)
@@ -78,7 +80,8 @@ class QRPreviewViewModel(
         }
     }
 
-    fun initialize(companyId: String, menuFireBaseRef:String) {
+    fun initialize(userId:String,companyId: String, menuFireBaseRef:String) {
+        _userId = userId
         _companyId = companyId
         _menuFireBaseRef = menuFireBaseRef
     }

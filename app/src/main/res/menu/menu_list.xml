@@ -11,4 +11,14 @@
         android:icon="@drawable/rounded_add_white_24"
         app:showAsAction="ifRoom"
         android:title="@string/add"/>
+
+    <item android:id="@+id/showDemo"
+        android:icon="@drawable/rounded_add_white_24"
+        app:showAsAction="never"
+        android:title="@string/show_demo"/>
+
+    <item android:id="@+id/hideDemo"
+        android:icon="@drawable/rounded_add_white_24"
+        app:showAsAction="never"
+        android:title="@string/hide_demo"/>
 </menu>
