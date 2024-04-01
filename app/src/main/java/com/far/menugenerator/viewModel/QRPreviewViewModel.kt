@@ -1,6 +1,7 @@
 package com.far.menugenerator.viewModel
 
 import android.graphics.Bitmap
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -13,8 +14,11 @@ import com.far.menugenerator.model.State
 import com.far.menugenerator.model.database.MenuService
 import com.far.menugenerator.model.database.model.MenuFirebase
 import com.far.menugenerator.model.storage.MenuStorage
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import java.io.File
+import java.net.URL
 import java.util.concurrent.TimeoutException
 import javax.inject.Inject
 import javax.inject.Provider
@@ -85,20 +89,6 @@ class QRPreviewViewModel(
         _companyId = companyId
         _menuFireBaseRef = menuFireBaseRef
     }
-
-    /*
-     fun shortenUrl() {
-        viewModelScope.launch(Dispatchers.IO) {
-
-            val url = "https://tinyurl.com/api-create.php?url=${menuFirebase.value?.fileUrl}"
-            try {
-                val response = withTimeout(5_000) { URL(url).readText() }
-            } catch (e: Exception) {
-                Log.e("TinyURL", "Error shortening URL: $e")
-            }
-        }
-    }
-    */
 
 
     class QRPreviewViewModelFactory @Inject constructor(

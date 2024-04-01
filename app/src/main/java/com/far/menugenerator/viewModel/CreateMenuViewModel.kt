@@ -11,6 +11,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.far.menugenerator.R
+import com.far.menugenerator.common.global.Constants
 import com.far.menugenerator.common.helpers.NetworkUtils
 import com.far.menugenerator.common.utils.FileUtils
 import com.far.menugenerator.common.utils.StringUtils
@@ -593,7 +594,7 @@ class CreateMenuViewModel @Inject constructor(
       return menuStorage.uploadFile(user,menuId,pdfPath)
     }
     private fun saveMenuFile(user:String,menuId:String, pdfFile:Uri,menuDirectory: File):Uri? {
-        return FileUtils.moveFile(fileUri = pdfFile, directory =  menuDirectory, fileName = "document.pdf")
+        return FileUtils.moveFile(fileUri = pdfFile, directory =  menuDirectory, fileName = Constants.PDF_FILE_NAME)
     }
     private suspend fun prepareItemsFirebase(user:String,menuId: String, items:List<MenuItemsTemp>):List<ItemFirebase>{
 

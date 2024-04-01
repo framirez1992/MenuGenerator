@@ -1,6 +1,9 @@
 package com.far.menugenerator.viewModel
 
+import android.accounts.NetworkErrorException
 import android.net.Uri
+import android.net.http.NetworkException
+import android.util.Log
 import androidx.core.net.toUri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -12,6 +15,8 @@ import com.far.menugenerator.common.helpers.NetworkUtils
 import com.far.menugenerator.common.utils.FileUtils
 import com.far.menugenerator.model.ProcessState
 import com.far.menugenerator.model.State
+import com.far.menugenerator.model.api.TinyUrlAPIInterface
+import com.far.menugenerator.model.api.model.TinyUrlRequest
 import com.far.menugenerator.model.common.MenuReference
 import com.far.menugenerator.model.database.MenuService
 import com.far.menugenerator.model.database.model.MenuFirebase
@@ -19,9 +24,14 @@ import com.far.menugenerator.model.database.room.services.MenuDS
 import com.far.menugenerator.model.database.room.services.MenuTempDS
 import com.far.menugenerator.model.storage.MenuStorage
 import com.far.menugenerator.view.common.BaseActivity
+import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
+import retrofit2.Retrofit
+import retrofit2.await
 import java.io.File
+import java.net.URL
 import java.util.concurrent.TimeoutException
 import javax.inject.Inject
 import javax.inject.Provider
@@ -30,7 +40,8 @@ class MenuListViewModel @Inject constructor(
     private val menuService:MenuService,
     private val menuStorage:MenuStorage,
     private val menuDS: MenuDS,
-    private val menuTempDS:MenuTempDS
+    private val menuTempDS:MenuTempDS,
+    private val retrofit: Retrofit
 ): ViewModel() {
 
     private var _companyId: String?=null
@@ -46,6 +57,7 @@ class MenuListViewModel @Inject constructor(
     private val deleteMenuProcess = MutableLiveData<ProcessState>()
     val previewFileState = MutableLiveData<ProcessState>()
     val shareFileState = MutableLiveData<ProcessState>()
+    val shortUrlState = MutableLiveData<ProcessState>()
 
     fun getFileUri() = fileUri!!
 
@@ -221,20 +233,58 @@ class MenuListViewModel @Inject constructor(
         }
     }
 
+    fun shortenUrl(url:String, token:String,userId:String,companyId: String, firebaseRef:String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val menu = menuService.getMenu(user = userId,companyId=companyId, firebaseRef = firebaseRef)!!
+                if(menu.shorUrl != null){
+                    shortUrlState.postValue(ProcessState(state = State.SUCCESS, message = menu.shorUrl))
+                }else{
+                    shortUrlState.postValue(ProcessState(state = State.LOADING, message = menu.shorUrl))
+                    if(!NetworkUtils.isConnectedToInternet()){
+                        throw NetworkErrorException()
+                    }
 
+                    val apiService = retrofit.create(TinyUrlAPIInterface::class.java)
+                    val tinyUrlRequest = TinyUrlRequest(url = url)
+                    val response = apiService.createPost(body = tinyUrlRequest, token = token).await()
+                    if (response.code == 0) {
+                        Log.i("TINY_URL",Gson().toJson(response))
+                        menu.shorUrl = response.data?.tiny_url
+                        menuService.updateMenu(user = userId,companyId = companyId, menu)
+                        shortUrlState.postValue(ProcessState(state = State.SUCCESS, message = menu.shorUrl))
+                    } else {
+                        shortUrlState.postValue(ProcessState(state = State.GENERAL_ERROR))
+                        Log.i("TINY_URL",Gson().toJson(response))
+                    }
+                }
+
+            }catch (e:NetworkErrorException){
+                shortUrlState.postValue(ProcessState(state = State.NETWORK_ERROR))
+            }
+            catch (e:Exception){
+                shortUrlState.postValue(ProcessState(state = State.GENERAL_ERROR))
+            }
+        }
+    }
+
+    data class ShorUrlResponse(val success:Boolean=false, val data:ResponseData)
+    data class ResponseData(val id:String="", val url:String="", val full:String="")
 
     class MenuListViewModelFactory @Inject constructor(
        private val menuService: Provider<MenuService>,
        private val menuStorage: Provider<MenuStorage>,
        private val menuDS: Provider<MenuDS>,
-       private val menuTempDS: Provider<MenuTempDS>
+       private val menuTempDS: Provider<MenuTempDS>,
+       private val retrofit: Provider<Retrofit>
    ):ViewModelProvider.Factory{
        override fun <T : ViewModel> create(modelClass: Class<T>): T {
            return MenuListViewModel(
                menuService = menuService.get(),
                menuStorage = menuStorage.get(),
                menuDS = menuDS.get(),
-               menuTempDS = menuTempDS.get()) as T
+               menuTempDS = menuTempDS.get(),
+               retrofit = retrofit.get()) as T
        }
    }
 

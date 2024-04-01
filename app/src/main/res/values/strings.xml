@@ -7,6 +7,8 @@
     <string name="menu_demo_id">z9PCkWSDV4RnGEnxJwbf</string>
     -->
 
+    <string name="tiny_url_endpoint" translatable="false">https://api.tinyurl.com</string>
+    <string name="tiny_url_token" translatable="false">np97L2ZzMLkPPhJhbtWFkjFLHpZQcCdygPGKksE5hb7hJqVtsAl7nCalTt25</string>
     <string name="interstitial_add_id_test" translatable="false">ca-app-pub-3940256099942544/1033173712</string>
     <string name="interstitial_add_id" translatable="false">ca-app-pub-8775587472639334/9465721003</string>
 

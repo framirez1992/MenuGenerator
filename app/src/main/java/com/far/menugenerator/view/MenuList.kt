@@ -5,6 +5,7 @@ import android.view.Menu
 import android.view.MenuItem
 import androidx.fragment.app.Fragment
 import android.view.View
+import android.widget.Toast
 import androidx.core.net.toFile
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -150,7 +151,7 @@ class MenuList : BaseActivity() {
                 options.add(ImageOption(icon = R.drawable.baseline_file_present_24,R.string.share_menu))
 
                 if(menu.online) {
-                    //options.add(ImageOption(icon = R.drawable.round_link_24, R.string.copy_link))
+                    options.add(ImageOption(icon = R.drawable.round_link_24, R.string.copy_link))
                     options.add(ImageOption(icon = R.drawable.rounded_qr_code_2_24, R.string.qr_code))
                 }
 
@@ -184,7 +185,12 @@ class MenuList : BaseActivity() {
                         }
                         R.string.copy_link->{
                             //TODO: Acortar URL
-                            //ActivityHelper.copyTextToClipboard(this,"url",menu.fileUri)
+                            viewModel.shortenUrl(
+                                url = menu.fileUri.split("&token")[0],
+                                token = getString(R.string.tiny_url_token),
+                                userId = userId,
+                                companyId = companyId,
+                                firebaseRef = menu.firebaseRef!!)
                         }
                         R.string.qr_code->screenNavigation.qrImagePreview(userId = userId,companyId = companyId, menuFirebaseRef = menu.firebaseRef!!)
                         R.string.edit-> {
@@ -247,6 +253,21 @@ class MenuList : BaseActivity() {
             if(it.state == State.SUCCESS)
                 ActivityHelper.viewFile(this,viewModel.getFileUri().toFile())
             else if(it.state == State.GENERAL_ERROR)
+                Snackbar.make(binding.root,getString(R.string.operation_failed_please_retry),Snackbar.LENGTH_LONG).show()
+            else if(it.state == State.NETWORK_ERROR)
+                dialogManager.showInternetErrorDialog()
+        }
+
+        viewModel.shortUrlState.observe(this){
+            if(it.state == State.LOADING)
+                dialogManager.showLoadingDialog()
+            else
+                dialogManager.dismissLoadingDialog()
+
+            if(it.state == State.SUCCESS) {
+                ActivityHelper.copyTextToClipboard(this, label = "URL", it.message!!)
+                Toast.makeText(this,getString(R.string.text_copied_to_clipboard),Toast.LENGTH_SHORT).show()
+            }else if(it.state == State.GENERAL_ERROR)
                 Snackbar.make(binding.root,getString(R.string.operation_failed_please_retry),Snackbar.LENGTH_LONG).show()
             else if(it.state == State.NETWORK_ERROR)
                 dialogManager.showInternetErrorDialog()

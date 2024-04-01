@@ -13,7 +13,8 @@ open class MenuService(private val db:FirebaseFirestore) {
             MenuFirebase::name.name to m.name,
             MenuFirebase::fileUrl.name to m.fileUrl,
             MenuFirebase::items.name to m.items,
-            MenuFirebase::menuSettings.name to m.menuSettings
+            MenuFirebase::menuSettings.name to m.menuSettings,
+            MenuFirebase::shorUrl.name to m.shorUrl
 
         )
         db.collection(user).document(companyId).collection("menu")
@@ -27,7 +28,8 @@ open class MenuService(private val db:FirebaseFirestore) {
             MenuFirebase::name.name to m.name,
             MenuFirebase::fileUrl.name to m.fileUrl,
             MenuFirebase::items.name to m.items,
-            MenuFirebase::menuSettings.name to m.menuSettings
+            MenuFirebase::menuSettings.name to m.menuSettings,
+            MenuFirebase::shorUrl.name to m.shorUrl
         )
         db.collection(user).document(companyId).collection("menu").document(m.fireBaseRef!!)
             .set(menu)

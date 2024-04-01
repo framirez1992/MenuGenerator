@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.canhub.cropper.CropImage
 import com.far.menugenerator.R
+import com.far.menugenerator.common.global.Constants
 import com.far.menugenerator.common.utils.FileUtils
 import com.far.menugenerator.common.utils.NumberUtils
 import com.far.menugenerator.common.utils.StringUtils
@@ -476,7 +477,7 @@ class MenuActivity : BaseActivity() {
 
 
     private fun generateMenu(fileName:String){
-        val file = File(this.applicationContext.filesDir, "temp.pdf")
+        val file = File(this.applicationContext.filesDir, Constants.PDF_FILE_NAME)
         val height = _binding.menuPreviewFinalScreen.llCompany.measuredHeight + calculateTotalItemHeight(_binding.menuPreviewFinalScreen.llItems) + _binding.menuPreviewFinalScreen.llFooter.measuredHeight
         viewModel.generateMenu(
             context = this,

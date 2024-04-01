@@ -2,6 +2,7 @@ package com.far.menugenerator.model.denpendencyInjection.application
 
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.far.menugenerator.R
 import com.far.menugenerator.model.database.room.RoomDB
 import com.far.menugenerator.view.MyApplication
 import com.google.firebase.Firebase
@@ -9,6 +10,8 @@ import com.google.firebase.firestore.firestore
 import com.google.firebase.storage.FirebaseStorage
 import dagger.Module
 import dagger.Provides
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
 @Module
 class ApplicationModule(private val application:MyApplication) {
@@ -32,4 +35,11 @@ class ApplicationModule(private val application:MyApplication) {
         name= "menu_generator.db")
         .build()
 
+    @Provides
+    @AppScope
+    fun tinyUrlClient(application: MyApplication):Retrofit = Retrofit.Builder()
+        .baseUrl(application.getString(R.string.tiny_url_endpoint))
+        .addConverterFactory(GsonConverterFactory.create())
+        // Add interceptors if needed
+        .build()
 }
