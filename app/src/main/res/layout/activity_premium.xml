@@ -121,13 +121,6 @@
             app:layout_constraintVertical_chainStyle="packed"
             android:text="Complete Purchase"/>
 
-        <Button
-            android:id="@+id/btnBack"
-            android:layout_width="250dp"
-            android:layout_height="wrap_content"
-            android:text="@string/back"
-            android:backgroundTint="@color/grey_100"
-            android:textColor="@color/black"/>
 
     </LinearLayout>
 

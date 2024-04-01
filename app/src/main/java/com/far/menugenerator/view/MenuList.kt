@@ -256,7 +256,8 @@ class MenuList : BaseActivity() {
     private fun searchMenus(){
         viewModel.getMenus(
             user= LoginActivity.userFirebase?.internalId!!,
-            showDemo = PreferenceUtils.getShowDemoPreference(context = this,true))
+            showDemo = PreferenceUtils.getShowDemoPreference(context = this,true),
+            demoId = getString(R.string.menu_demo_id))
     }
 
     private fun showDeleteMenuConfirmationDialog(menuReference: MenuReference){

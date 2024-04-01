@@ -20,16 +20,17 @@
             android:src="@drawable/outline_save_24"
             app:tint="@color/white"
             android:background="@drawable/rounded_corners"
-            android:backgroundTint="@color/purple_500"
+            android:backgroundTint="@color/deep_orange_500"
             android:layout_alignParentEnd="true"
             android:layout_marginHorizontal="20dp"/>
 
-        <com.google.android.material.imageview.ShapeableImageView android:id="@+id/btnEdit"
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/btnEdit"
             android:layout_width="70dp"
             android:layout_height="30dp"
             android:src="@drawable/round_edit_24"
             app:tint="@color/white"
-            android:background="@color/purple_500"
+            android:background="@color/deep_orange_500"
             app:shapeAppearanceOverlay="@style/Circular"
             app:contentPadding="5dp"
             android:layout_alignParentEnd="true"

@@ -62,11 +62,11 @@ class MenuListViewModel @Inject constructor(
     }
 
 
-    fun getMenus(user:String, showDemo:Boolean){
+    fun getMenus(user:String, showDemo:Boolean, demoId:String){
         viewModelScope.launch {
             searchMenuProcess.postValue(ProcessState(State.LOADING))
             val menuList = mutableListOf<MenuReference?>()
-            val onlineDemo = if(showDemo) menuService.getMenus(user=Constants.USERID_DEMO, companyId = Constants.COMPANYID_DEMO).map { MenuReference(menuId = it!!.menuId, firebaseRef = it.fireBaseRef!!, name = it.name, fileUri = it.fileUrl, online = true, isDemo = true)  } else mutableListOf()
+            val onlineDemo = if(showDemo) menuService.getMenus(user=Constants.USERID_DEMO, companyId = Constants.COMPANYID_DEMO).filter { it?.menuId == demoId }.map { MenuReference(menuId = it!!.menuId, firebaseRef = it.fireBaseRef!!, name = it.name, fileUri = it.fileUrl, online = true, isDemo = true)  } else mutableListOf()
             val onlineMenus = menuService.getMenus(user,companyId!!).map {  MenuReference(menuId = it!!.menuId, firebaseRef = it.fireBaseRef!!, name = it.name, fileUri = it.fileUrl, online = true, isDemo = false)}
             val localMenus = menuDS.getMenusByCompanyId(companyId!!).map { MenuReference(menuId = it.menuId, firebaseRef = null, name = it.name,it.fileUri!!, online = false, isDemo = false) }
 

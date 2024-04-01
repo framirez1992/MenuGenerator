@@ -52,7 +52,8 @@ class DialogManager(private val baseActivity: BaseActivity) {
     }
     fun dismissLoadingDialog(){
         if(currentLoadingDialog != null){
-            currentLoadingDialog!!.dismiss()
+            currentLoadingDialog!!.dismissAllowingStateLoss()
+            currentLoadingDialog = null
         }
     }
 

@@ -25,7 +25,7 @@
             android:gravity="center_vertical"
             android:paddingHorizontal="10dp"
             android:textSize="18sp"
-            android:textStyle="italic"
+            android:textStyle="italic|bold"
             app:layout_constraintStart_toEndOf="@id/imgSearch"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@id/imgSearch"

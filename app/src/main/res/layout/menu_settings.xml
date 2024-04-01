@@ -24,13 +24,12 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:paddingBottom="10dp"
-            android:textSize="16sp"
+            android:textSize="18sp"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@id/title"
-            android:text="@string/business_logo"
-            android:textColor="@color/purple_700"/>
+            android:text="@string/business_logo"/>
 
         <CheckBox android:id="@+id/cbLogo"
             android:layout_width="0dp"
@@ -42,12 +41,13 @@
 
 
         <ImageView android:id="@+id/imgShape"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toStartOf="@id/tvLabelShape"
             app:layout_constraintTop_toBottomOf="@id/cbLogo"
-            android:src="@drawable/round_interests_24"/>
+            android:src="@drawable/round_interests_24"
+            android:layout_marginLeft="3dp"/>
 
         <TextView android:id="@+id/tvLabelShape"
             android:layout_width="wrap_content"
@@ -57,7 +57,8 @@
             app:layout_constraintTop_toTopOf="@id/imgShape"
             app:layout_constraintBottom_toBottomOf="@id/imgShape"
             android:text="@string/shape"
-            android:paddingHorizontal="10dp"/>
+            android:textSize="16sp"
+            android:paddingHorizontal="5dp"/>
 
         <Spinner android:id="@+id/spnShape"
             android:layout_width="0dp"
@@ -69,20 +70,16 @@
 
 
 
-
-
-
         <TextView android:id="@+id/tvBusinessInfo"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:paddingVertical="10dp"
-            android:textSize="16sp"
+            android:textSize="18sp"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@id/imgShape"
-            android:text="@string/business_info"
-            android:textColor="@color/purple_700"/>
+            android:text="@string/business_info"/>
 
         <CheckBox android:id="@+id/cbBusinessName"
             android:layout_width="0dp"
@@ -148,13 +145,12 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:paddingBottom="10dp"
-            android:textSize="16sp"
+            android:textSize="18sp"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@id/cbPhone3"
-            android:text="@string/social_media"
-            android:textColor="@color/purple_700"/>
+            android:text="@string/social_media"/>
 
         <CheckBox android:id="@+id/cbFacebook"
             android:layout_width="0dp"

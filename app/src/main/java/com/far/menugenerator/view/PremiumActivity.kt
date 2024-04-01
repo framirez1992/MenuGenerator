@@ -22,6 +22,7 @@ import com.far.menugenerator.model.State
 import com.far.menugenerator.view.common.BaseActivity
 import com.far.menugenerator.view.common.DialogManager
 import com.far.menugenerator.viewModel.PremiumViewModel
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -113,6 +114,14 @@ class PremiumActivity : BaseActivity() {
         outState.putString(ARG_USER,viewModel.userId)
         outState.putString(ARG_COMPANY_ID,viewModel.companyId)
         outState.putString(ARG_MENU_ID,viewModel.menuId)
+    }
+
+    override fun onBackPressed() {
+        if(viewModel.uploadMenuStatus.value?.state != State.LOADING){//No permitir dar back cuando se esta subiendo el menu.
+            super.onBackPressed()
+        }else{
+            Toast.makeText(this,getString(R.string.please_wait),Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun initViews() {
@@ -257,7 +266,7 @@ class PremiumActivity : BaseActivity() {
         binding.btnCompletePurchase.visibility = View.VISIBLE
     }
     private fun showToastAndFinish(text:String){
-        Toast.makeText(this,text,Toast.LENGTH_LONG).show()
+        Toast.makeText(this,text,Toast.LENGTH_SHORT).show()
         finish()
     }
 
@@ -334,7 +343,7 @@ class PremiumActivity : BaseActivity() {
             }
             BillingResponseCode.ITEM_NOT_OWNED->{
                 Log.d(TAG, "queryProductDetailsAsync:ITEM_NOT_OWNED")
-                showToastAndFinish(getString(R.string.item_not_owned))
+                //showToastAndFinish(getString(R.string.item_not_owned))
             }
             BillingResponseCode.ITEM_UNAVAILABLE->{
                 Log.d(TAG, "queryProductDetailsAsync:ITEM_UNAVAILABLE")

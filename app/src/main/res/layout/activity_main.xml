@@ -33,7 +33,7 @@
             android:padding="10dp"
             android:src="@drawable/rounded_navigate_next_24"
             android:layout_marginHorizontal="15dp"
-            app:tint="@color/purple_500"
+            app:tint="@color/deep_orange_800"
             android:layout_alignParentEnd="true"/>
 
 
@@ -44,7 +44,7 @@
             android:padding="10dp"
             android:src="@drawable/baseline_menu_24"
             android:layout_marginHorizontal="15dp"
-            app:tint="@color/purple_500"
+            app:tint="@color/deep_orange_800"
             android:layout_alignParentEnd="true"/>
 
     </RelativeLayout>

@@ -13,4 +13,7 @@
     <color name="red_500">#F44336</color>
     <color name="red_A700">#D50000</color>
     <color name="green_900">#1B5E20</color>
+    <color name="indigo_500">#3F51B5</color>
+    <color name="deep_orange_500">#FF5722</color>
+    <color name="deep_orange_800">#D84315</color>
 </resources>
