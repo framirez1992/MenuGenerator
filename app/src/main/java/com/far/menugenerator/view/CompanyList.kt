@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.far.menugenerator.R
+import com.far.menugenerator.common.utils.PreferenceUtils
 import com.far.menugenerator.databinding.DialogImageTitleDescriptionBinding
 import com.far.menugenerator.databinding.FragmentCompanyListBinding
 import com.far.menugenerator.model.ProcessState
@@ -91,7 +92,6 @@ class CompanyList : BaseActivity() {
             processDeleteCompanyState(it)
         }
         _viewModel.getCompanies().observe(this){
-            //TODO: si no hay companias, abrir navigation.companyActivity() automaticamente
 
             val adapters = CompanyAdapter(it){ comp->
                 val options = listOf(
@@ -124,7 +124,11 @@ class CompanyList : BaseActivity() {
         binding.swipe.isRefreshing = processState.state == State.LOADING
         binding.rv.visibility = if(processState.state == State.LOADING) View.GONE else View.VISIBLE
 
-        if(processState.state == State.SUCCESS && _viewModel.getCompanies().value!!.isEmpty()){
+        if(processState.state == State.SUCCESS
+            && _viewModel.getCompanies().value!!.isEmpty()
+            && PreferenceUtils.getShowNoCompanyAlert(context = this,true)){
+
+            PreferenceUtils.setShowNoCompanyAlert(context = this,false)
             showFirstCompanyDialog()
         }else if(processState.state == State.GENERAL_ERROR)
             Snackbar.make(binding.root,

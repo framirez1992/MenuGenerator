@@ -1,4 +1,5 @@
 <resources>
+    <string name="default_web_client_id">1025547524096-enpaob40mr9rk2ic1s6q1vvofk2f58ek.apps.googleusercontent.com</string>
     <!--
     <string name="server_client_id">1025547524096-enpaob40mr9rk2ic1s6q1vvofk2f58ek.apps.googleusercontent.com</string>
     -->

@@ -1,5 +1,6 @@
 package com.far.menugenerator.viewModel
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -48,6 +49,7 @@ class LoginViewModel(
                 _loadUserState.postValue(ProcessState(State.SUCCESS))
 
             }catch (e:Exception){
+                Log.i("LOGIN", e.message.toString())
                 _loadUserState.postValue(ProcessState(State.GENERAL_ERROR))
             }
         }

@@ -1,5 +1,6 @@
 package com.far.menugenerator.model.denpendencyInjection.activity
 
+import com.far.menugenerator.R
 import com.far.menugenerator.view.common.BaseActivity
 import com.far.menugenerator.view.common.DialogManager
 import com.far.menugenerator.view.common.ScreenNavigation
@@ -19,6 +20,7 @@ class ActivityModule(private val activity: BaseActivity) {
     @Provides
     fun googleSignInClient(activity:BaseActivity): GoogleSignInClient {
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(activity.getString(R.string.default_web_client_id))
             .requestEmail()
             .build()
         // Build a GoogleSignInClient with the options specified by gso.

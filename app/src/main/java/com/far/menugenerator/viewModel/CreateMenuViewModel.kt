@@ -2,19 +2,24 @@ package com.far.menugenerator.viewModel
 
 import android.content.Context
 import android.net.Uri
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import androidx.annotation.IdRes
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.net.toUri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.bumptech.glide.Glide
 import com.far.menugenerator.R
 import com.far.menugenerator.common.global.Constants
 import com.far.menugenerator.common.helpers.NetworkUtils
 import com.far.menugenerator.common.utils.FileUtils
 import com.far.menugenerator.common.utils.StringUtils
+import com.far.menugenerator.databinding.ItemMenuFinalPreviewBinding
 import com.far.menugenerator.model.Category
 import com.far.menugenerator.model.CreateMenuState
 import com.far.menugenerator.model.ItemPreview
@@ -84,12 +89,15 @@ class CreateMenuViewModel @Inject constructor(
     private val _categories = MutableLiveData<MutableList<Category>>()//SOLO CATEGORIAS
     private val _items = MutableLiveData<MutableList<MenuItemsTemp>>()//SOLO PRODUCTOS
     private val _itemsPreview = MutableLiveData<ItemPreview>()
+    val stateLoadingFinalPreviewItems = MutableLiveData<ProcessState>()
 
     private val _editItem = MutableLiveData<MenuItemsTemp?>()
 
     private var _editMenu:MenuTemp? = null
     private var _editMenuItems:List<MenuItemsTemp>?=null
     private var _editItemsOriginalImages:List<Pair<String,String>> = listOf()
+    private var _orderedFinalPreviewItems:MutableList<Pair<String?,ItemMenuFinalPreviewBinding>> = mutableListOf()
+    val orderedFinalPreviewItems get() = _orderedFinalPreviewItems
 
     val state:LiveData<CreateMenuState> get() = _state
     val stateProcessMenu:LiveData<ProcessState> get() = _stateProcessMenu
@@ -100,6 +108,7 @@ class CreateMenuViewModel @Inject constructor(
 
     fun getCompany() = company
     fun getMenuSettings():LiveData<MenuSettings> = _menuSettings
+
 
 
     fun initialize(userId:String,companyRef:String, menuReferenceId:String?, isOnlineMenu:Boolean?, menuReferenceFirebaseRef:String?){
@@ -307,7 +316,7 @@ class CreateMenuViewModel @Inject constructor(
             val itemStyle: ItemStyle = getItemStyle(currentItemImage.value != null,description.isNotBlank())
 
             //val uri = currentItemImage.value?.toString()
-            //massiveLoad(_menuId!!,10,100,itemStyle,uri)
+            //massiveLoad(_menuId!!,1,100,itemStyle,uri)
 
             val menuItem = MenuItemsTemp(
                 id = UUID.randomUUID().toString(),
@@ -832,7 +841,7 @@ class CreateMenuViewModel @Inject constructor(
 
     private suspend fun massiveLoad(menuId:String,categories:Int,itemsPerCategory:Int,itemStyle:ItemStyle, image:String?){
 
-        (0..categories).forEach{ catIndex->
+        (1..categories).forEach{ catIndex->
             val catId = UUID.randomUUID().toString()
             val categoryName="Category $catIndex"
             val cat = MenuItemsTemp(
@@ -873,6 +882,89 @@ class CreateMenuViewModel @Inject constructor(
 
     }
 
+    fun loadFinalPreview(parent: ViewGroup, orderedPreview:MutableList<MenuItemsTemp>){
+        viewModelScope.launch(Dispatchers.IO) {
+            _orderedFinalPreviewItems.clear()
+            stateLoadingFinalPreviewItems.postValue(ProcessState(state = State.LOADING))
+
+            val menuSettings = _menuSettings.value!!
+            val filtered = orderedPreview.filter{it.enabled}.toMutableList()
+
+            val emptyCategories = mutableListOf<MenuItemsTemp>()
+
+            filtered.filter { it.type == ItemStyle.MENU_CATEGORY_HEADER.name }.forEach { category ->
+                if (filtered.none { it.type != ItemStyle.MENU_CATEGORY_HEADER.name && it.categoryId == category.id })
+                    emptyCategories.add(category)
+            }
+            filtered.removeAll(emptyCategories)
+
+            val views = filtered.filter{it.enabled}.map{ menuItem ->
+                val binding = ItemMenuFinalPreviewBinding.inflate(LayoutInflater.from(parent.context),parent,false)
+
+                binding.imageTitleDescription.root.visibility = if(menuSettings.menuStyle == MenuStyle.BASIC && menuItem.type == ItemStyle.MENU_IMAGE_TITLE_DESCRIPTION_PRICE.name) View.VISIBLE else View.GONE
+                binding.imageTitleDescriptionCatalog.root.visibility = if(menuSettings.menuStyle == MenuStyle.CATALOG && menuItem.type == ItemStyle.MENU_IMAGE_TITLE_DESCRIPTION_PRICE.name) View.VISIBLE else View.GONE
+                binding.titleDescription.root.visibility = if(menuItem.type == ItemStyle.MENU_TITLE_DESCRIPTION_PRICE.name) View.VISIBLE else View.GONE
+                binding.titlePrice.root.visibility = if(menuItem.type == ItemStyle.MENU_TITLE_PRICE.name) View.VISIBLE else View.GONE
+                binding.categoryTitle.root.visibility = if (menuItem.type == ItemStyle.MENU_CATEGORY_HEADER.name) View.VISIBLE else View.GONE
+
+
+                //Don`t show NO_CATEGORY ITEM
+                if(menuItem.type == ItemStyle.MENU_CATEGORY_HEADER.name &&  menuItem.id == CreateMenuViewModel.noCategoryId){
+                    binding.root.visibility = View.GONE
+                }
+
+                when (menuItem.type) {
+                    ItemStyle.MENU_IMAGE_TITLE_DESCRIPTION_PRICE.name -> {
+
+                        if(menuSettings.menuStyle == MenuStyle.BASIC) {
+                            binding.imageTitleDescription.title.text = menuItem.name
+                            binding.imageTitleDescription.body.text = menuItem.description
+                            binding.imageTitleDescription.price.text = StringUtils.doubleToMoneyString(
+                                amount = menuItem.price,
+                                country = "US",
+                                language = "en"
+                            )
+                        }else if(menuSettings.menuStyle == MenuStyle.CATALOG){
+                            binding.imageTitleDescriptionCatalog.title.text = menuItem.name
+                            binding.imageTitleDescriptionCatalog.body.text = menuItem.description
+                            binding.imageTitleDescriptionCatalog.price.text = StringUtils.doubleToMoneyString(amount = menuItem.price, country = "US", language = "en")
+                        }
+
+                    }
+                    ItemStyle.MENU_TITLE_DESCRIPTION_PRICE.name -> {
+                        binding.titleDescription.title.text = menuItem.name
+                        binding.titleDescription.body.text = menuItem.description
+                        binding.titleDescription.price.text = StringUtils.doubleToMoneyString(amount = menuItem.price, country = "US", language = "en")
+                    }
+                    ItemStyle.MENU_TITLE_PRICE.name -> {
+                        binding.titlePrice.title.text = menuItem.name
+                        binding.titlePrice.price.text = StringUtils.doubleToMoneyString(amount = menuItem.price, country = "US", language = "en")
+                    }
+                    else -> {
+                        binding.categoryTitle.title.text = menuItem.name
+                    }
+                }
+
+
+
+
+                // Get the layout parameters of the view.
+                val layoutParams = binding.root.layoutParams as ViewGroup.MarginLayoutParams
+                if(menuItem.type == ItemStyle.MENU_CATEGORY_HEADER.name)
+                    layoutParams.setMargins(0, 20, 0, 0)
+                else
+                    layoutParams.setMargins(0, 0, 0, 0)
+
+                binding.root.layoutParams = layoutParams
+
+                menuItem.imageUri to binding
+            }
+
+            _orderedFinalPreviewItems.addAll(views)
+            stateLoadingFinalPreviewItems.postValue(ProcessState(state = State.SUCCESS))
+        }
+
+    }
 
     class CreateMenuViewModelFactory @Inject constructor (
         private val menuStorageProvider: Provider<MenuStorage>, //usamos provider para eviar bugs (ver video)

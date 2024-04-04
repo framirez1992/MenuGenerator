@@ -82,8 +82,9 @@ class LoginActivity : BaseActivity() {
             val TAG = "LoginActivity"
             Log.w(TAG, "signInResult:failed code=" + e.getStatusCode())
             updateUI(null)
+            val message = "${getString(R.string.operation_failed_please_retry)}. ${e.message.toString()}"
             Snackbar.make(_binding.root,
-                e.message.toString(),
+                message,
                 Snackbar.LENGTH_LONG).show()
         }
     }
@@ -121,6 +122,18 @@ class LoginActivity : BaseActivity() {
         val signInIntent: Intent = mGoogleSignInClient.signInIntent
         startActivityForResult(signInIntent, RC_SIGN_IN)
     }
+    private fun signOut() {
+        try {
+            mGoogleSignInClient.signOut()
+                .addOnCompleteListener(this) {
+                    finish()
+                }
+        }catch (e:Exception){
+
+        }
+
+    }
+
 
     private fun getAccountInfo(){
         //if (LoginActivity.userFirebase != null) {

@@ -10,7 +10,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.ArrayAdapter
-import android.widget.CompoundButton
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -20,7 +20,6 @@ import com.far.menugenerator.R
 import com.far.menugenerator.common.global.Constants
 import com.far.menugenerator.common.utils.FileUtils
 import com.far.menugenerator.common.utils.NumberUtils
-import com.far.menugenerator.common.utils.StringUtils
 import com.far.menugenerator.databinding.ActivityMainBinding
 import com.far.menugenerator.databinding.DialogCategoryBinding
 import com.far.menugenerator.databinding.DialogImageTitleDescriptionBinding
@@ -29,7 +28,6 @@ import com.far.menugenerator.databinding.MenuNameDialogBinding
 import com.far.menugenerator.databinding.MenuSettingsBinding
 import com.far.menugenerator.model.Category
 import com.far.menugenerator.model.ItemPreview
-import com.far.menugenerator.model.ItemStyle
 import com.far.menugenerator.model.LogoShape
 import com.far.menugenerator.model.MenuSettings
 import com.far.menugenerator.model.MenuStyle
@@ -69,10 +67,7 @@ class MenuActivity : BaseActivity() {
     @Inject lateinit var screenNavigation: ScreenNavigation
     @Inject lateinit var dialogManager: DialogManager
     @Inject lateinit var createMenuViewModelFactory: CreateMenuViewModel.CreateMenuViewModelFactory
-    
-    
-    
-    
+
     //private var menuReference:MenuReference?=null
 
     private val isMobileAdsInitializeCalled = AtomicBoolean(false)
@@ -333,7 +328,12 @@ class MenuActivity : BaseActivity() {
         viewModel.getMenuSettings().observe(this){
             if(viewModel.state.value?.currentScreen == R.id.menuPreviewFinalScreen){
                 fillCompany(it)
-                fillFinalPreview(it, (_binding.menuPreviewScreen.rvPreview.adapter as MenuPreviewAdapter).currentPreview)
+                //VOLVER A ACTIVAR CUANDO SE EFECTUEN CAMBIOS SOBRE LOS ITEMS (V2)
+               // val preview = (_binding.menuPreviewScreen.rvPreview.adapter as MenuPreviewAdapter).currentPreview
+               // viewModel.loadFinalPreview(
+               //     parent = _binding.menuPreviewFinalScreen.llItems,
+               //     orderedPreview = preview)
+                //fillFinalPreview(it, preview)
             }
         }
 
@@ -378,7 +378,21 @@ class MenuActivity : BaseActivity() {
             }
 
         }
+
+        viewModel.stateLoadingFinalPreviewItems.observe(this){
+            if(it.state == State.LOADING){
+                _binding.menuPreviewFinalScreen.llItems.visibility = View.INVISIBLE
+                dialogManager.showLoadingDialog()
+            }else{
+                fillFinalPreviewItems(viewModel.orderedFinalPreviewItems)
+                _binding.menuPreviewFinalScreen.llItems.visibility = View.VISIBLE
+                dialogManager.dismissLoadingDialog()
+            }
+        }
     }
+
+
+
     private fun showImageOptions() {
         val options = listOf(
             ImageOption(R.drawable.baseline_image_search_24,R.string.search),
@@ -612,7 +626,11 @@ class MenuActivity : BaseActivity() {
         if(currentView == R.id.menuPreviewFinalScreen){
             val menuSettings = viewModel.getMenuSettings().value!!
             fillCompany(menuSettings)
-            fillFinalPreview(menuSettings,(_binding.menuPreviewScreen.rvPreview.adapter as MenuPreviewAdapter).currentPreview)
+            val preview = (_binding.menuPreviewScreen.rvPreview.adapter as MenuPreviewAdapter).currentPreview
+            viewModel.loadFinalPreview(
+                parent = _binding.menuPreviewFinalScreen.llItems,
+                orderedPreview = preview)
+            //fillFinalPreview(menuSettings,(_binding.menuPreviewScreen.rvPreview.adapter as MenuPreviewAdapter).currentPreview)
         }
         if(currentView == R.id.menuPreviewScreen && _binding.menuPreviewScreen.root.windowToken!=null){
             this.hideKeyboard(_binding.menuPreviewScreen.root.windowToken)
@@ -739,86 +757,108 @@ class MenuActivity : BaseActivity() {
 
 
 
+
+/*
     private fun fillFinalPreview(menuSettings: MenuSettings, items: List<MenuItemsTemp>){
+       lifecycleScope.launch(Dispatchers.Main) {
+           //draw.postValue(true)
+           _binding.menuPreviewFinalScreen.llItems.removeAllViews()
 
-        _binding.menuPreviewFinalScreen.llItems.removeAllViews()
+            items.filter{it.enabled}.forEach{ menuItem ->
 
-        items.filter{it.enabled}.forEach{ menuItem ->
-
-            if(menuItem.type == ItemStyle.MENU_CATEGORY_HEADER.name //Si es una categoria y esta categoria no tiene items visibles(NO MOSTRAR)
-                && items.none { it.type != ItemStyle.MENU_CATEGORY_HEADER.name && it.categoryId == menuItem.id
-                        && it.enabled }) return@forEach
-
-            val binding = ItemMenuFinalPreviewBinding.inflate(LayoutInflater.from(this),_binding.menuPreviewFinalScreen.llItems,false)
-
-            binding.imageTitleDescription.root.visibility = if(menuSettings.menuStyle == MenuStyle.BASIC && menuItem.type == ItemStyle.MENU_IMAGE_TITLE_DESCRIPTION_PRICE.name) View.VISIBLE else View.GONE
-            binding.imageTitleDescriptionCatalog.root.visibility = if(menuSettings.menuStyle == MenuStyle.CATALOG && menuItem.type == ItemStyle.MENU_IMAGE_TITLE_DESCRIPTION_PRICE.name) View.VISIBLE else View.GONE
-            binding.titleDescription.root.visibility = if(menuItem.type == ItemStyle.MENU_TITLE_DESCRIPTION_PRICE.name) View.VISIBLE else View.GONE
-            binding.titlePrice.root.visibility = if(menuItem.type == ItemStyle.MENU_TITLE_PRICE.name) View.VISIBLE else View.GONE
-            binding.categoryTitle.root.visibility = if (menuItem.type == ItemStyle.MENU_CATEGORY_HEADER.name) View.VISIBLE else View.GONE
+                if(menuItem.type == ItemStyle.MENU_CATEGORY_HEADER.name //Si es una categoria y esta categoria no tiene items visibles(NO MOSTRAR)
+                    && items.none { it.type != ItemStyle.MENU_CATEGORY_HEADER.name && it.categoryId == menuItem.id
+                            && it.enabled }) return@forEach
 
 
-            //Don`t show NO_CATEGORY ITEM
-            if(menuItem.type == ItemStyle.MENU_CATEGORY_HEADER.name &&  menuItem.id == CreateMenuViewModel.noCategoryId){
-                binding.root.visibility = View.GONE
-            }
+                val binding = ItemMenuFinalPreviewBinding.inflate(LayoutInflater.from(this@MenuActivity),_binding.menuPreviewFinalScreen.llItems,false)
 
-            when (menuItem.type) {
-                ItemStyle.MENU_IMAGE_TITLE_DESCRIPTION_PRICE.name -> {
+                binding.imageTitleDescription.root.visibility = if(menuSettings.menuStyle == MenuStyle.BASIC && menuItem.type == ItemStyle.MENU_IMAGE_TITLE_DESCRIPTION_PRICE.name) View.VISIBLE else View.GONE
+                binding.imageTitleDescriptionCatalog.root.visibility = if(menuSettings.menuStyle == MenuStyle.CATALOG && menuItem.type == ItemStyle.MENU_IMAGE_TITLE_DESCRIPTION_PRICE.name) View.VISIBLE else View.GONE
+                binding.titleDescription.root.visibility = if(menuItem.type == ItemStyle.MENU_TITLE_DESCRIPTION_PRICE.name) View.VISIBLE else View.GONE
+                binding.titlePrice.root.visibility = if(menuItem.type == ItemStyle.MENU_TITLE_PRICE.name) View.VISIBLE else View.GONE
+                binding.categoryTitle.root.visibility = if (menuItem.type == ItemStyle.MENU_CATEGORY_HEADER.name) View.VISIBLE else View.GONE
 
-                    if(menuSettings.menuStyle == MenuStyle.BASIC) {
-                        binding.imageTitleDescription.title.text = menuItem.name
-                        binding.imageTitleDescription.body.text = menuItem.description
-                        binding.imageTitleDescription.price.text = StringUtils.doubleToMoneyString(
-                            amount = menuItem.price,
-                            country = "US",
-                            language = "en"
-                        )
-                        Glide.with(this)
-                            .load(menuItem.imageUri)
-                            //.error(R.drawable.baseline_broken_image_24)
-                            .into(binding.imageTitleDescription.image)
-                    }else if(menuSettings.menuStyle == MenuStyle.CATALOG){
-                        binding.imageTitleDescriptionCatalog.title.text = menuItem.name
-                        binding.imageTitleDescriptionCatalog.body.text = menuItem.description
-                        binding.imageTitleDescriptionCatalog.price.text = StringUtils.doubleToMoneyString(amount = menuItem.price, country = "US", language = "en")
-                        Glide.with(this)
-                            .load(menuItem.imageUri)
-                            //.error(R.drawable.baseline_broken_image_24)
-                            .into(binding.imageTitleDescriptionCatalog.image)
+
+                //Don`t show NO_CATEGORY ITEM
+                if(menuItem.type == ItemStyle.MENU_CATEGORY_HEADER.name &&  menuItem.id == CreateMenuViewModel.noCategoryId){
+                    binding.root.visibility = View.GONE
+                }
+
+                when (menuItem.type) {
+                    ItemStyle.MENU_IMAGE_TITLE_DESCRIPTION_PRICE.name -> {
+
+                        if(menuSettings.menuStyle == MenuStyle.BASIC) {
+                            binding.imageTitleDescription.title.text = menuItem.name
+                            binding.imageTitleDescription.body.text = menuItem.description
+                            binding.imageTitleDescription.price.text = StringUtils.doubleToMoneyString(
+                                amount = menuItem.price,
+                                country = "US",
+                                language = "en"
+                            )
+                            Glide.with(this@MenuActivity)
+                                .load(menuItem.imageUri)
+                                //.error(R.drawable.baseline_broken_image_24)
+                                .into(binding.imageTitleDescription.image)
+                        }else if(menuSettings.menuStyle == MenuStyle.CATALOG){
+                            binding.imageTitleDescriptionCatalog.title.text = menuItem.name
+                            binding.imageTitleDescriptionCatalog.body.text = menuItem.description
+                            binding.imageTitleDescriptionCatalog.price.text = StringUtils.doubleToMoneyString(amount = menuItem.price, country = "US", language = "en")
+                            Glide.with(this@MenuActivity)
+                                .load(menuItem.imageUri)
+                                //.error(R.drawable.baseline_broken_image_24)
+                                .into(binding.imageTitleDescriptionCatalog.image)
+                        }
+
                     }
+                    ItemStyle.MENU_TITLE_DESCRIPTION_PRICE.name -> {
+                        binding.titleDescription.title.text = menuItem.name
+                        binding.titleDescription.body.text = menuItem.description
+                        binding.titleDescription.price.text = StringUtils.doubleToMoneyString(amount = menuItem.price, country = "US", language = "en")
+                    }
+                    ItemStyle.MENU_TITLE_PRICE.name -> {
+                        binding.titlePrice.title.text = menuItem.name
+                        binding.titlePrice.price.text = StringUtils.doubleToMoneyString(amount = menuItem.price, country = "US", language = "en")
+                    }
+                    else -> {
+                        binding.categoryTitle.title.text = menuItem.name
+                    }
+                }
 
-                }
-                ItemStyle.MENU_TITLE_DESCRIPTION_PRICE.name -> {
-                    binding.titleDescription.title.text = menuItem.name
-                    binding.titleDescription.body.text = menuItem.description
-                    binding.titleDescription.price.text = StringUtils.doubleToMoneyString(amount = menuItem.price, country = "US", language = "en")
-                }
-                ItemStyle.MENU_TITLE_PRICE.name -> {
-                    binding.titlePrice.title.text = menuItem.name
-                    binding.titlePrice.price.text = StringUtils.doubleToMoneyString(amount = menuItem.price, country = "US", language = "en")
-                }
-                else -> {
-                    binding.categoryTitle.title.text = menuItem.name
-                }
+
+
+
+                // Get the layout parameters of the view.
+                val layoutParams = binding.root.layoutParams as ViewGroup.MarginLayoutParams
+                if(menuItem.type == ItemStyle.MENU_CATEGORY_HEADER.name)
+                    layoutParams.setMargins(0, 20, 0, 0)
+                else
+                    layoutParams.setMargins(0, 0, 0, 0)
+
+                binding.root.layoutParams = layoutParams
+
+                _binding.menuPreviewFinalScreen.llItems.addView(binding.root)
+                // y no tiene items visibles IGNORAR
             }
 
+            _binding.menuPreviewFinalScreen.llItems.invalidate()
+           //draw.postValue(false)
 
-
-
-            // Get the layout parameters of the view.
-            val layoutParams = binding.root.layoutParams as ViewGroup.MarginLayoutParams
-            if(menuItem.type == ItemStyle.MENU_CATEGORY_HEADER.name)
-                layoutParams.setMargins(0, 20, 0, 0)
-            else
-                layoutParams.setMargins(0, 0, 0, 0)
-
-            binding.root.layoutParams = layoutParams
-
-            _binding.menuPreviewFinalScreen.llItems.addView(binding.root)
-            // y no tiene items visibles IGNORAR
         }
 
+    }*/
+
+    private fun fillFinalPreviewItems(orderedFinalPreviewItems: MutableList<Pair<String?,ItemMenuFinalPreviewBinding>>) {
+        _binding.menuPreviewFinalScreen.llItems.removeAllViews()
+        orderedFinalPreviewItems.forEach {
+            if(!it.first.isNullOrEmpty()){
+                Glide.with(this)
+                    .load(it.first)
+                    //.error(R.drawable.baseline_broken_image_24)
+                    .into(it.second.imageTitleDescription.image)
+            }
+            _binding.menuPreviewFinalScreen.llItems.addView(it.second.root)
+        }
         _binding.menuPreviewFinalScreen.llItems.invalidate()
     }
 

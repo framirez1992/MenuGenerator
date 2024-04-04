@@ -12,21 +12,22 @@
     tools:context=".view.LoginActivity">
 
 
-    <ImageView android:id="@+id/imgLogo"
-        android:layout_width="150dp"
-        android:layout_height="150dp"
+    <com.google.android.material.imageview.ShapeableImageView android:id="@+id/imgLogo"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
         android:src="@mipmap/ic_launcher"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintVertical_bias="0.3"/>
+        app:layout_constraintVertical_bias="0.3"
+        app:shapeAppearanceOverlay="@style/Circular" />
 
 
 
     <com.google.android.gms.common.SignInButton
         android:id="@+id/sign_in_button"
-        android:layout_width="wrap_content"
+        android:layout_width="150dp"
         android:layout_height="wrap_content"
         android:layout_gravity="start"
         android:layout_marginTop="16dp"
