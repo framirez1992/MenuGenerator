@@ -12,4 +12,6 @@ object Constants {
     //const val ANDROID_OAUTH_CLIENT_ID="1025547524096-0c3en766snnolcmpsij9kkma192ho0i7.apps.googleusercontent.com"
     //web_client
     const val ANDROID_OAUTH_CLIENT_ID="1025547524096-1d3jb0ekfqkqgbvu9fnrsqk1n0ksn0pn.apps.googleusercontent.com"
+
+    const val IN_APP_PRODUCT_MENU_ID="single_virtual_menu"
 }

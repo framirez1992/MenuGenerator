@@ -20,6 +20,7 @@ import com.android.billingclient.api.QueryPurchasesParams
 import com.android.billingclient.api.consumePurchase
 import com.android.billingclient.api.queryProductDetails
 import com.android.billingclient.api.queryPurchasesAsync
+import com.far.menugenerator.common.global.Constants
 import com.far.menugenerator.common.helpers.NetworkUtils
 import com.far.menugenerator.common.utils.FileUtils
 import com.far.menugenerator.model.Enums
@@ -185,7 +186,7 @@ class PremiumViewModel(
                 .setProductList(
                     ImmutableList.of(
                         QueryProductDetailsParams.Product.newBuilder()
-                            .setProductId("test1"
+                            .setProductId(Constants.IN_APP_PRODUCT_MENU_ID
                                 //"base_subscription"
                             )
                             .setProductType(BillingClient.ProductType.INAPP

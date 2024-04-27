@@ -624,7 +624,10 @@ class CreateMenuViewModel @Inject constructor(
         //UPLOAD LOCAL IMAGES ONLY
         val firebaseItems = items.mapIndexed { _,menuItem->
                 val image =  if(menuItem.imageUri !=null
-                    && (_editItemsOriginalImages.isEmpty() || _editItemsOriginalImages.any { it.first == menuItem.id && it.second != menuItem.imageUri }))
+                    && (_editItemsOriginalImages.none { it.first == menuItem.id } //Producto nuevo
+                                    || _editItemsOriginalImages.any { it.first == menuItem.id && it.second != menuItem.imageUri } //Producto existente con imagen distinta
+                       )
+                    )
                     "*"
                 else menuItem.imageUri
 
