@@ -9,6 +9,7 @@ import com.far.menugenerator.model.database.model.ItemFirebase
 @Entity(tableName = "menu_temp")
 data class MenuTemp(
     @PrimaryKey(autoGenerate = false) val menuId:String="",
+    val menuType:String,
     var fireBaseRef:String?=null,
     val name:String="",
     val fileUrl:String="",

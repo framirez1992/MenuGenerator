@@ -10,6 +10,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.ArrayAdapter
+import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -20,6 +21,7 @@ import com.far.menugenerator.R
 import com.far.menugenerator.common.global.Constants
 import com.far.menugenerator.common.utils.FileUtils
 import com.far.menugenerator.common.utils.NumberUtils
+import com.far.menugenerator.common.utils.StringUtils
 import com.far.menugenerator.databinding.ActivityMainBinding
 import com.far.menugenerator.databinding.DialogCategoryBinding
 import com.far.menugenerator.databinding.DialogImageTitleDescriptionBinding
@@ -77,6 +79,7 @@ class MenuActivity : BaseActivity() {
 
     companion object {
         const val ARG_COMPANY_REF = "companyRef"
+        const val ARG_MENU_TYPE = "menuType";
         const val ARG_MENU_ID="menuId"
         const val ARG_MENU_ONLINE="menuOnline"
         const val ARG_MENU_FIREBASE_REF="menuFirebaseRef"
@@ -89,31 +92,36 @@ class MenuActivity : BaseActivity() {
 
         _binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(_binding.root)
-        
+
+        val menuType:String?
         val companyRef:String?
         val menuId:String?
         val isOnline:Boolean?
         val menuFirebaseRef:String?
         if(savedInstanceState == null){
+            menuType = intent.getStringExtra(ARG_MENU_TYPE)
             companyRef = intent.getStringExtra(ARG_COMPANY_REF)
             menuId = intent.getStringExtra(ARG_MENU_ID)
             isOnline = intent.getBooleanExtra(ARG_MENU_ONLINE,false)
             menuFirebaseRef = intent.getStringExtra(ARG_MENU_FIREBASE_REF)
         }else{
+            menuType = savedInstanceState.getString(ARG_MENU_TYPE)
             companyRef = savedInstanceState.getString(ARG_COMPANY_REF)
             menuId = savedInstanceState.getString(ARG_MENU_ID)
             isOnline = savedInstanceState.getBoolean(ARG_MENU_ONLINE,false)
             menuFirebaseRef = savedInstanceState.getString(ARG_MENU_FIREBASE_REF)
         }
         
-        if(LoginActivity.userFirebase == null || companyRef.isNullOrEmpty()){
+        if(LoginActivity.userFirebase == null || companyRef.isNullOrEmpty() || menuType.isNullOrEmpty()){
             finish()
         }else {
             if(viewModel.companyReference.isNullOrEmpty() || viewModel.menuId.isNullOrEmpty()){
                 viewModel.initialize(
+                    context = this,
                     userId = LoginActivity.userFirebase?.internalId!!,
                     companyRef = companyRef,
                     menuReferenceId = menuId,
+                    menuType = menuType,
                     isOnlineMenu = isOnline,
                     menuReferenceFirebaseRef = menuFirebaseRef)
             }
@@ -142,8 +150,15 @@ class MenuActivity : BaseActivity() {
         outState.putString(ARG_MENU_ID,viewModel.menuReferenceId)
         outState.putBoolean(ARG_MENU_ONLINE, viewModel.isMenuOnline?:false)
         outState.putString(ARG_MENU_FIREBASE_REF, viewModel.menuReferenceFirebaseRef)
+        outState.putString(ARG_MENU_TYPE, viewModel.menuType?.name)
     }
 
+    override fun onBackPressed() {
+        //super.onBackPressed()
+        dialogManager.showExitConfirmDialog(){
+            finish()
+        }
+    }
     private fun initializeMobileAdsSdk() {
         if (isMobileAdsInitializeCalled.getAndSet(true)) {
             return
@@ -185,7 +200,7 @@ class MenuActivity : BaseActivity() {
     }
 
 
-    fun showInterstitial(onFinish:()->Unit) {
+    private fun showInterstitial(onFinish:()->Unit) {
         // Show the ad if it's ready. Otherwise restart the game.
         if (interstitialAd != null) {
             interstitialAd?.fullScreenContentCallback =
@@ -269,6 +284,8 @@ class MenuActivity : BaseActivity() {
                 _binding.addMenuItemScreen.productData.etProductPrice.text.toString().toDouble()
             )
             clearAddProductFields()
+
+            Toast.makeText(this, getString(R.string.product_added),Toast.LENGTH_SHORT).show()
         }
 
         _binding.addMenuItemScreen.productData.btnEdit.setOnClickListener{
@@ -281,11 +298,14 @@ class MenuActivity : BaseActivity() {
             )
             viewModel.setScreen(R.id.menuPreviewScreen)
             clearAddProductFields()
+            Toast.makeText(this, getString(R.string.product_edited),Toast.LENGTH_SHORT).show()
         }
         _binding.addMenuItemScreen.productData.btnCancel.setOnClickListener{
             viewModel.editItem(null)
             clearAddProductFields()
             viewModel.setScreen(R.id.menuPreviewScreen)
+
+            Toast.makeText(this, getString(R.string.cancelled),Toast.LENGTH_SHORT).show()
         }
         _binding.addMenuItemScreen.productData.enabled.setOnCheckedChangeListener { buttonView, isChecked ->
             _binding.addMenuItemScreen.productData.imgVisible.setImageResource(
@@ -421,6 +441,7 @@ class MenuActivity : BaseActivity() {
 
         d.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
         d.show()
+        d.setCancelable(false)
         val positive = d.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
         //Poner los listener aqui para evitar que se cierre automaticamente
         if(category == null){
@@ -477,7 +498,7 @@ class MenuActivity : BaseActivity() {
             val menuName = dialogBinding.etMenuName.text.toString()
             if(menuNameTextValidation(menuName,dialogBinding.tilMenuName)){
                 d.dismiss()
-                (this as MenuActivity).showInterstitial {
+                showInterstitial {
                     generateMenu(menuName)
                 }
 
@@ -904,21 +925,21 @@ class MenuActivity : BaseActivity() {
         if(company.phone1.isNullOrBlank() || !menuSettings.showPhone1){
             _binding.menuPreviewFinalScreen.tvPhone1.visibility = View.GONE
         }else{
-            _binding.menuPreviewFinalScreen.tvPhone1.text= company.phone1
+            _binding.menuPreviewFinalScreen.tvPhone1.text= StringUtils.formatPhone(company.phone1)
             _binding.menuPreviewFinalScreen.tvPhone1.visibility = View.VISIBLE
         }
 
         if(company.phone2.isNullOrBlank() || !menuSettings.showPhone2){
             _binding.menuPreviewFinalScreen.tvPhone2.visibility = View.GONE
         }else{
-            _binding.menuPreviewFinalScreen.tvPhone2.text= company.phone2
+            _binding.menuPreviewFinalScreen.tvPhone2.text= StringUtils.formatPhone(company.phone2)
             _binding.menuPreviewFinalScreen.tvPhone2.visibility = View.VISIBLE
         }
 
         if(company.phone3.isNullOrBlank() || !menuSettings.showPhone3){
             _binding.menuPreviewFinalScreen.tvPhone3.visibility = View.GONE
         }else{
-            _binding.menuPreviewFinalScreen.tvPhone3.text= company.phone3
+            _binding.menuPreviewFinalScreen.tvPhone3.text= StringUtils.formatPhone(company.phone3)
             _binding.menuPreviewFinalScreen.tvPhone3.visibility = View.VISIBLE
         }
 
@@ -963,12 +984,11 @@ class MenuActivity : BaseActivity() {
 
         if(company.whatsapp.isNullOrBlank() || !menuSettings.showWhatsapp){
             _binding.menuPreviewFinalScreen.llWhatsapp.visibility = View.GONE
-
         }else{
             _binding.menuPreviewFinalScreen.llWhatsapp.visibility = View.VISIBLE
-            _binding.menuPreviewFinalScreen.tvWhatsapp.text= company.whatsapp
+            _binding.menuPreviewFinalScreen.tvWhatsapp.text= StringUtils.formatPhone(company.whatsapp)
         }
     }
-    
+
     
 }

@@ -8,6 +8,8 @@ import androidx.annotation.StringRes
 import androidx.fragment.app.DialogFragment
 import com.far.menugenerator.R
 import com.far.menugenerator.databinding.DialogImageTitleDescriptionBinding
+import com.far.menugenerator.databinding.DialogMenuTypeBinding
+import com.far.menugenerator.model.Enums
 import com.far.menugenerator.view.adapters.ImageOption
 import com.far.menugenerator.view.dialogs.DialogLoading
 import com.far.menugenerator.view.dialogs.DialogProductEdit
@@ -75,6 +77,49 @@ class DialogManager(private val baseActivity: BaseActivity) {
         binding.title.setText(R.string.network_error)
         binding.body.setText(R.string.check_your_network)
         showSingleButtonDialog(binding.root)
+    }
+
+    fun showExitConfirmDialog(onButton1Click:()->Unit = {}){
+        val dialogBinding = DialogImageTitleDescriptionBinding.inflate(baseActivity.layoutInflater)
+        dialogBinding.title.setText(R.string.exit)
+        dialogBinding.body.setText(R.string.changes_won_t_be_saved_exit_anyway)
+        dialogBinding.img.setImageResource(R.drawable.warning)
+        showTwoButtonsDialog(dialogBinding.root,
+            R.string.yes,
+            onButton1Click,
+            button2Label = R.string.cancel,
+            onButton2Click = {})
+    }
+
+    fun showMenuTypeDialog(onButton1Click:(Enums.MenuType)->Unit = {}){
+        val dialogBinding = DialogMenuTypeBinding.inflate(baseActivity.layoutInflater)
+        var menuType = Enums.MenuType.DATA_MENU
+
+
+        dialogBinding.fromScratch.setOnClickListener{
+            menuType = Enums.MenuType.DATA_MENU
+            dialogBinding.fromScratch.setCardBackgroundColor(baseActivity.getColor(R.color.deep_orange_500))
+            dialogBinding.tvFromScratch.setTextColor(baseActivity.getColor(R.color.white))
+
+            dialogBinding.fromFile.setCardBackgroundColor(baseActivity.getColor(R.color.white))
+            dialogBinding.tvFromFile.setTextColor(baseActivity.getColor(R.color.black))
+        }
+        dialogBinding.fromFile.setOnClickListener{
+            menuType = Enums.MenuType.FILE_MENU
+            dialogBinding.fromScratch.setCardBackgroundColor(baseActivity.getColor(R.color.white))
+            dialogBinding.tvFromScratch.setTextColor(baseActivity.getColor(R.color.black))
+
+            dialogBinding.fromFile.setCardBackgroundColor(baseActivity.getColor(R.color.deep_orange_500))
+            dialogBinding.tvFromFile.setTextColor(baseActivity.getColor(R.color.white))
+        }
+        showTwoButtonsDialog(dialogBinding.root,
+            R.string.next,
+            {onButton1Click(menuType)},
+            button2Label = R.string.cancel,
+            onButton2Click = {})
+
+        dialogBinding.fromScratch.performClick()
+
     }
 
     fun showSingleButtonDialog(view:View,onButtonClick:()->Unit = {}){

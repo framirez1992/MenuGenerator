@@ -1,5 +1,6 @@
 package com.far.menugenerator.common.utils
 
+import android.telephony.PhoneNumberUtils
 import com.google.gson.Gson
 import java.text.DecimalFormat
 import java.text.NumberFormat
@@ -22,6 +23,10 @@ object StringUtils {
     fun objectToJson(obj:Any):String{
         val gson = Gson()
         return gson.toJson(obj)
+    }
+
+    fun formatPhone(phoneNumber:String):String{
+       return PhoneNumberUtils.formatNumber(phoneNumber,Locale.getDefault().country)
     }
 
 }

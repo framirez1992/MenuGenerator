@@ -5,7 +5,10 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import androidx.credentials.ClearCredentialStateRequest
+import androidx.credentials.CredentialManager
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.far.menugenerator.R
@@ -21,8 +24,8 @@ import com.far.menugenerator.view.common.BaseActivity
 import com.far.menugenerator.view.common.DialogManager
 import com.far.menugenerator.view.common.ScreenNavigation
 import com.far.menugenerator.viewModel.CompanyListViewModel
-import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 
@@ -33,7 +36,7 @@ class CompanyList : BaseActivity() {
     @Inject lateinit var companyListFactory:CompanyListViewModel.CompanyListViewModelFactory
     @Inject lateinit var navigation: ScreenNavigation
     @Inject lateinit var dialogManager: DialogManager
-    @Inject lateinit var mGoogleSignInClient: GoogleSignInClient
+    @Inject lateinit var credentialManager: CredentialManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,8 +64,8 @@ class CompanyList : BaseActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when(item.itemId){
             R.id.optionRefresh -> getCompanies()
-            R.id.optionNewMenu -> navigation.companyActivity(null)
-            R.id.optionLogout -> signOut()
+            R.id.optionNewMenu,R.id.optionNewMenuAction -> navigation.companyActivity(null)
+            R.id.optionLogout -> showSignOutDialog()
         }
 
         return true
@@ -73,11 +76,15 @@ class CompanyList : BaseActivity() {
         _viewModel.onResume(LoginActivity.userFirebase?.internalId!!)
     }
     override fun onBackPressed() {
+        showSignOutDialog()
         //super.onBackPressed()
     }
 
     private fun initViews(){
-
+        binding.btnAddCompany.visibility = View.GONE
+        binding.btnAddCompany.setOnClickListener{
+            navigation.companyActivity(null)
+        }
         binding.swipe.setOnRefreshListener {
             getCompanies()
         }
@@ -124,6 +131,10 @@ class CompanyList : BaseActivity() {
         binding.swipe.isRefreshing = processState.state == State.LOADING
         binding.rv.visibility = if(processState.state == State.LOADING) View.GONE else View.VISIBLE
 
+        binding.btnAddCompany.visibility = if(processState.state != State.LOADING
+                                            && (_viewModel.getCompanies().value == null || _viewModel.getCompanies().value?.size == 0))
+                                            View.VISIBLE else View.GONE
+
         if(processState.state == State.SUCCESS
             && _viewModel.getCompanies().value!!.isEmpty()
             && PreferenceUtils.getShowNoCompanyAlert(context = this,true)){
@@ -134,6 +145,8 @@ class CompanyList : BaseActivity() {
             Snackbar.make(binding.root,
                 getString(R.string.operation_failed_please_retry),
                 Snackbar.LENGTH_LONG).show()
+
+
     }
 
     private fun showFirstCompanyDialog(){
@@ -183,10 +196,25 @@ class CompanyList : BaseActivity() {
             })
     }
 
+
+    private fun showSignOutDialog(){
+        val dialogBinding = DialogImageTitleDescriptionBinding.inflate(layoutInflater)
+        dialogBinding.title.setText(R.string.signout)
+        dialogBinding.body.setText(R.string.are_you_sure_you_want_to_sign_out)
+        dialogBinding.img.setImageResource(R.drawable.warning)
+        dialogManager.showTwoButtonsDialog(dialogBinding.root,
+            button1Label = R.string.yes,
+            onButton1Click = {
+               signOut()
+            },
+            button2Label = R.string.not_now,
+            onButton2Click = {})
+    }
     private fun signOut() {
-        mGoogleSignInClient.signOut()
-            .addOnCompleteListener(this) {
-                finish()
-            }
+        lifecycleScope.launch {
+            val request = ClearCredentialStateRequest()
+            credentialManager.clearCredentialState(request)
+            finish()
+        }
     }
 }

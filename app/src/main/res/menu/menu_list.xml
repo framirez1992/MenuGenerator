@@ -7,13 +7,17 @@
         android:title="@string/refresh"
         app:showAsAction="ifRoom"/>
 
+    <item android:id="@+id/addAction"
+        android:icon="@drawable/rounded_add_white_24"
+        android:title="@string/add_menu"
+        app:showAsAction="always"/>
+
     <item android:id="@+id/add"
         android:icon="@drawable/rounded_add_white_24"
-        app:showAsAction="ifRoom"
-        android:title="@string/add"/>
+        android:title="@string/add_menu"
+        app:showAsAction="never"/>
 
     <item android:id="@+id/showDemo"
-        android:icon="@drawable/rounded_add_white_24"
         app:showAsAction="never"
         android:title="@string/show_demo"/>
 

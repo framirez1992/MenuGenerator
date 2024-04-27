@@ -21,8 +21,7 @@ class CategoriesAdapter(private val categories:MutableList<Category>, private va
 
     override fun onBindViewHolder(holder: CategoryViewHolder, position: Int) {
         holder.bind(categories[position])
-        holder.binding.btnDelete.setOnClickListener{
-            //remove(id)
+        holder.binding.root.setOnClickListener{
             onClick(categories[position])
         }
     }

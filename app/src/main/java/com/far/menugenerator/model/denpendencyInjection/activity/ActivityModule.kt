@@ -1,12 +1,9 @@
 package com.far.menugenerator.model.denpendencyInjection.activity
 
-import com.far.menugenerator.R
+import androidx.credentials.CredentialManager
 import com.far.menugenerator.view.common.BaseActivity
 import com.far.menugenerator.view.common.DialogManager
 import com.far.menugenerator.view.common.ScreenNavigation
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInClient
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import dagger.Module
 import dagger.Provides
 
@@ -18,14 +15,8 @@ class ActivityModule(private val activity: BaseActivity) {
     fun activity() = activity
     @ActivityScope
     @Provides
-    fun googleSignInClient(activity:BaseActivity): GoogleSignInClient {
-        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(activity.getString(R.string.default_web_client_id))
-            .requestEmail()
-            .build()
-        // Build a GoogleSignInClient with the options specified by gso.
-        return GoogleSignIn.getClient(activity, gso);
-    }
+    fun googleCredentialManager(activity: BaseActivity):CredentialManager =  CredentialManager.create(activity)
+
     @ActivityScope
     @Provides
     fun screenNavigation(activity: BaseActivity) = ScreenNavigation(activity)

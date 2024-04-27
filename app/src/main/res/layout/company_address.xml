@@ -18,10 +18,11 @@
             android:id="@+id/etAddress1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/address_1"
+            android:hint="@string/address_line_1"
             android:textSize="@dimen/body"
             android:lines="1"
-            android:inputType="text"/>
+            android:inputType="text"
+            android:maxLength="50"/>
     </com.google.android.material.textfield.TextInputLayout>
 
 
@@ -38,10 +39,11 @@
             android:id="@+id/etAddress2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/address_2"
+            android:hint="@string/address_line_2"
             android:textSize="@dimen/body"
             android:lines="1"
-            android:inputType="text"/>
+            android:inputType="text"
+            android:maxLength="50"/>
     </com.google.android.material.textfield.TextInputLayout>
 
 
@@ -58,10 +60,11 @@
             android:id="@+id/etAddress3"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/address_3"
+            android:hint="@string/address_line_3"
             android:textSize="@dimen/body"
             android:lines="1"
-            android:inputType="text"/>
+            android:inputType="text"
+            android:maxLength="50"/>
     </com.google.android.material.textfield.TextInputLayout>
 
 

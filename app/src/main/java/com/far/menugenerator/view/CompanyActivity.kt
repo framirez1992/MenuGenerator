@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
 import com.canhub.cropper.CropImage
 import com.far.menugenerator.R
+import com.far.menugenerator.databinding.DialogImageTitleDescriptionBinding
 import com.far.menugenerator.databinding.FragmentCompanyBinding
 import com.far.menugenerator.model.Company
 import com.far.menugenerator.model.ProcessState
@@ -179,6 +180,13 @@ class CompanyActivity : BaseActivity() {
     override fun onPause() {
         super.onPause()
        setCurrentChanges()
+    }
+
+    override fun onBackPressed() {
+        //super.onBackPressed()
+        dialogManager.showExitConfirmDialog(){
+            finish()
+        }
     }
 
     private fun setCurrentChanges(){

@@ -22,7 +22,7 @@
                 android:layout_height="@dimen/img_logo_size"
                 android:layout_gravity="center_horizontal"
                 android:src="@mipmap/ic_launcher"
-                android:scaleType="fitCenter"/>
+                android:scaleType="fitXY"/>
 
             <TextView android:id="@+id/tvCompanyName"
                 android:layout_width="match_parent"

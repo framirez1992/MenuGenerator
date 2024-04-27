@@ -122,7 +122,8 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toStartOf="@id/cbPhone2"
             app:layout_constraintTop_toBottomOf="@id/cbAddress2"
-            android:text="@string/phone_1"/>
+            android:text="@string/phone_1"
+            android:visibility="gone"/>
 
         <CheckBox android:id="@+id/cbPhone2"
             android:layout_width="0dp"
@@ -131,7 +132,8 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@id/cbPhone1"
             app:layout_constraintBottom_toBottomOf="@id/cbPhone1"
-            android:text="@string/phone_2"/>
+            android:text="@string/phone_2"
+            android:visibility="gone"/>
 
         <CheckBox android:id="@+id/cbPhone3"
             android:layout_width="0dp"
@@ -139,7 +141,8 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@id/cbPhone1"
-            android:text="@string/phone_3"/>
+            android:text="@string/phone_3"
+            android:visibility="gone"/>
 
         <TextView android:id="@+id/tvSocialMedia"
             android:layout_width="0dp"

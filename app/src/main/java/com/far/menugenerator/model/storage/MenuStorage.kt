@@ -17,14 +17,14 @@ open class MenuStorage(private val storage:FirebaseStorage) {
                FileInputStream(File(pdfPath))
            }
 
-            val  route = "$user/menus/$menuId/${FileUtils.getFileName(pdfPath)}"
+            val  route = "$user/menus/$menuId/${FileUtils.getUriFileName(pdfPath)}"
             val fileRef = storage.reference.child(route)
             fileRef.putStream(stream).await()
             return fileRef.downloadUrl.await()
     }
 
     suspend fun uploadMenuItemsImages(user:String,menuId:String,file:Uri):Uri{
-        val fileRef = storage.reference.child("$user/menus/$menuId/items/${FileUtils.getFileName(file)}")
+        val fileRef = storage.reference.child("$user/menus/$menuId/items/${FileUtils.getUriFileName(file)}")
         fileRef.putFile(file).await()
         return fileRef.downloadUrl.await()
     }
@@ -42,7 +42,7 @@ open class MenuStorage(private val storage:FirebaseStorage) {
 
     }
     suspend fun removeMenuItemsImages(user:String,menuId:String,file:Uri){
-        val fileRef = storage.reference.child("$user/menus/$menuId/items/${FileUtils.getFileName(file)}")
+        val fileRef = storage.reference.child("$user/menus/$menuId/items/${FileUtils.getUriFileName(file)}")
         fileRef.delete().await()
     }
 

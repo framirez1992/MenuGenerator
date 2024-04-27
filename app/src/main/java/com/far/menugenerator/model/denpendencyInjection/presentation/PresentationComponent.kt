@@ -5,6 +5,7 @@ import com.far.menugenerator.view.CompanyActivity
 import com.far.menugenerator.view.CompanyList
 import com.far.menugenerator.view.LoginActivity
 import com.far.menugenerator.view.MenuActivity
+import com.far.menugenerator.view.MenuFilesActivity
 import com.far.menugenerator.view.MenuList
 import com.far.menugenerator.view.PremiumActivity
 import com.far.menugenerator.view.QRPreview
@@ -22,5 +23,6 @@ interface PresentationComponent {
     fun inject(menuList:MenuList)
     fun inject(qrPreview:QRPreview)
     fun inject(menuActivity: MenuActivity)
+    fun inject(menuFilesActivity: MenuFilesActivity)
     fun inject(premiumActivity: PremiumActivity)
 }

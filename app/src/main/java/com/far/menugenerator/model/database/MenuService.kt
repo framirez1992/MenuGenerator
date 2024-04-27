@@ -10,6 +10,7 @@ open class MenuService(private val db:FirebaseFirestore) {
 
         val menu = hashMapOf(
             MenuFirebase::menuId.name to m.menuId,
+            MenuFirebase::menuType.name to m.menuType,
             MenuFirebase::name.name to m.name,
             MenuFirebase::fileUrl.name to m.fileUrl,
             MenuFirebase::items.name to m.items,
@@ -25,6 +26,7 @@ open class MenuService(private val db:FirebaseFirestore) {
 
         val menu = hashMapOf(
             MenuFirebase::menuId.name to m.menuId,
+            MenuFirebase::menuType.name to m.menuType,
             MenuFirebase::name.name to m.name,
             MenuFirebase::fileUrl.name to m.fileUrl,
             MenuFirebase::items.name to m.items,

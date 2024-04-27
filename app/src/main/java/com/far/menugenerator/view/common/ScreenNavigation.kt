@@ -1,11 +1,11 @@
 package com.far.menugenerator.view.common
 
 import android.content.Intent
-import com.far.menugenerator.R
 import com.far.menugenerator.model.database.model.CompanyFirebase
 import com.far.menugenerator.view.CompanyActivity
 import com.far.menugenerator.view.CompanyList
 import com.far.menugenerator.view.MenuActivity
+import com.far.menugenerator.view.MenuFilesActivity
 import com.far.menugenerator.view.MenuList
 import com.far.menugenerator.view.PremiumActivity
 import com.far.menugenerator.view.QRPreview
@@ -34,12 +34,24 @@ class ScreenNavigation (private val baseActivity: BaseActivity) {
         activity.startActivity(i)
     }
 
-    fun menuActivity(companyReference: String,menuId: String?,isOnline:Boolean?,menuRef:String?){
+    fun menuActivity(companyReference: String,menuId: String?,menuType:String,isOnline:Boolean?,menuRef:String?){
         val i = Intent(activity,MenuActivity::class.java).apply {
             putExtra(MenuActivity.ARG_COMPANY_REF,companyReference)
             putExtra(MenuActivity.ARG_MENU_ID,menuId)
+            putExtra(MenuActivity.ARG_MENU_TYPE, menuType)
             putExtra(MenuActivity.ARG_MENU_ONLINE,isOnline)
             putExtra(MenuActivity.ARG_MENU_FIREBASE_REF,menuRef)
+        }
+        activity.startActivity(i)
+    }
+
+    fun menuFileActivity(companyReference: String,menuId: String?,menuType:String,isOnline:Boolean?,menuRef:String?){
+        val i = Intent(activity,MenuFilesActivity::class.java).apply {
+            putExtra(MenuFilesActivity.ARG_COMPANY_REF,companyReference)
+            putExtra(MenuFilesActivity.ARG_MENU_ID,menuId)
+            putExtra(MenuFilesActivity.ARG_MENU_TYPE, menuType)
+            putExtra(MenuFilesActivity.ARG_MENU_ONLINE,isOnline)
+            putExtra(MenuFilesActivity.ARG_MENU_FIREBASE_REF,menuRef)
         }
         activity.startActivity(i)
     }
@@ -53,21 +65,13 @@ class ScreenNavigation (private val baseActivity: BaseActivity) {
         activity.startActivity(i)
     }
 
-    fun premiumActivity(userId:String, companyId:String, menuId:String){
+    fun premiumActivity(userId:String, companyId:String, menuId:String, menuType:String){
         val i = Intent(activity, PremiumActivity::class.java).apply {
             putExtra(PremiumActivity.ARG_USER,userId)
             putExtra(PremiumActivity.ARG_COMPANY_ID,companyId)
             putExtra(PremiumActivity.ARG_MENU_ID,menuId)
+            putExtra(PremiumActivity.ARG_MENU_TYPE, menuType)
         }
         activity.startActivity(i)
-    }
-
-    fun currentFragmentOnActivityResult(requestCode: Int, resultCode: Int, data: Intent?){
-        currentFragment?.onActivityResult(requestCode, resultCode, data)
-    }
-    private fun setFragment(){
-        val fragmentTransaction = fragmentManager.beginTransaction()
-        fragmentTransaction.replace(R.id.frame,currentFragment)
-        fragmentTransaction.commit()
     }
 }

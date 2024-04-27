@@ -1,5 +1,4 @@
 <resources>
-    <string name="default_web_client_id">1025547524096-enpaob40mr9rk2ic1s6q1vvofk2f58ek.apps.googleusercontent.com</string>
     <!--
     <string name="server_client_id">1025547524096-enpaob40mr9rk2ic1s6q1vvofk2f58ek.apps.googleusercontent.com</string>
     -->
@@ -11,14 +10,8 @@
     <string name="tiny_url_endpoint" translatable="false">https://api.tinyurl.com</string>
     <string name="tiny_url_token" translatable="false">np97L2ZzMLkPPhJhbtWFkjFLHpZQcCdygPGKksE5hb7hJqVtsAl7nCalTt25</string>
     <string name="interstitial_add_id_test" translatable="false">ca-app-pub-3940256099942544/1033173712</string>
-    <string name="interstitial_add_id" translatable="false">ca-app-pub-8775587472639334/9465721003</string>
 
     <string name="app_name">MenuGenerator</string>
-    <string name="action_sign_in">Sign in or register</string>
-    <string name="action_sign_in_short">Sign in</string>
-    <string name="invalid_username">Not a valid username</string>
-    <string name="invalid_password">Password must be >5 characters</string>
-    <string name="login_failed">"Login failed"</string>
     <string name="sign_in">Sign In</string>
 
     <string name="my_business">My business</string>
@@ -26,20 +19,21 @@
     <string name="address_1">Address 1</string>
     <string name="address_2">Address 2</string>
     <string name="address_3">Address 3</string>
+    <string name="address_line_1">Address Line 1</string>
+    <string name="address_line_2">Address Line 2</string>
+    <string name="address_line_3">Address Line 3</string>
+
     <string name="phone_1">Phone 1</string>
     <string name="phone_2">Phone 2</string>
     <string name="phone_3">Phone 3</string>
     <string name="facebook">Facebook</string>
     <string name="whatsapp">WhatsApp</string>
     <string name="instagram">Instagram</string>
-    <string name="type_of_menu">Type of menu</string>
 
     <string name="title">Title</string>
     <string name="description">Description</string>
     <string name="categories">Categories</string>
     <string name="category_name">Category Name</string>
-    <string name="next">Next</string>
-    <string name="back">Back</string>
     <string name="products">Products</string>
     <string name="name">Name</string>
     <string name="price">Price</string>
@@ -50,16 +44,13 @@
     <string name="required">Required</string>
     <string name="invalid_value">Invalid value</string>
     <string name="generate">Generate</string>
-    <string name="new_menu">New Menu</string>
     <string name="refresh">Refresh</string>
     <string name="edit_product">Edit Product</string>
     <string name="edit">Edit</string>
     <string name="cancel">Cancel</string>
-    <string name="options">Options</string>
     <string name="delete">Delete</string>
     <string name="show_menus">Show menus</string>
     <string name="please_wait">Please wait</string>
-    <string name="new_company">New Company</string>
     <string name="operation_failed_please_retry">Operation failed. Please retry</string>
     <string name="signout">Sign out</string>
     <string name="yes">Yes</string>
@@ -68,12 +59,9 @@
     <string name="are_you_sure_you_want_to_delete_this_company">Are you sure you want to delete this company?</string>
     <string name="are_you_sure_you_want_to_delete_this_menu">Are you sure you want to delete this menu?</string>
     <string name="mandatory">Mandatory</string>
-    <string name="touch_for_options">(touch for options)</string>
-    <string name="add_image">Add image</string>
     <string name="finish">Finish</string>
     <string name="share_menu">Share menu</string>
     <string name="share_qr_code">Share QR Code</string>
-    <string name="touch">touch</string>
     <string name="share">Share</string>
     <string name="menu_settings">Menu settings</string>
     <string name="business_logo">Business logo</string>
@@ -83,14 +71,12 @@
     <string name="add_company">Add Company</string>
     <string name="delete_company">Delete Company</string>
     <string name="delete_menu">Delete Menu</string>
-    <string name="shape">Logo shape</string>
+    <string name="shape">Shape</string>
     <string name="business_info">Business info</string>
-    <string name="logo_shape">Logo shape</string>
     <string name="show_logo">Show logo</string>
     <string name="social_media">Social media</string>
     <string name="rounded">Rounded</string>
-    <string name="none">NONE</string>
-    <string name="square">Square</string>
+    <string name="none">None</string>
     <string name="rounded_square">Rounded square</string>
     <string name="menu_name">Menu name</string>
     <string name="copy_link">Copy link</string>
@@ -99,16 +85,13 @@
     <string name="network_error">Network error</string>
     <string name="check_your_network">Please check your internet connection and try again later</string>
     <string name="close">Close</string>
-    <string name="no_category">No category</string>
     <string name="warning">Warning</string>
     <string name="add_products_to_continue">Add products to this menu to continue</string>
     <string name="name_in_use">This name is in use</string>
     <string name="qr_code">QR Code</string>
-    <string name="upload">Upload</string>
     <string name="upgrade">Upgrade</string>
     <string name="buy">Buy</string>
-    <string name="subscribe">Subscribe</string>
-    <string name="show_demo">Show Demo</string>
+    <string name="show_demo">Show demo</string>
     <string name="menus_are_saved_online_msg">Menus are saved online. You can access them from any device.</string>
     <string name="access_to_the_menu_qr_code_msg">Access to the menu QR code. You can print it and paste it on your business or your business cards so that your customers can scan it and see the menu.</string>
     <string name="access_to_the_url_msg">Access to the URL of your menu. You can share the link on your social networks so that your clients can see it.</string>
@@ -117,9 +100,22 @@
     <string name="an_error_has_occurred_validating_the_purchase">An error has occurred validating the purchase.</string>
     <string name="feature_not_supported">Feature not supported</string>
     <string name="item_already_owned">Item already owned</string>
-    <string name="item_not_owned">Item not owned</string>
     <string name="item_unavailable">Item unavailable</string>
     <string name="service_disconnected">Service disconnected</string>
     <string name="service_unavailable">Service unavailable</string>
-    <string name="hide_demo">Hide Demo</string>
+    <string name="hide_demo">Hide demo</string>
+    <string name="add_menu">Add menu</string>
+    <string name="are_you_sure_you_want_to_sign_out">Are you sure you want to sign out?</string>
+    <string name="exit">Exit</string>
+    <string name="changes_won_t_be_saved_exit_anyway">Changes won\'t be saved. Exit anyway?</string>
+    <string name="product_added">Product added</string>
+    <string name="product_edited">Product edited</string>
+    <string name="cancelled">Cancelled</string>
+    <string name="build_your_menu_from_scratch">Build your menu from scratch</string>
+    <string name="import_menu_from_file">Import menu from file</string>
+    <string name="next">Next</string>
+    <string name="storage_permission_needed">Storage permission needed</string>
+    <string name="storage_permission_details">This app needs access to your storage to search your digital menu file. By allowing permission, you will enable this feature</string>
+    <string name="allow">Allow</string>
+    <string name="tap_to_select_file">(Tap to select file)</string>
 </resources>

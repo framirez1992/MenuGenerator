@@ -16,6 +16,7 @@ import com.far.menugenerator.common.helpers.ActivityHelper
 import com.far.menugenerator.common.utils.PreferenceUtils
 import com.far.menugenerator.databinding.DialogImageTitleDescriptionBinding
 import com.far.menugenerator.databinding.FragmentMenuListBinding
+import com.far.menugenerator.model.Enums
 import com.far.menugenerator.model.State
 import com.far.menugenerator.model.common.MenuReference
 import com.far.menugenerator.model.database.room.services.MenuTempDS
@@ -44,7 +45,7 @@ class MenuList : BaseActivity() {
 
     companion object {
          const val ARG_COMPANY_ID = "COMPANY_ID"
-        const val ARG_COMPANY_REF= "COMPANY_REF"
+         const val ARG_COMPANY_REF= "COMPANY_REF"
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -99,13 +100,27 @@ class MenuList : BaseActivity() {
     }
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when(item.itemId){
-            R.id.add->{
-                viewModel.clearMenuTempData()
-                screenNavigation.menuActivity(
-                companyReference = viewModel.companyRef!!,
-                menuId = null,
-                isOnline = null,
-                menuRef = null)
+            R.id.add, R.id.addAction ->{
+                dialogManager.showMenuTypeDialog{menuType->
+                    if(menuType == Enums.MenuType.DATA_MENU){
+                        viewModel.clearMenuTempData()
+                        screenNavigation.menuActivity(
+                            companyReference = viewModel.companyRef!!,
+                            menuId = null,
+                            menuType = Enums.MenuType.DATA_MENU.name,
+                            isOnline = null,
+                            menuRef = null)
+                    }else{
+                        screenNavigation.menuFileActivity(
+                            companyReference = viewModel.companyRef!!,
+                            menuId = null,
+                            menuType = Enums.MenuType.FILE_MENU.name,
+                            isOnline = null,
+                            menuRef = null
+                        )
+                    }
+                }
+
             }
             R.id.optionRefresh -> searchMenus()
             R.id.showDemo -> {
@@ -168,7 +183,8 @@ class MenuList : BaseActivity() {
                             screenNavigation.premiumActivity(
                                 userId = userId,
                                 companyId = companyId,
-                                menuId = menu.menuId
+                                menuId = menu.menuId,
+                                menuType = menu.menuType
                                 )}
                         R.string.preview -> {
                             viewModel.searchPreviewUri(
@@ -194,13 +210,25 @@ class MenuList : BaseActivity() {
                         }
                         R.string.qr_code->screenNavigation.qrImagePreview(userId = userId,companyId = companyId, menuFirebaseRef = menu.firebaseRef!!)
                         R.string.edit-> {
-                            viewModel.clearMenuTempData()
-                            screenNavigation.menuActivity(
-                                companyReference = viewModel.companyRef!!,
-                                menuId = menu.menuId,
-                                isOnline = menu.online,
-                                menuRef = menu.firebaseRef
-                            )
+                            if(menu.menuType == Enums.MenuType.DATA_MENU.name){
+                                viewModel.clearMenuTempData()
+                                screenNavigation.menuActivity(
+                                    companyReference = viewModel.companyRef!!,
+                                    menuId = menu.menuId,
+                                    menuType = Enums.MenuType.DATA_MENU.name,
+                                    isOnline = menu.online,
+                                    menuRef = menu.firebaseRef
+                                )
+                            }else{
+                                screenNavigation.menuFileActivity(
+                                    companyReference = viewModel.companyRef!!,
+                                    menuId = menu.menuId,
+                                    menuType = Enums.MenuType.DATA_MENU.name,
+                                    isOnline = menu.online,
+                                    menuRef = menu.firebaseRef
+                                )
+                            }
+
                         }
                         R.string.delete-> showDeleteMenuConfirmationDialog(menuReference = menu)
                     }

@@ -66,6 +66,7 @@ class PremiumActivity : BaseActivity() {
         const val ARG_COMPANY_ID="COMPANY_ID"
         const val ARG_USER="USER_ID"
         const val ARG_MENU_ID="MENU_ID"
+        const val ARG_MENU_TYPE="MENU_TYPE"
     }
 
     private lateinit var billingClient: BillingClient
@@ -80,22 +81,25 @@ class PremiumActivity : BaseActivity() {
         val userId:String?
         val companyId:String?
         val menuId:String?
+        val menuType:String?
         if(savedInstanceState == null){
             userId = intent.extras?.getString(ARG_USER)
             companyId = intent.extras?.getString(ARG_COMPANY_ID)
             menuId = intent.extras?.getString(ARG_MENU_ID)
+            menuType = intent.extras?.getString(ARG_MENU_TYPE)
         }else{
             userId = savedInstanceState.getString(ARG_USER)
             companyId = savedInstanceState.getString(ARG_COMPANY_ID)
             menuId = savedInstanceState.getString(ARG_MENU_ID)
+            menuType = savedInstanceState.getString(ARG_MENU_TYPE)
         }
 
-        if(LoginActivity.userFirebase == null || userId.isNullOrEmpty() || companyId.isNullOrEmpty() || menuId.isNullOrEmpty()){
+        if(LoginActivity.userFirebase == null || userId.isNullOrEmpty() || companyId.isNullOrEmpty() || menuId.isNullOrEmpty() || menuType.isNullOrEmpty()){
             finish()
         }else{
 
             if(viewModel.userId.isNullOrEmpty() || viewModel.companyId.isNullOrEmpty() || viewModel.menuId.isNullOrEmpty()){
-                viewModel.initData(userId = userId, companyId = companyId, menuId = menuId)
+                viewModel.initData(userId = userId, companyId = companyId, menuId = menuId, menuType = menuType)
             }
 
             billingClient = BillingClient.newBuilder(this)
@@ -114,6 +118,7 @@ class PremiumActivity : BaseActivity() {
         outState.putString(ARG_USER,viewModel.userId)
         outState.putString(ARG_COMPANY_ID,viewModel.companyId)
         outState.putString(ARG_MENU_ID,viewModel.menuId)
+        outState.putString(ARG_MENU_TYPE, viewModel.menuType?.name)
     }
 
     override fun onBackPressed() {

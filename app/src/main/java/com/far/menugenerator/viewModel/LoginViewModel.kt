@@ -11,7 +11,7 @@ import com.far.menugenerator.model.State
 import com.far.menugenerator.model.database.UserService
 import com.far.menugenerator.model.database.model.PLAN
 import com.far.menugenerator.model.database.model.UserFirebase
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -28,23 +28,23 @@ class LoginViewModel(
 
     fun getUser()= _userFirebase
 
-    fun loadUser(account: GoogleSignInAccount){
+    fun loadUser(googleIdTokenCredential: GoogleIdTokenCredential){
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 _loadUserState.postValue(ProcessState(State.LOADING))
-                var user = userService.getUser(account.email!!)
+                var user = userService.getUser(googleIdTokenCredential.id)
                 if(user == null) {
                     user = UserFirebase(
                         internalId = UUID.randomUUID().toString(),
-                        accountId = account.id,
-                        email = account.email!!,
+                        accountId = googleIdTokenCredential.id,
+                        email = googleIdTokenCredential.id,
                         plan = PLAN.FREE.name,
                         enabled = true
                     )
                     userService.registerUser(user = user)
                     _userFirebase = user
                 }else{
-                   _userFirebase = user
+                    _userFirebase = user
                 }
                 _loadUserState.postValue(ProcessState(State.SUCCESS))
 

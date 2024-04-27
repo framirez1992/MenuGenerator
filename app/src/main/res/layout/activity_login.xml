@@ -21,10 +21,14 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintVertical_bias="0.3"
-        app:shapeAppearanceOverlay="@style/Circular" />
+        app:shapeAppearanceOverlay="@style/Circular"
+        android:padding="15dp"
+        app:contentPadding="0dp"/>
 
 
 
+
+<!--
     <com.google.android.gms.common.SignInButton
         android:id="@+id/sign_in_button"
         android:layout_width="150dp"
@@ -39,7 +43,19 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/imgLogo"
         app:layout_constraintVertical_bias="0.2"/>
-
+-->
+    <ImageButton
+        android:id="@+id/btnLogin"
+        android:layout_width="150dp"
+        android:layout_height="40dp"
+        android:src="@drawable/google_tiny"
+        android:background="@drawable/rounded_corners_button"
+        android:backgroundTint="@color/grey_300"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/imgLogo"
+        app:layout_constraintVertical_bias="0.2"/>
 
     <ProgressBar android:id="@+id/pb"
         android:layout_width="50dp"

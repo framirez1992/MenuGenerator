@@ -22,7 +22,8 @@
             android:hint="@string/menu_name"
             android:textSize="@dimen/body"
             android:lines="1"
-            android:inputType="text"/>
+            android:inputType="text"
+            android:maxLength="50"/>
     </com.google.android.material.textfield.TextInputLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

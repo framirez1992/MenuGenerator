@@ -6,6 +6,7 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "menu")
 data class Menu(
     @PrimaryKey(autoGenerate = false) val menuId:String,
+    val menuType:String,
     val companyId:String,
     val name:String="",
     val fileUri:String?=null,

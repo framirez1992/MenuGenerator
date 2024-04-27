@@ -1,19 +1,16 @@
 package com.far.menugenerator.common.utils
 
+import android.content.ContentResolver
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.pdf.PdfDocument
 import android.net.Uri
-import android.os.Environment
+import android.provider.MediaStore
 import android.view.View
 import androidx.core.net.toFile
 import androidx.core.net.toUri
-import com.bumptech.glide.Glide
-import com.bumptech.glide.load.engine.DiskCacheStrategy
-import com.bumptech.glide.load.resource.bitmap.DownsampleStrategy
-import com.bumptech.glide.request.RequestOptions
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import kotlinx.coroutines.Dispatchers
@@ -21,6 +18,7 @@ import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
+import java.io.InputStream
 import kotlin.io.path.Path
 import kotlin.io.path.name
 import kotlin.math.min
@@ -28,11 +26,21 @@ import kotlin.math.min
 object FileUtils {
 
 
-    fun getFileName(file: Uri):String{//Uris Locales, las remotas de firebase Storage no funciona
+    fun getRealFileName(contentResolver:ContentResolver, uri:Uri):String{
+        var name:String="UNKNOWN"
+        val projection = arrayOf(MediaStore.MediaColumns.DISPLAY_NAME)
+        val cursor = contentResolver.query(uri, projection, null, null, null)
+        if (cursor != null && cursor.moveToFirst()) {
+            name = cursor.getString(cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME))
+        }
+        cursor?.close()
+        return name
+    }
+    fun getUriFileName(file: Uri):String{//Uris Locales, las remotas de firebase Storage no funciona
         val filePath = Path(file.path!!)
         return filePath.name
     }
-    fun getFileName(path: String):String{
+    fun getUriFileName(path: String):String{
         val filePath = Path(path)
         return filePath.name
     }
@@ -100,6 +108,29 @@ object FileUtils {
         val contentResolver = context.contentResolver
         val inputStream = contentResolver.openInputStream(imageUri)
         return BitmapFactory.decodeStream(inputStream)
+    }
+
+    //copia el contenido de un uri de tipo conten(content://) y lo copia en mi folder interno
+    fun copyUriContentToFile(context: Context, file:Uri, outputFile: File){
+        val contentResolver = context.contentResolver
+        val inputStream = contentResolver.openInputStream(file)
+        copyStreamToFile(inputStream!!, outputFile)
+        inputStream.close()
+    }
+
+    fun copyStreamToFile(inputStream: InputStream, outputFile: File) {
+        inputStream.use { input ->
+            val outputStream = FileOutputStream(outputFile)
+            outputStream.use { output ->
+                val buffer = ByteArray(4 * 1024) // buffer size
+                while (true) {
+                    val byteCount = input.read(buffer)
+                    if (byteCount < 0) break
+                    output.write(buffer, 0, byteCount)
+                }
+                output.flush()
+            }
+        }
     }
 
     fun resizeAndSaveBitmap(context: Context, bitmap: Bitmap, targetSize: Float, targetFile: File) {

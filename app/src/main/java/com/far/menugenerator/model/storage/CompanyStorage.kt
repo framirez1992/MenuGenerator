@@ -7,7 +7,7 @@ import kotlinx.coroutines.tasks.await
 
 open class CompanyStorage(private val storage: FirebaseStorage) {
     suspend fun uploadCompanyLogo(user:String,companyId:String,file: Uri): UploadResult {
-       val fileName = FileUtils.getFileName(file)
+       val fileName = FileUtils.getUriFileName(file)
        val fileRef = storage.reference.child("$user/company/$companyId/${fileName}")
        fileRef.putFile(file).await()
        val fileUri = fileRef.downloadUrl.await()

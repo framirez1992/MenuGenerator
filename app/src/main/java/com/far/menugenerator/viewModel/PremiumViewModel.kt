@@ -22,6 +22,7 @@ import com.android.billingclient.api.queryProductDetails
 import com.android.billingclient.api.queryPurchasesAsync
 import com.far.menugenerator.common.helpers.NetworkUtils
 import com.far.menugenerator.common.utils.FileUtils
+import com.far.menugenerator.model.Enums
 import com.far.menugenerator.model.ItemStyle
 import com.far.menugenerator.model.MenuSettings
 import com.far.menugenerator.model.ProcessState
@@ -57,10 +58,12 @@ class PremiumViewModel(
     private var _userId: String?=null
     private var _companyId:String?=null
     private var _menuId:String?=null
+    private var _menuType:Enums.MenuType?=null
 
     val userId get() = _userId
     val companyId get() = _companyId
     val menuId get() = _menuId
+    val menuType get() = _menuType
 
 
     private var _productDetails:List<ProductDetails>?=null
@@ -82,10 +85,11 @@ class PremiumViewModel(
     val updateConfirmPendingPurchasesStatus = MutableLiveData<ProcessState>()
     val searchConfirmedPaymentsStatus = MutableLiveData<ProcessState>()
 
-    fun initData(userId:String,companyId: String, menuId:String) {
+    fun initData(userId:String,companyId: String, menuId:String, menuType:String) {
         this._userId = userId
         this._companyId = companyId
         this._menuId = menuId
+        this._menuType = Enums.MenuType.valueOf(menuType)
     }
 
     fun initGoogleBillingData(billingClient: BillingClient){
@@ -213,8 +217,6 @@ class PremiumViewModel(
 
                 //PURCHASE PROCESSING
                 val purchase = confirmedPurchases.first()!!
-                //purchase.status = PurchaseStatus.PROCESSING.name
-                //purchaseService.updatePurchase(user = _userId,purchase=purchase)
                 //////////////////////////////////////////////////////////////
 
                 val localMenu = menuDS.getMenuById(menuId = _menuId!!)
@@ -227,7 +229,7 @@ class PremiumViewModel(
                 //Upload Images
                 val items = prepareItemsFirebase(user = _userId!!, menuId = localMenu.menuId, items = localMenuItems)
                 //Save Menu in FireBase
-                val savedMenu = saveMenuFireBase(user =  _userId!!, companyId = localMenu.companyId, menuId = localMenu.menuId,fileName = localMenu.name, fileUrl =  menuStorageUrl, items =  items, menuSettings = localMenuSettings)
+                val savedMenu = saveMenuFireBase(user =  _userId!!, companyId = localMenu.companyId, menuId = localMenu.menuId, menuType = _menuType!!.name,fileName = localMenu.name, fileUrl =  menuStorageUrl, items =  items, menuSettings = localMenuSettings)
 
                 //Update purchase status
                 purchase.menuId = localMenu.menuId
@@ -250,6 +252,9 @@ class PremiumViewModel(
 
         }
     }
+
+
+
 
     private suspend fun prepareItemsFirebase(user:String,menuId: String, items:List<MenuItems>):List<ItemFirebase>{
 
@@ -278,8 +283,8 @@ class PremiumViewModel(
     private suspend fun uploadMenuFile(user:String,menuId:String, pdfPath:String): Uri {
         return menuStorage.uploadFile(user,menuId,pdfPath)
     }
-    private fun saveMenuFireBase(user:String,companyId:String,menuId:String, fileName:String, fileUrl:String, items:List<ItemFirebase>,menuSettings: MenuSettings): MenuFirebase {
-        val menu = MenuFirebase(menuId = menuId,name=fileName,fileUrl= fileUrl, items = items, menuSettings = menuSettings)
+    private fun saveMenuFireBase(user:String,companyId:String,menuId:String,menuType: String, fileName:String, fileUrl:String, items:List<ItemFirebase>,menuSettings: MenuSettings): MenuFirebase {
+        val menu = MenuFirebase(menuId = menuId, menuType = menuType,name=fileName,fileUrl= fileUrl, items = items, menuSettings = menuSettings)
         menuService.saveMenu(user, companyId = companyId,menu)
         return menu
     }
