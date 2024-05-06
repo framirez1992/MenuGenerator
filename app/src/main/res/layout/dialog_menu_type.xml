@@ -21,8 +21,8 @@
             android:padding="20dp">
 
             <ImageView
-                android:layout_width="100dp"
-                android:layout_height="100dp"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
                 app:shapeAppearanceOverlay="@style/Circular"
                 android:src="@drawable/hand_phone"/>
 
@@ -34,7 +34,7 @@
                 android:paddingHorizontal="10dp"
                 android:text="@string/build_your_menu_from_scratch"
                 android:textStyle="bold"
-                android:textSize="20sp"/>
+                android:textSize="16sp"/>
         </LinearLayout>
 
     </androidx.cardview.widget.CardView>
@@ -56,8 +56,8 @@
             android:padding="20dp">
 
             <ImageView
-                android:layout_width="100dp"
-                android:layout_height="100dp"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
                 app:shapeAppearanceOverlay="@style/Circular"
                 android:src="@drawable/file_phone"/>
 
@@ -69,7 +69,7 @@
                 android:paddingHorizontal="10dp"
                 android:text="@string/import_menu_from_file"
                 android:textStyle="bold"
-                android:textSize="20sp"/>
+                android:textSize="16sp"/>
         </LinearLayout>
 
     </androidx.cardview.widget.CardView>

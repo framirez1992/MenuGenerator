@@ -6,7 +6,6 @@ import com.far.menugenerator.databinding.ActivityMainBinding
 import com.far.menugenerator.view.common.BaseActivity
 import com.far.menugenerator.view.common.ScreenNavigation
 import com.far.menugenerator.viewModel.MainActivityViewModel
-import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import javax.inject.Inject
 
 class MainActivity : BaseActivity() {

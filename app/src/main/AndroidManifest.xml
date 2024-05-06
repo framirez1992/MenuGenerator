@@ -20,7 +20,8 @@
         android:requestLegacyExternalStorage="true">
         <activity
             android:name=".view.MenuFilesActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".view.PremiumActivity"
             android:exported="false"

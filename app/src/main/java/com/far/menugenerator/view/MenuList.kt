@@ -203,7 +203,7 @@ class MenuList : BaseActivity() {
                             //TODO: Acortar URL
                             viewModel.shortenUrl(
                                 url = menu.fileUri.split("&token")[0],
-                                token = getString(R.string.tiny_url_token),
+                                token = Constants.TYNY_URL_TOKEN,
                                 userId = userId,
                                 companyId = companyId,
                                 firebaseRef = menu.firebaseRef!!)

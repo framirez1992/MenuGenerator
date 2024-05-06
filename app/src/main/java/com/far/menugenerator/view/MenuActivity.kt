@@ -11,7 +11,6 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.ArrayAdapter
 import android.widget.Toast
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -181,7 +180,7 @@ class MenuActivity : BaseActivity() {
 
         AdManagerInterstitialAd.load(
             this,
-            getString(R.string.interstitial_add_id_test),
+            Constants.INTERSTITIAL_AD_ID,
             adRequest,
             object : AdManagerInterstitialAdLoadCallback() {
                 override fun onAdFailedToLoad(adError: LoadAdError) {

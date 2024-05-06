@@ -1,17 +1,7 @@
 <resources>
-    <!--
-    <string name="server_client_id">1025547524096-enpaob40mr9rk2ic1s6q1vvofk2f58ek.apps.googleusercontent.com</string>
-    -->
     <string name="menu_demo_id">ec6053bf-c3da-41d3-8474-baac5513874d</string>
-    <!-- espanol
-    <string name="menu_demo_id">z9PCkWSDV4RnGEnxJwbf</string>
-    -->
 
-    <string name="tiny_url_endpoint" translatable="false">https://api.tinyurl.com</string>
-    <string name="tiny_url_token" translatable="false">np97L2ZzMLkPPhJhbtWFkjFLHpZQcCdygPGKksE5hb7hJqVtsAl7nCalTt25</string>
-    <string name="interstitial_add_id_test" translatable="false">ca-app-pub-3940256099942544/1033173712</string>
-
-    <string name="app_name">MenuGenerator</string>
+    <string name="app_name" translatable="false">MenuGenerator</string>
     <string name="sign_in">Sign In</string>
 
     <string name="my_business">My business</string>
@@ -56,11 +46,11 @@
     <string name="yes">Yes</string>
     <string name="not_now">Not now</string>
     <string name="do_you_want_to_add_a_new_company_now">Do you want to add a new company now?</string>
-    <string name="are_you_sure_you_want_to_delete_this_company">Are you sure you want to delete this company?</string>
-    <string name="are_you_sure_you_want_to_delete_this_menu">Are you sure you want to delete this menu?</string>
+    <string name="are_you_sure_you_want_to_delete_this_company">All data related to this company will be deleted and cannot be recovered. Are you sure you want to continue?</string>
+    <string name="are_you_sure_you_want_to_delete_this_menu">All data related to this menu will be deleted and cannot be recovered.Are you sure you want to delete this menu?</string>
     <string name="mandatory">Mandatory</string>
     <string name="finish">Finish</string>
-    <string name="share_menu">Share menu</string>
+    <string name="share_menu">Share Menu</string>
     <string name="share_qr_code">Share QR Code</string>
     <string name="share">Share</string>
     <string name="menu_settings">Menu settings</string>
@@ -92,9 +82,9 @@
     <string name="upgrade">Upgrade</string>
     <string name="buy">Buy</string>
     <string name="show_demo">Show demo</string>
-    <string name="menus_are_saved_online_msg">Menus are saved online. You can access them from any device.</string>
-    <string name="access_to_the_menu_qr_code_msg">Access to the menu QR code. You can print it and paste it on your business or your business cards so that your customers can scan it and see the menu.</string>
-    <string name="access_to_the_url_msg">Access to the URL of your menu. You can share the link on your social networks so that your clients can see it.</string>
+    <string name="menus_are_saved_online_msg">Menus are saved online. Manage your menus from any android  phone keeping them linked to your account for easy access.</string>
+    <string name="access_to_the_menu_qr_code_msg">Access to the menu QR code. Print and display the QR Code at your business. Customers can then scan it anytime to view your latest menu.</string>
+    <string name="access_to_the_url_msg">Share the link on social media! This makes it easy for your clients to access your menu anytime, anywhere, directly from their phones or devices.</string>
     <string name="pending_payment">Pending payment</string>
     <string name="the_payment_is_being_processed">The payment is being processed. once it is applied you can return to this screen to complete the purchase.</string>
     <string name="an_error_has_occurred_validating_the_purchase">An error has occurred validating the purchase.</string>

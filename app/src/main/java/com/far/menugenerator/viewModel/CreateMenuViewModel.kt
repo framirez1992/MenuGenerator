@@ -634,6 +634,7 @@ class CreateMenuViewModel @Inject constructor(
             ItemFirebase(
                 id = menuItem.id,
                 type = menuItem.type,
+                enabled = menuItem.enabled,
                 categoryId = menuItem.categoryId,
                 categoryName = menuItem.categoryName,
                 name = menuItem.name,

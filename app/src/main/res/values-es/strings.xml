@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?><resources>
+
+  <string name="menu_demo_id">006a8dfc-d589-4a36-b0af-261fae90a2b3</string>
+
+  <string name="app_name">MenuGenerator</string>
+
+  <string name="sign_in">Iniciar sesión</string>
+      
+  <string name="my_business">Mi negocio</string>
+      
+  <string name="business_name">Nombre del Negocio</string>
+      
+  <string name="address_1">Dirección 1</string>
+      
+  <string name="address_2">Dirección 2</string>
+      
+  <string name="address_3">Dirección 3</string>
+      
+  <string name="address_line_1">Dirección Línea 1</string>
+      
+  <string name="address_line_2">Línea de dirección 2</string>
+      
+  <string name="address_line_3">Línea de dirección 3</string>
+      
+  <string name="phone_1">Teléfono 1</string>
+      
+  <string name="phone_2">Teléfono 2</string>
+      
+  <string name="phone_3">Teléfono 3</string>
+      
+  <string name="facebook">Facebook</string>
+      
+  <string name="whatsapp">WhatsApp</string>
+      
+  <string name="instagram">Instagram</string>
+      
+  <string name="title">Título</string>
+      
+  <string name="description">Descripción</string>
+      
+  <string name="categories">Categorías</string>
+      
+  <string name="category_name">Nombre de la categoría</string>
+      
+  <string name="products">Productos</string>
+      
+  <string name="name">Nombre</string>
+      
+  <string name="price">Precio</string>
+      
+  <string name="add">Agregar</string>
+      
+  <string name="clear">Limpiar</string>
+      
+  <string name="search">Buscar</string>
+      
+  <string name="preview">Vista Previa</string>
+      
+  <string name="required">Requerido</string>
+      
+  <string name="invalid_value">Valor no válido</string>
+      
+  <string name="generate">Generar</string>
+      
+  <string name="refresh">Actualizar</string>
+      
+  <string name="edit_product">Editar producto</string>
+      
+  <string name="edit">Editar</string>
+      
+  <string name="cancel">Cancelar</string>
+      
+  <string name="delete">Borrar</string>
+      
+  <string name="show_menus">Mostrar menús</string>
+      
+  <string name="please_wait">Espere por favor</string>
+      
+  <string name="operation_failed_please_retry">Operación fallida. Por favor, intenta de nuevo</string>
+      
+  <string name="signout">Desconectar</string>
+      
+  <string name="yes">Sí</string>
+      
+  <string name="not_now">Ahora no</string>
+      
+  <string name="do_you_want_to_add_a_new_company_now">¿Quieres agregar una nueva empresa ahora?</string>
+      
+  <string name="are_you_sure_you_want_to_delete_this_company">Todos los datos relacionados a esta empresa se eliminarán y no se podrán recuperar. Estás seguro de que quieres continuar?</string>
+      
+  <string name="are_you_sure_you_want_to_delete_this_menu">Todos los datos relacionados a este menú se eliminarán y no se podrán recuperar. ¿Está seguro de que desea eliminar este menú?</string>
+      
+  <string name="mandatory">Obligatorio</string>
+      
+  <string name="finish">Finalizar</string>
+      
+  <string name="share_menu">Compartir Menú</string>
+      
+  <string name="share_qr_code">Compartir código QR</string>
+      
+  <string name="share">Compartir</string>
+      
+  <string name="menu_settings">Configuración del menú</string>
+      
+  <string name="business_logo">Logotipo de empresa</string>
+      
+  <string name="apply">Aplicar</string>
+      
+  <string name="basic">Básico</string>
+      
+  <string name="catalog">Catalogo</string>
+      
+  <string name="add_company">Agregar empresa</string>
+      
+  <string name="delete_company">Eliminar empresa</string>
+      
+  <string name="delete_menu">Eliminar menú</string>
+      
+  <string name="shape">Forma</string>
+      
+  <string name="business_info">Información comercial</string>
+      
+  <string name="show_logo">Mostrar logotipo</string>
+      
+  <string name="social_media">Redes sociales</string>
+      
+  <string name="rounded">Redondeado</string>
+      
+  <string name="none">Ninguno</string>
+      
+  <string name="rounded_square">Cuadrado redondeado</string>
+      
+  <string name="menu_name">Nombre del menú</string>
+      
+  <string name="copy_link">Copiar link</string>
+      
+  <string name="text_copied_to_clipboard">Texto copiado al portapapeles</string>
+      
+  <string name="enabled">Activado</string>
+      
+  <string name="network_error">Error de red</string>
+      
+  <string name="check_your_network">Comprueba tu conexión a Internet y vuelve a intentarlo más tarde.</string>
+      
+  <string name="close">Cerrar</string>
+      
+  <string name="warning">Advertencia</string>
+      
+  <string name="add_products_to_continue">Añade productos a este menú para continuar</string>
+      
+  <string name="name_in_use">Este nombre está en uso.</string>
+      
+  <string name="qr_code">Código QR</string>
+      
+  <string name="upgrade">Mejorar</string>
+      
+  <string name="buy">Comprar</string>
+      
+  <string name="show_demo">Mostrar demostración</string>
+      
+  <string name="menus_are_saved_online_msg">Administra tus menús desde cualquier teléfono Android y mantenlos vinculados a tu cuenta para un fácil acceso.</string>
+      
+  <string name="access_to_the_menu_qr_code_msg">Acceso al código QR del menú. Imprime y muestra el código QR en tu negocio. Los clientes pueden escanearlo en cualquier momento para ver tu menú más reciente.</string>
+      
+  <string name="access_to_the_url_msg">¡Comparte el enlace en las redes sociales! Esto permite a tus clientes acceder a tu menú en cualquier momento y lugar, directamente desde sus teléfonos o dispositivos.</string>
+      
+  <string name="pending_payment">Pago pendiente</string>
+      
+  <string name="the_payment_is_being_processed">El pago se está procesando. una vez aplicado podrás volver a esta pantalla para completar la compra.</string>
+      
+  <string name="an_error_has_occurred_validating_the_purchase">Se ha producido un error al validar la compra.</string>
+      
+  <string name="feature_not_supported">Característica no compatible</string>
+      
+  <string name="item_already_owned">Artículo ya poseído</string>
+      
+  <string name="item_unavailable">Artículo no disponible</string>
+      
+  <string name="service_disconnected">Servicio desconectado</string>
+      
+  <string name="service_unavailable">Servicio No Disponible</string>
+      
+  <string name="hide_demo">Ocultar demostración</string>
+      
+  <string name="add_menu">Agregar menú</string>
+      
+  <string name="are_you_sure_you_want_to_sign_out">¿Estás seguro de que deseas cerrar sesión?</string>
+      
+  <string name="exit">Salir</string>
+      
+  <string name="changes_won_t_be_saved_exit_anyway">Los cambios no se guardarán. ¿Salir de todos modos?</string>
+      
+  <string name="product_added">Producto agregado</string>
+      
+  <string name="product_edited">Producto editado</string>
+      
+  <string name="cancelled">Cancelado</string>
+      
+  <string name="build_your_menu_from_scratch">Crea tu menú desde cero</string>
+      
+  <string name="import_menu_from_file">Importar menú desde archivo</string>
+      
+  <string name="next">Siguiente</string>
+      
+  <string name="storage_permission_needed">Se necesita permiso de almacenamiento</string>
+      
+  <string name="storage_permission_details">Esta aplicación necesita acceso a su almacenamiento para buscar su archivo de menú digital. Al aceptar el permiso, habilitará esta función</string>
+      
+  <string name="allow">Permitir</string>
+      
+  <string name="tap_to_select_file">(Toque para seleccionar el archivo)</string>
+  
+</resources>

@@ -207,7 +207,7 @@ class CompanyList : BaseActivity() {
             onButton1Click = {
                signOut()
             },
-            button2Label = R.string.not_now,
+            button2Label = R.string.cancel,
             onButton2Click = {})
     }
     private fun signOut() {

@@ -13,7 +13,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.far.menugenerator.R
 import com.far.menugenerator.common.global.Constants
@@ -35,7 +34,6 @@ import com.google.android.gms.ads.admanager.AdManagerInterstitialAdLoadCallback
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputLayout
-import kotlinx.coroutines.launch
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
@@ -350,7 +348,7 @@ class MenuFilesActivity : BaseActivity() {
 
         AdManagerInterstitialAd.load(
             this,
-            getString(R.string.interstitial_add_id_test),
+            Constants.INTERSTITIAL_AD_ID,
             adRequest,
             object : AdManagerInterstitialAdLoadCallback() {
                 override fun onAdFailedToLoad(adError: LoadAdError) {
