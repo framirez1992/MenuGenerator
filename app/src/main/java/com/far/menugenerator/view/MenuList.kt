@@ -3,7 +3,6 @@ package com.far.menugenerator.view
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
-import androidx.fragment.app.Fragment
 import android.view.View
 import android.widget.Toast
 import androidx.core.net.toFile
@@ -16,10 +15,9 @@ import com.far.menugenerator.common.helpers.ActivityHelper
 import com.far.menugenerator.common.utils.PreferenceUtils
 import com.far.menugenerator.databinding.DialogImageTitleDescriptionBinding
 import com.far.menugenerator.databinding.FragmentMenuListBinding
-import com.far.menugenerator.model.Enums
-import com.far.menugenerator.model.State
-import com.far.menugenerator.model.common.MenuReference
-import com.far.menugenerator.model.database.room.services.MenuTempDS
+import com.far.menugenerator.common.global.Enums
+import com.far.menugenerator.viewModel.model.State
+import com.far.menugenerator.viewModel.model.MenuReference
 import com.far.menugenerator.view.adapters.ImageOption
 import com.far.menugenerator.view.adapters.MenuAdapter
 import com.far.menugenerator.view.common.BaseActivity
@@ -45,7 +43,6 @@ class MenuList : BaseActivity() {
 
     companion object {
          const val ARG_COMPANY_ID = "COMPANY_ID"
-         const val ARG_COMPANY_REF= "COMPANY_REF"
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,23 +52,20 @@ class MenuList : BaseActivity() {
         setContentView(binding.root)
 
         val companyId:String?
-        val companyRef:String?
         if(savedInstanceState == null){//se crea desde 0
             companyId = intent?.extras?.getString(ARG_COMPANY_ID)
-            companyRef = intent?.extras?.getString(ARG_COMPANY_REF)
         }else{//vuelve despues de haber abandonado la pantalla (ya sea que la activifad siga viva o se haya guardado info con el metodo onSaveInstanceState)
             companyId = savedInstanceState.getString(ARG_COMPANY_ID)
-            companyRef = savedInstanceState.getString(ARG_COMPANY_REF)
         }
 
-        if(LoginActivity.userFirebase == null || companyId.isNullOrEmpty() || companyRef.isNullOrEmpty()){
+        if(LoginActivity.userFirebase == null || companyId.isNullOrEmpty()){
             finish()
         }else{
             //Este ecenario se aplica si la actividad se borra por estar mucho tiempo en background.
             //el viewModel no sostiene la referencia y la info se borra. pero el onSaveInstanceState hace que los valores sobrevivan.
             //Probado usando el developer opcion (Eliminar actividades) que borra tda la info de la actividad inmediatamente el usuario las abandona.
-            if(viewModel.companyId.isNullOrEmpty() || viewModel.companyRef.isNullOrEmpty()){
-                viewModel.setInitialValues(companyId = companyId, companyReference = companyRef)
+            if(viewModel.companyId.isNullOrEmpty()){
+                viewModel.setInitialValues(companyId = companyId)
             }
             initViews()
             initObservers()
@@ -96,7 +90,6 @@ class MenuList : BaseActivity() {
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putString(ARG_COMPANY_ID,viewModel.companyId)
-        outState.putString(ARG_COMPANY_REF,viewModel.companyRef)
     }
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when(item.itemId){
@@ -105,18 +98,16 @@ class MenuList : BaseActivity() {
                     if(menuType == Enums.MenuType.DATA_MENU){
                         viewModel.clearMenuTempData()
                         screenNavigation.menuActivity(
-                            companyReference = viewModel.companyRef!!,
+                            companyId = viewModel.companyId!!,
                             menuId = null,
                             menuType = Enums.MenuType.DATA_MENU.name,
-                            isOnline = null,
-                            menuRef = null)
+                            isOnline = null)
                     }else{
                         screenNavigation.menuFileActivity(
-                            companyReference = viewModel.companyRef!!,
+                            companyReference = viewModel.companyId!!,
                             menuId = null,
                             menuType = Enums.MenuType.FILE_MENU.name,
-                            isOnline = null,
-                            menuRef = null
+                            isOnline = null
                         )
                     }
                 }
@@ -176,7 +167,7 @@ class MenuList : BaseActivity() {
                 }
 
                 dialogManager.showImageBottomSheet(options){option->
-                    val userId = if(menu.isDemo) Constants.USERID_DEMO else LoginActivity.userFirebase?.internalId!!
+                    val userId = if(menu.isDemo) Constants.USERID_DEMO else LoginActivity.userFirebase?.accountId!!
                     val companyId = if(menu.isDemo) Constants.COMPANYID_DEMO else viewModel.companyId!!
                     when(option.string){
                         R.string.upgrade->{
@@ -206,26 +197,24 @@ class MenuList : BaseActivity() {
                                 token = Constants.TYNY_URL_TOKEN,
                                 userId = userId,
                                 companyId = companyId,
-                                firebaseRef = menu.firebaseRef!!)
+                                menuId = menu.menuId)
                         }
-                        R.string.qr_code->screenNavigation.qrImagePreview(userId = userId,companyId = companyId, menuFirebaseRef = menu.firebaseRef!!)
+                        R.string.qr_code->screenNavigation.qrImagePreview(userId = userId,companyId = companyId, menuId = menu.menuId!!)
                         R.string.edit-> {
                             if(menu.menuType == Enums.MenuType.DATA_MENU.name){
                                 viewModel.clearMenuTempData()
                                 screenNavigation.menuActivity(
-                                    companyReference = viewModel.companyRef!!,
+                                    companyId = viewModel.companyId!!,
                                     menuId = menu.menuId,
                                     menuType = Enums.MenuType.DATA_MENU.name,
-                                    isOnline = menu.online,
-                                    menuRef = menu.firebaseRef
+                                    isOnline = menu.online
                                 )
                             }else{
                                 screenNavigation.menuFileActivity(
-                                    companyReference = viewModel.companyRef!!,
+                                    companyReference = viewModel.companyId!!,
                                     menuId = menu.menuId,
                                     menuType = Enums.MenuType.DATA_MENU.name,
-                                    isOnline = menu.online,
-                                    menuRef = menu.firebaseRef
+                                    isOnline = menu.online
                                 )
                             }
 
@@ -304,7 +293,7 @@ class MenuList : BaseActivity() {
 
     private fun searchMenus(){
         viewModel.getMenus(
-            user= LoginActivity.userFirebase?.internalId!!,
+            user= LoginActivity.userFirebase?.accountId!!,
             showDemo = PreferenceUtils.getShowDemoPreference(context = this,true),
             demoId = getString(R.string.menu_demo_id))
     }
@@ -318,7 +307,7 @@ class MenuList : BaseActivity() {
         dialogManager.showTwoButtonsDialog( view = dialogBinding.root,
             button1Label = R.string.delete,
             onButton1Click = {
-                viewModel.deleteMenu(LoginActivity.userFirebase?.internalId!!, menuReference = menuReference)
+                viewModel.deleteMenu(LoginActivity.userFirebase?.accountId!!, menuReference = menuReference)
             },
             button2Label = R.string.cancel,
             onButton2Click = {

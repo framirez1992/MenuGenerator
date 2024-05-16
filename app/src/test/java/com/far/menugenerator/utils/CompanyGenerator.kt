@@ -1,6 +1,6 @@
 package com.far.menugenerator.utils
 
-import com.far.menugenerator.model.database.model.CompanyFirebase
+import com.far.menugenerator.model.firebase.firestore.model.CompanyFirebase
 
 object CompanyGenerator {
     fun getCompanies():List<CompanyFirebase?>{

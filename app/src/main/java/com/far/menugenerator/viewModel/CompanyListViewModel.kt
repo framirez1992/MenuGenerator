@@ -6,14 +6,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.far.menugenerator.common.helpers.NetworkUtils
-import com.far.menugenerator.model.ProcessState
-import com.far.menugenerator.model.State
-import com.far.menugenerator.model.database.CompanyService
-import com.far.menugenerator.model.database.MenuService
-import com.far.menugenerator.model.database.model.CompanyFirebase
-import com.far.menugenerator.model.database.model.MenuFirebase
-import com.far.menugenerator.model.storage.CompanyStorage
-import com.far.menugenerator.model.storage.MenuStorage
+import com.far.menugenerator.viewModel.model.ProcessState
+import com.far.menugenerator.viewModel.model.State
+import com.far.menugenerator.model.firebase.firestore.CompanyService
+import com.far.menugenerator.model.firebase.firestore.MenuService
+import com.far.menugenerator.model.firebase.firestore.model.CompanyFirebase
+import com.far.menugenerator.model.firebase.firestore.model.MenuFirebase
+import com.far.menugenerator.model.firebase.storage.CompanyStorage
+import com.far.menugenerator.model.firebase.storage.MenuStorage
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.storage.StorageException
 import kotlinx.coroutines.launch
@@ -23,9 +23,9 @@ import javax.inject.Provider
 
 class CompanyListViewModel @Inject constructor (
     private val companyService: CompanyService,
-    private val companyStorage:CompanyStorage,
+    private val companyStorage: CompanyStorage,
     private val menuService: MenuService,
-    private val menuStorage:MenuStorage
+    private val menuStorage: MenuStorage
 ): ViewModel() {
 
     private val companies = MutableLiveData<List<CompanyFirebase?>>()
@@ -41,15 +41,15 @@ class CompanyListViewModel @Inject constructor (
         //deleteCompanyState.postValue(null)
     }
 
-    fun onResume(user:String){
-        getCompanies(user=user)
+    fun onResume(uid:String){
+        getCompanies(uid=uid)
     }
 
-    fun getCompanies(user:String){
+    fun getCompanies(uid:String){
         searchCompaniesState.postValue(ProcessState(state =  State.LOADING))
         viewModelScope.launch{
             try{
-                companies.postValue(companyService.getCompanies(user))
+                companies.postValue(companyService.getCompanies(uid))
                 searchCompaniesState.postValue(ProcessState(state =  State.SUCCESS))
             }catch (e:Exception){
                 e.printStackTrace()
@@ -59,7 +59,7 @@ class CompanyListViewModel @Inject constructor (
         }
     }
 
-    fun deleteCompany(user:String, company:CompanyFirebase){
+    fun deleteCompany(uid:String, company: CompanyFirebase){
         deleteCompanyState.postValue(ProcessState(state =  State.LOADING))
         viewModelScope.launch {
             try {
@@ -69,20 +69,20 @@ class CompanyListViewModel @Inject constructor (
                 }
 
                 if(company.logoUrl != null)
-                    deleteCompanyLogo(user=user,company=company)
+                    deleteCompanyLogo(uid=uid,company=company)
 
 
-                val menus = menuService.getMenus(user = user, companyId = company.companyId)
+                val menus = menuService.getMenus(user = uid, companyId = company.companyId)
                 //Delete all menus files files
                 menus.forEach{
                     //Delete Files
-                    removeAllMenuFiles(user = user, menuId = it?.menuId!!)
+                    removeAllMenuFiles(uid = uid, companyId = company.companyId, menuId = it?.menuId!!)
                     //Delete  Data
-                    deleteMenuFromFirebaseDB(user = user, companyId = company.companyId,menu=it)
+                    deleteMenuFromFirebaseDB(user = uid, companyId = company.companyId,menu=it)
                 }
 
 
-                deleteCompanyFromFirebaseDB(user= user, company= company)
+                deleteCompanyFromFirebaseDB(user= uid, company= company)
                 deleteCompanyState.postValue(ProcessState(state =  State.SUCCESS))
             }catch (e:TimeoutException){
                 deleteCompanyState.postValue(ProcessState(state =  State.NETWORK_ERROR, message = e.message))
@@ -91,14 +91,14 @@ class CompanyListViewModel @Inject constructor (
                 deleteCompanyState.postValue(ProcessState(state =  State.GENERAL_ERROR, message = e.message))
             }
 
-            getCompanies(user = user)
+            getCompanies(uid = uid)
 
         }
     }
 
-    private suspend fun deleteCompanyLogo(user:String, company:CompanyFirebase){
+    private suspend fun deleteCompanyLogo(uid:String, company: CompanyFirebase){
         try{
-            companyStorage.removeCompanyLogo(user = user, companyId = company.companyId, remoteFileName =company.logoFileName!!)
+            companyStorage.removeCompanyLogo(uid = uid, companyId = company.companyId, remoteFileName =company.logoFileName!!)
         }catch (e:StorageException){
             if(e.errorCode != StorageException.ERROR_OBJECT_NOT_FOUND){
                 throw e
@@ -106,9 +106,9 @@ class CompanyListViewModel @Inject constructor (
         }
     }
 
-    private suspend fun removeAllMenuFiles(user:String,menuId:String){
+    private suspend fun removeAllMenuFiles(uid:String,companyId: String, menuId:String){
         try{
-            menuStorage.removeAllMenuFiles(user = user, menuId = menuId)
+            menuStorage.removeAllMenuFiles(uid = uid, companyId=companyId, menuId = menuId)
         }catch (e:StorageException){
             if(e.errorCode != StorageException.ERROR_OBJECT_NOT_FOUND){
                 throw e
@@ -117,7 +117,7 @@ class CompanyListViewModel @Inject constructor (
 
     }
 
-    private fun deleteMenuFromFirebaseDB(user:String,companyId:String,menu:MenuFirebase){
+    private fun deleteMenuFromFirebaseDB(user:String,companyId:String,menu: MenuFirebase){
         try{
             menuService.deleteMenu(user = user, companyId = companyId,m=menu)
         }catch (e: FirebaseFirestoreException){
@@ -127,7 +127,7 @@ class CompanyListViewModel @Inject constructor (
         }
     }
 
-    private fun deleteCompanyFromFirebaseDB(user:String, company:CompanyFirebase){
+    private fun deleteCompanyFromFirebaseDB(user:String, company: CompanyFirebase){
         try{
             companyService.deleteCompany(user= user, company= company)
         }catch (e: FirebaseFirestoreException){

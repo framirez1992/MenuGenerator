@@ -32,7 +32,7 @@ import com.far.menugenerator.model.ItemPreview
 import com.far.menugenerator.model.LogoShape
 import com.far.menugenerator.model.MenuSettings
 import com.far.menugenerator.model.MenuStyle
-import com.far.menugenerator.model.State
+import com.far.menugenerator.viewModel.model.State
 import com.far.menugenerator.model.database.room.model.MenuItemsTemp
 import com.far.menugenerator.view.adapters.CategoriesAdapter
 import com.far.menugenerator.view.adapters.ImageOption
@@ -77,11 +77,10 @@ class MenuActivity : BaseActivity() {
     private final val TAG = "MainActivity"
 
     companion object {
-        const val ARG_COMPANY_REF = "companyRef"
+        const val ARG_COMPANY_ID = "companyId"
         const val ARG_MENU_TYPE = "menuType";
         const val ARG_MENU_ID="menuId"
         const val ARG_MENU_ONLINE="menuOnline"
-        const val ARG_MENU_FIREBASE_REF="menuFirebaseRef"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -93,36 +92,33 @@ class MenuActivity : BaseActivity() {
         setContentView(_binding.root)
 
         val menuType:String?
-        val companyRef:String?
+        val companyId:String?
         val menuId:String?
         val isOnline:Boolean?
-        val menuFirebaseRef:String?
+
         if(savedInstanceState == null){
             menuType = intent.getStringExtra(ARG_MENU_TYPE)
-            companyRef = intent.getStringExtra(ARG_COMPANY_REF)
+            companyId = intent.getStringExtra(ARG_COMPANY_ID)
             menuId = intent.getStringExtra(ARG_MENU_ID)
             isOnline = intent.getBooleanExtra(ARG_MENU_ONLINE,false)
-            menuFirebaseRef = intent.getStringExtra(ARG_MENU_FIREBASE_REF)
         }else{
             menuType = savedInstanceState.getString(ARG_MENU_TYPE)
-            companyRef = savedInstanceState.getString(ARG_COMPANY_REF)
+            companyId = savedInstanceState.getString(ARG_COMPANY_ID)
             menuId = savedInstanceState.getString(ARG_MENU_ID)
             isOnline = savedInstanceState.getBoolean(ARG_MENU_ONLINE,false)
-            menuFirebaseRef = savedInstanceState.getString(ARG_MENU_FIREBASE_REF)
         }
         
-        if(LoginActivity.userFirebase == null || companyRef.isNullOrEmpty() || menuType.isNullOrEmpty()){
+        if(LoginActivity.userFirebase == null || companyId.isNullOrEmpty() || menuType.isNullOrEmpty()){
             finish()
         }else {
-            if(viewModel.companyReference.isNullOrEmpty() || viewModel.menuId.isNullOrEmpty()){
+            if(viewModel.companyId.isNullOrEmpty() || viewModel.menuId.isNullOrEmpty()){
                 viewModel.initialize(
                     context = this,
-                    userId = LoginActivity.userFirebase?.internalId!!,
-                    companyRef = companyRef,
+                    userId = LoginActivity.userFirebase?.accountId!!,
+                    companyId = companyId,
                     menuReferenceId = menuId,
                     menuType = menuType,
-                    isOnlineMenu = isOnline,
-                    menuReferenceFirebaseRef = menuFirebaseRef)
+                    isOnlineMenu = isOnline)
             }
             
             hideActionBar()
@@ -145,10 +141,9 @@ class MenuActivity : BaseActivity() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putString(ARG_COMPANY_REF,viewModel.companyReference)
+        outState.putString(ARG_COMPANY_ID,viewModel.companyId)
         outState.putString(ARG_MENU_ID,viewModel.menuReferenceId)
         outState.putBoolean(ARG_MENU_ONLINE, viewModel.isMenuOnline?:false)
-        outState.putString(ARG_MENU_FIREBASE_REF, viewModel.menuReferenceFirebaseRef)
         outState.putString(ARG_MENU_TYPE, viewModel.menuType?.name)
     }
 

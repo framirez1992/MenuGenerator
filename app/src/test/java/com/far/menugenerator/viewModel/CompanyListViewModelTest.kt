@@ -1,11 +1,11 @@
 package com.far.menugenerator.viewModel
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import com.far.menugenerator.model.ProcessState
-import com.far.menugenerator.model.State
-import com.far.menugenerator.model.database.CompanyService
-import com.far.menugenerator.model.database.MenuService
-import com.far.menugenerator.model.storage.CompanyStorage
-import com.far.menugenerator.model.storage.MenuStorage
+import com.far.menugenerator.viewModel.model.ProcessState
+import com.far.menugenerator.viewModel.model.State
+import com.far.menugenerator.model.firebase.firestore.CompanyService
+import com.far.menugenerator.model.firebase.firestore.MenuService
+import com.far.menugenerator.model.firebase.storage.CompanyStorage
+import com.far.menugenerator.model.firebase.storage.MenuStorage
 import com.far.menugenerator.utils.CompanyGenerator
 import com.far.menugenerator.utils.MenuGenerator
 import com.google.firebase.firestore.FirebaseFirestoreException
@@ -104,7 +104,7 @@ class CompanyListViewModelTest {
         dispatcher.scheduler.advanceUntilIdle()
         val companies = sut.getCompanies().value
 
-        Assert.assertEquals(capturedStates.first()?.state,State.LOADING)
+        Assert.assertEquals(capturedStates.first()?.state, State.LOADING)
         Assert.assertEquals(capturedStates.last()?.state, State.GENERAL_ERROR)
         Assert.assertEquals(capturedStates.last()?.message, FAILURE_MESSAGE)
         Assert.assertNull(companies)
@@ -117,11 +117,11 @@ class CompanyListViewModelTest {
         sut.getSearchCompaniesState().observeForever{
             capturedStates.add(it)
         }
-        sut.getCompanies(user = USER)
+        sut.getCompanies(uid = USER)
         dispatcher.scheduler.advanceUntilIdle()
         val companies = sut.getCompanies().value
 
-        Assert.assertEquals(capturedStates.first()?.state,State.LOADING)
+        Assert.assertEquals(capturedStates.first()?.state, State.LOADING)
         Assert.assertEquals(capturedStates.last()?.state, State.SUCCESS)
         Assert.assertEquals(companies, CompanyGenerator.getCompanies())
 
@@ -134,10 +134,10 @@ class CompanyListViewModelTest {
         sut.getSearchCompaniesState().observeForever{
             capturedStates.add(it)
         }
-        sut.getCompanies(user = USER)
+        sut.getCompanies(uid = USER)
         dispatcher.scheduler.advanceUntilIdle()
         val companies = sut.getCompanies().value
-        Assert.assertEquals(capturedStates.first()?.state,State.LOADING)
+        Assert.assertEquals(capturedStates.first()?.state, State.LOADING)
         Assert.assertEquals(capturedStates.last()?.state, State.GENERAL_ERROR)
         Assert.assertEquals(capturedStates.last()?.message, FAILURE_MESSAGE)
         Assert.assertNull(companies)
@@ -169,7 +169,7 @@ class CompanyListViewModelTest {
         verify { companyService.deleteCompany(USER,companyToDelete)}
 
         Assert.assertEquals(deleteStates.first()?.state, State.LOADING)
-        Assert.assertEquals(deleteStates.last()?.state,State.SUCCESS)
+        Assert.assertEquals(deleteStates.last()?.state, State.SUCCESS)
 
     }
 
@@ -184,9 +184,9 @@ class CompanyListViewModelTest {
         sut.deleteCompany(USER,company!!)
         dispatcher.scheduler.advanceUntilIdle()
 
-        coVerify { companyStorage.removeCompanyLogo(user = USER, companyId = company.companyId,company.logoFileName!!) }
-        Assert.assertEquals(deleteStates.first()?.state,State.LOADING)
-        Assert.assertEquals(deleteStates.last()?.state,State.GENERAL_ERROR)
+        coVerify { companyStorage.removeCompanyLogo(uid = USER, companyId = company.companyId,company.logoFileName!!) }
+        Assert.assertEquals(deleteStates.first()?.state, State.LOADING)
+        Assert.assertEquals(deleteStates.last()?.state, State.GENERAL_ERROR)
 
     }
 
@@ -198,16 +198,16 @@ class CompanyListViewModelTest {
             states.add(it)
         }
         val company = CompanyGenerator.getCompanies().first()
-        sut.deleteCompany(user = USER, company = company!!)
+        sut.deleteCompany(uid = USER, company = company!!)
         dispatcher.scheduler.advanceUntilIdle()
 
-        coVerify { companyStorage.removeCompanyLogo(user = USER, companyId = company.companyId,company.logoFileName!!) }
+        coVerify { companyStorage.removeCompanyLogo(uid = USER, companyId = company.companyId,company.logoFileName!!) }
         coVerify { menuStorage.removeAllMenuFiles(user = USER, menuId = any()) }
         coVerify { menuService.deleteMenu(user = USER, companyId = company.companyId,any()) }
         coVerify { companyService.deleteCompany(user = USER, company = company) }
 
-        Assert.assertEquals(states.first()?.state,State.LOADING)
-        Assert.assertEquals(states.last()?.state,State.SUCCESS)
+        Assert.assertEquals(states.first()?.state, State.LOADING)
+        Assert.assertEquals(states.last()?.state, State.SUCCESS)
     }
 
 

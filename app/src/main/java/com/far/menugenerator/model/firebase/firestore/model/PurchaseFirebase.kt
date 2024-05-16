@@ -1,9 +1,8 @@
-package com.far.menugenerator.model.database.model
+package com.far.menugenerator.model.firebase.firestore.model
 
 import java.util.Date
 
 data class PurchaseFirebase(
-    var fireBaseRef:String?=null,
     var status:String?=null,
     var message:String?=null,
     var orderId:String?=null,

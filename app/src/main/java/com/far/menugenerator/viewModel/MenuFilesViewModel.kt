@@ -13,20 +13,20 @@ import androidx.lifecycle.viewModelScope
 import com.far.menugenerator.common.helpers.NetworkUtils
 import com.far.menugenerator.common.utils.FileUtils
 import com.far.menugenerator.common.utils.StringUtils
-import com.far.menugenerator.model.Enums
+import com.far.menugenerator.common.global.Enums
 import com.far.menugenerator.model.MenuSettings
-import com.far.menugenerator.model.ProcessState
-import com.far.menugenerator.model.State
-import com.far.menugenerator.model.database.CompanyService
-import com.far.menugenerator.model.database.MenuService
-import com.far.menugenerator.model.database.model.CompanyFirebase
-import com.far.menugenerator.model.database.model.ItemFirebase
-import com.far.menugenerator.model.database.model.MenuFirebase
+import com.far.menugenerator.viewModel.model.ProcessState
+import com.far.menugenerator.viewModel.model.State
+import com.far.menugenerator.model.firebase.firestore.CompanyService
+import com.far.menugenerator.model.firebase.firestore.MenuService
+import com.far.menugenerator.model.firebase.firestore.model.CompanyFirebase
+import com.far.menugenerator.model.firebase.firestore.model.ItemFirebase
+import com.far.menugenerator.model.firebase.firestore.model.MenuFirebase
 import com.far.menugenerator.model.database.room.model.Menu
 import com.far.menugenerator.model.database.room.model.MenuTemp
 import com.far.menugenerator.model.database.room.services.MenuDS
 import com.far.menugenerator.model.database.room.services.MenuTempDS
-import com.far.menugenerator.model.storage.MenuStorage
+import com.far.menugenerator.model.firebase.storage.MenuStorage
 import com.far.menugenerator.view.LoginActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -37,9 +37,9 @@ import javax.inject.Inject
 import javax.inject.Provider
 
 class MenuFilesViewModel(
-    private val menuService:MenuService,
-    private val companyService:CompanyService,
-    private val menuStorage:MenuStorage,
+    private val menuService: MenuService,
+    private val companyService: CompanyService,
+    private val menuStorage: MenuStorage,
     private val menuDS:MenuDS,
     private val menuTempDS:MenuTempDS
 ):ViewModel() {
@@ -51,19 +51,17 @@ class MenuFilesViewModel(
     val stateProcessMenu:LiveData<ProcessState> get() = _stateProcessMenu
 
     private lateinit var _userId:String
-    private var _companyReference:String?=null
+    private var _companyId:String?=null
     private var _menuType: Enums.MenuType?=null
     private var _menuReferenceId:String?=null
-    private var _menuReferenceFirebaseRef:String?=null
     private var _isMenuOnline:Boolean?=null
 
     private var company: CompanyFirebase?=null
 
     private var _editMenu:MenuTemp? = null
 
-    val companyReference get() = _companyReference
+    val companyId get() = _companyId
     val menuReferenceId get() = _menuReferenceId
-    val menuReferenceFirebaseRef get() = _menuReferenceFirebaseRef
     val isMenuOnline get() = _isMenuOnline
     val menuType get()= _menuType
 
@@ -73,20 +71,19 @@ class MenuFilesViewModel(
     fun getCompany() = company
 
 
-    fun initialize(userId:String,companyRef:String,menuType:String, menuReferenceId:String?, isOnlineMenu:Boolean?, menuReferenceFirebaseRef:String?){
+    fun initialize(userId:String, companyId:String, menuType:String, menuReferenceId:String?, isOnlineMenu:Boolean?){
         _userId = userId
-        _companyReference = companyRef
+        _companyId = companyId
         _menuType = Enums.MenuType.valueOf(menuType)
         _menuReferenceId = menuReferenceId
         _isMenuOnline = isOnlineMenu
-        _menuReferenceFirebaseRef = menuReferenceFirebaseRef
     }
 
     fun prepareMenu(){
         _menuId = _menuReferenceId?:UUID.randomUUID().toString()
         viewModelScope.launch(Dispatchers.IO) {
             if(company == null){
-                company = companyService.getCompany(user = _userId, companyRef = _companyReference!!)
+                company = companyService.getCompany(user = _userId, companyId = _companyId!!)
             }
             initMenuData()
         }
@@ -98,10 +95,9 @@ class MenuFilesViewModel(
 
         val menuTemp: MenuTemp
         if(_isMenuOnline!!){
-            val firebaseMenu = menuService.getMenu(user = _userId, companyId = company!!.companyId, _menuReferenceFirebaseRef!!)
+            val firebaseMenu = menuService.getMenu(user = _userId, companyId = company!!.companyId, menuId = menuId!!)
             menuTemp = MenuTemp(
-                fireBaseRef = firebaseMenu!!.fireBaseRef,
-                menuId = firebaseMenu.menuId,
+                menuId = firebaseMenu!!.menuId,
                 menuType = firebaseMenu.menuType,
                 name = firebaseMenu.name,
                 fileUrl = firebaseMenu.fileUrl,
@@ -109,7 +105,6 @@ class MenuFilesViewModel(
         }else{
             val menuLocal = menuDS.getMenuById(menuId = _menuReferenceId!!)
             menuTemp = MenuTemp(
-                fireBaseRef = null,
                 menuId = menuLocal.menuId,
                 menuType = menuLocal.menuType,
                 name = menuLocal.name,
@@ -174,7 +169,7 @@ class MenuFilesViewModel(
     private suspend fun generate(context:Context,referenceName:String, menuFile:Uri,){
         if(_menuReferenceId != null && isMenuOnline!!){//(Solo se crean Locales, luego de comprados se mandan a firebase) Si es online Hacer por firebase
             processMenu(
-                user = LoginActivity.userFirebase?.internalId!!,
+                user = LoginActivity.userFirebase?.accountId!!,
                 companyId = company!!.companyId,
                 menuType = _menuType!!.name,
                 fileName = referenceName,
@@ -183,7 +178,7 @@ class MenuFilesViewModel(
 
         }else {
             processMenuLocal(
-                user = LoginActivity.userFirebase?.internalId!!,
+                user = LoginActivity.userFirebase?.accountId!!,
                 companyId = company!!.companyId,
                 menuType = _menuType!!.name,
                 fileName = referenceName,
@@ -212,7 +207,7 @@ class MenuFilesViewModel(
         }
 
         val tempMenuId:String = UUID.randomUUID().toString()
-        val menuStorageUrl = uploadMenuFile(user = user, menuId = tempMenuId, menuFile = menuFile).toString()
+        val menuStorageUrl = uploadMenuFile(uid = user, companyId = companyId ,menuId = tempMenuId, menuFile = menuFile).toString()
         val savedMenu = saveMenuFireBase(user =  user, companyId = companyId, menuId = tempMenuId, menuType = menuType,fileName = fileName, fileUrl =  menuStorageUrl, items =  emptyList(), menuSettings = menuSettings)
     }
 
@@ -220,12 +215,12 @@ class MenuFilesViewModel(
         if(!NetworkUtils.isConnectedToInternet()){
             throw TimeoutException()
         }
-        val menuStorageUrl = uploadMenuFile(user = user,menuId=menuTemp.menuId, menuFile = menuFile).toString()
+        val menuStorageUrl = uploadMenuFile(uid = user, companyId = companyId,menuId=menuTemp.menuId, menuFile = menuFile).toString()
         val savedMenu = editMenuFireBase(user =  user, companyId = companyId, menuTemp = menuTemp,fileName = fileName, fileUrl =  menuStorageUrl, items =  emptyList(), menuSettings = MenuSettings())
     }
 
-    private suspend fun uploadMenuFile(user:String, menuId:String, menuFile:Uri):Uri {
-        return menuStorage.uploadFile(user,menuId,menuFile.path!!)
+    private suspend fun uploadMenuFile(uid:String, companyId:String, menuId:String, menuFile:Uri):Uri {
+        return menuStorage.uploadFile(uid = uid,companyId = companyId,menuId = menuId, pdfPath =  menuFile.path!!)
     }
 
     private fun saveMenuFireBase(user:String, companyId:String, menuId:String, menuType: String, fileName:String, fileUrl:String, items:List<ItemFirebase>, menuSettings: MenuSettings): MenuFirebase {
@@ -235,7 +230,7 @@ class MenuFilesViewModel(
     }
 
     private fun editMenuFireBase(user:String, companyId:String, menuTemp: MenuTemp, fileName:String, fileUrl:String, items:List<ItemFirebase>, menuSettings: MenuSettings): MenuFirebase {
-        val menu = MenuFirebase(fireBaseRef = menuTemp.fireBaseRef,menuId = menuTemp.menuId, menuType = menuTemp.menuType,name=fileName,fileUrl= fileUrl, items = items, menuSettings = menuSettings)
+        val menu = MenuFirebase(menuId = menuTemp.menuId, menuType = menuTemp.menuType,name=fileName,fileUrl= fileUrl, items = items, menuSettings = menuSettings)
         menuService.updateMenu(user, companyId = companyId,menu)
         return menu
     }
@@ -323,7 +318,7 @@ class MenuFilesViewModel(
         private val menuDS:Provider<MenuDS>,
         private val menuTempDS:Provider<MenuTempDS>,
 
-    ) :ViewModelProvider.Factory{
+        ) :ViewModelProvider.Factory{
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             return MenuFilesViewModel(
                 menuService = menuService.get(),

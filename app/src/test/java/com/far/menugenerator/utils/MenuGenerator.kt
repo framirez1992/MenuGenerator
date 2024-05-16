@@ -1,6 +1,6 @@
 package com.far.menugenerator.utils
 
-import com.far.menugenerator.model.database.model.MenuFirebase
+import com.far.menugenerator.model.firebase.firestore.model.MenuFirebase
 
 object MenuGenerator {
     fun generateMenus()= listOf<MenuFirebase?>(

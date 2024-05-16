@@ -9,12 +9,11 @@ import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
 import com.canhub.cropper.CropImage
 import com.far.menugenerator.R
-import com.far.menugenerator.databinding.DialogImageTitleDescriptionBinding
 import com.far.menugenerator.databinding.FragmentCompanyBinding
 import com.far.menugenerator.model.Company
-import com.far.menugenerator.model.ProcessState
-import com.far.menugenerator.model.State
-import com.far.menugenerator.model.database.model.CompanyFirebase
+import com.far.menugenerator.viewModel.model.ProcessState
+import com.far.menugenerator.viewModel.model.State
+import com.far.menugenerator.model.firebase.firestore.model.CompanyFirebase
 import com.far.menugenerator.view.adapters.ImageOption
 import com.far.menugenerator.view.common.BaseActivity
 import com.far.menugenerator.view.common.DialogManager
@@ -81,7 +80,7 @@ class CompanyActivity : BaseActivity() {
         }
         _binding.btnBack.setOnClickListener { _viewModel.previousScreen()}
         _binding.btnFinish.setOnClickListener {
-           _viewModel.saveChanges(user= LoginActivity.userFirebase?.internalId!!,
+           _viewModel.saveChanges(user= LoginActivity.userFirebase?.accountId!!,
                companyName = _binding.layoutCompanyName.etBusinessName.text.toString(),
                phone1 = "",
                phone2 = "",

@@ -10,8 +10,8 @@ import androidx.lifecycle.ViewModelProvider
 import com.far.menugenerator.R
 import com.far.menugenerator.common.helpers.ActivityHelper
 import com.far.menugenerator.databinding.FragmentQRPreviewBinding
-import com.far.menugenerator.model.ProcessState
-import com.far.menugenerator.model.State
+import com.far.menugenerator.viewModel.model.ProcessState
+import com.far.menugenerator.viewModel.model.State
 import com.far.menugenerator.view.adapters.ImageOption
 import com.far.menugenerator.view.common.BaseActivity
 import com.far.menugenerator.view.common.DialogManager
@@ -42,7 +42,7 @@ class QRPreview : BaseActivity() {
     companion object {
         const val ARG_USER_ID="userId"
         const val ARG_COMPANY_ID = "companyId"
-        const val ARG_MENU_FIREBASE_REF = "menuFirebaseRef"
+        const val ARG_MENU_ID = "menuId"
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,23 +54,23 @@ class QRPreview : BaseActivity() {
 
         val userId:String?
         val companyId:String?
-        val menuFireBaseRef:String?
+        val menuId:String?
         if(savedInstanceState == null){
             userId = intent.extras?.getString(ARG_USER_ID)
             companyId = intent.extras?.getString(ARG_COMPANY_ID)
-            menuFireBaseRef = intent.extras?.getString(ARG_MENU_FIREBASE_REF)
+            menuId = intent.extras?.getString(ARG_MENU_ID)
         }else{
             userId = savedInstanceState.getString(ARG_USER_ID)
             companyId = savedInstanceState.getString(ARG_COMPANY_ID)
-            menuFireBaseRef = savedInstanceState.getString(ARG_MENU_FIREBASE_REF)
+            menuId = savedInstanceState.getString(ARG_MENU_ID)
         }
 
-        if(LoginActivity.userFirebase == null  || userId.isNullOrEmpty() || companyId.isNullOrEmpty() || menuFireBaseRef.isNullOrEmpty()){
+        if(LoginActivity.userFirebase == null  || userId.isNullOrEmpty() || companyId.isNullOrEmpty() || menuId.isNullOrEmpty()){
             finish()
         }else {
 
-            if(viewModel.userId.isNullOrEmpty() || viewModel.companyId.isNullOrEmpty() || viewModel.menuFirebaseRef.isNullOrEmpty()){
-                viewModel.initialize(userId = userId,companyId = companyId, menuFireBaseRef = menuFireBaseRef)
+            if(viewModel.userId.isNullOrEmpty() || viewModel.companyId.isNullOrEmpty() || viewModel.menuId.isNullOrEmpty()){
+                viewModel.initialize(userId = userId,companyId = companyId, menuId = menuId)
             }
 
             initViews()
@@ -83,7 +83,7 @@ class QRPreview : BaseActivity() {
         super.onSaveInstanceState(outState)
         outState.putString(ARG_USER_ID, viewModel.userId)
         outState.putString(ARG_COMPANY_ID,viewModel.companyId)
-        outState.putString(ARG_MENU_FIREBASE_REF, viewModel.menuFirebaseRef)
+        outState.putString(ARG_MENU_ID, viewModel.menuId)
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {

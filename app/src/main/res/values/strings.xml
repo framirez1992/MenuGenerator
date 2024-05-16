@@ -1,5 +1,5 @@
 <resources>
-    <string name="menu_demo_id">ec6053bf-c3da-41d3-8474-baac5513874d</string>
+    <string name="menu_demo_id">17d47682-efeb-4315-9cbf-2d2be2c00a28</string>
 
     <string name="app_name" translatable="false">MenuGenerator</string>
     <string name="sign_in">Sign In</string>
@@ -108,4 +108,5 @@
     <string name="storage_permission_details">This app needs access to your storage to search your digital menu file. By allowing permission, you will enable this feature</string>
     <string name="allow">Allow</string>
     <string name="tap_to_select_file">(Tap to select file)</string>
+    <string name="finish_purchase">Finish Purchase</string>
 </resources>

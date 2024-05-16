@@ -4,6 +4,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.far.menugenerator.R
 import com.far.menugenerator.common.global.Constants
+import com.far.menugenerator.model.api.TinyUrlAPIInterface
 import com.far.menugenerator.model.database.room.RoomDB
 import com.far.menugenerator.view.MyApplication
 import com.google.firebase.Firebase
@@ -38,9 +39,9 @@ class ApplicationModule(private val application:MyApplication) {
 
     @Provides
     @AppScope
-    fun tinyUrlClient():Retrofit = Retrofit.Builder()
+    fun tinyUrlClient():TinyUrlAPIInterface = Retrofit.Builder()
         .baseUrl(Constants.TYNY_URL_ENDPOINT)
         .addConverterFactory(GsonConverterFactory.create())
         // Add interceptors if needed
-        .build()
+        .build().create(TinyUrlAPIInterface::class.java)
 }

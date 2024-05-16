@@ -1,7 +1,5 @@
 package com.far.menugenerator.view.common
 
-import android.app.AlertDialog
-import android.content.DialogInterface
 import android.view.View
 import androidx.annotation.StringRes
 
@@ -9,7 +7,7 @@ import androidx.fragment.app.DialogFragment
 import com.far.menugenerator.R
 import com.far.menugenerator.databinding.DialogImageTitleDescriptionBinding
 import com.far.menugenerator.databinding.DialogMenuTypeBinding
-import com.far.menugenerator.model.Enums
+import com.far.menugenerator.common.global.Enums
 import com.far.menugenerator.view.adapters.ImageOption
 import com.far.menugenerator.view.dialogs.DialogLoading
 import com.far.menugenerator.view.dialogs.DialogProductEdit

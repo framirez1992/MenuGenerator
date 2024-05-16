@@ -1,4 +1,4 @@
-package com.far.menugenerator.model.storage
+package com.far.menugenerator.model.firebase.storage
 
 import android.net.Uri
 

@@ -1,15 +1,14 @@
 package com.far.menugenerator.view.adapters
 
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.far.menugenerator.R
 import com.far.menugenerator.databinding.RowCompanyBinding
-import com.far.menugenerator.model.database.model.CompanyFirebase
+import com.far.menugenerator.model.firebase.firestore.model.CompanyFirebase
 
-class CompanyAdapter(private val companies:List<CompanyFirebase?>,val onclick: (CompanyFirebase)->Unit): RecyclerView.Adapter<CompanyAdapter.CompanyViewHolder>() {
+class CompanyAdapter(private val companies:List<CompanyFirebase?>, val onclick: (CompanyFirebase)->Unit): RecyclerView.Adapter<CompanyAdapter.CompanyViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CompanyViewHolder {
         val binding = RowCompanyBinding.inflate(LayoutInflater.from(parent.context),parent,false)
@@ -29,7 +28,7 @@ class CompanyAdapter(private val companies:List<CompanyFirebase?>,val onclick: (
 
     class CompanyViewHolder(private val binding:RowCompanyBinding):RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(company:CompanyFirebase){
+        fun bind(company: CompanyFirebase){
             binding.tvCompanyName.text = company.businessName
 
             if(company.logoUrl != null)

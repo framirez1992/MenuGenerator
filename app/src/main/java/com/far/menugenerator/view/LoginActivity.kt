@@ -3,7 +3,6 @@ package com.far.menugenerator.view
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.widget.Toast
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
@@ -14,9 +13,9 @@ import androidx.lifecycle.lifecycleScope
 import com.far.menugenerator.R
 import com.far.menugenerator.common.global.Constants
 import com.far.menugenerator.databinding.ActivityLoginBinding
-import com.far.menugenerator.model.ProcessState
-import com.far.menugenerator.model.State
-import com.far.menugenerator.model.database.model.UserFirebase
+import com.far.menugenerator.viewModel.model.ProcessState
+import com.far.menugenerator.viewModel.model.State
+import com.far.menugenerator.model.firebase.firestore.model.UserFirebase
 import com.far.menugenerator.view.common.BaseActivity
 import com.far.menugenerator.view.common.ScreenNavigation
 import com.far.menugenerator.viewModel.LoginViewModel
@@ -24,7 +23,14 @@ import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.google.android.material.snackbar.Snackbar
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthException
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 
@@ -36,15 +42,17 @@ class LoginActivity : BaseActivity() {
     @Inject lateinit var factory:LoginViewModel.LoginViewModelFactory
     @Inject lateinit var screenNavigation:ScreenNavigation
     @Inject lateinit var credentialManager: CredentialManager
-    //@Inject lateinit var mGoogleSignInClient:GoogleSignInClient
+    private lateinit var auth: FirebaseAuth
 
     companion object{
-        var userFirebase:UserFirebase? =null
+        var userFirebase: UserFirebase? =null
         private const val RC_SIGN_IN = 100
     }
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        auth = Firebase.auth
+
         _binding = ActivityLoginBinding.inflate(layoutInflater)
         presentationComponent.inject(this)
         viewModel = ViewModelProvider(this,factory)[LoginViewModel::class.java]
@@ -54,8 +62,8 @@ class LoginActivity : BaseActivity() {
         initObservers()
     }
 
-    private fun updateUI(googleIdTokenCredential: GoogleIdTokenCredential){
-        viewModel.loadUser(googleIdTokenCredential)
+    private fun updateUI(firebaseUser: FirebaseUser){
+        viewModel.loadUser(firebaseUser)
     }
     /*
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -94,7 +102,7 @@ class LoginActivity : BaseActivity() {
         }
     }
 
-    private fun loadUserState(processState:ProcessState){
+    private fun loadUserState(processState: ProcessState){
         if(processState.state == State.LOADING){
             isLoading(true)
         }else if(processState.state == State.GENERAL_ERROR){
@@ -111,19 +119,6 @@ class LoginActivity : BaseActivity() {
         _binding.pb.visibility = if(loading) View.VISIBLE else View.GONE
         //_binding.signInButton.visibility = if(loading) View.GONE else View.VISIBLE
         _binding.btnLogin.visibility = if(loading) View.GONE else View.VISIBLE
-    }
-
-
-    private fun getAccountInfo(){
-        //if (LoginActivity.userFirebase != null) {
-        //    val acct = LoginActivity.userFirebase
-        //    val personName = acct!!.displayName
-        //    val personGivenName = acct.givenName
-        //    val personFamilyName = acct.familyName
-        //    val personEmail= acct.email
-        //    val personId = acct.id
-        //    val personPhoto = acct.photoUrl
-        //}
     }
 
     private fun login(){
@@ -152,7 +147,7 @@ class LoginActivity : BaseActivity() {
         }
     }
 
-    private fun handleSignIn(result: GetCredentialResponse) {
+    private suspend fun handleSignIn(result: GetCredentialResponse) {
         // Handle the successfully returned credential.
 
         when (val credential = result.credential) {
@@ -179,13 +174,25 @@ class LoginActivity : BaseActivity() {
                         val googleIdTokenCredential = GoogleIdTokenCredential
                             .createFrom(credential.data)
 
-                        updateUI(googleIdTokenCredential)
+
+                        val firebaseCredential = GoogleAuthProvider.getCredential(googleIdTokenCredential.idToken, null)
+                        val authResult = auth.signInWithCredential(firebaseCredential).await()
+                            if(authResult.user != null){
+                                updateUI(authResult.user!!)
+                            }
                     } catch (e: GoogleIdTokenParsingException) {
                         Log.e(TAG, "Received an invalid google id token response", e)
                         val message = "${getString(R.string.operation_failed_please_retry)}. ${e.message.toString()}"
                         Snackbar.make(_binding.root,
                             message,
                             Snackbar.LENGTH_LONG).show()
+                    }catch (e:FirebaseAuthException){
+                        Log.e(TAG, "Received FirebaseAuthException", e)
+                        val message = "${e.message.toString()}"
+                        Snackbar.make(_binding.root,
+                            message,
+                            Snackbar.LENGTH_LONG).show()
+                        isLoading(false)
                     }
                 } else {
                     // Catch any unrecognized custom credential type here.
@@ -194,6 +201,7 @@ class LoginActivity : BaseActivity() {
                     Snackbar.make(_binding.root,
                         message,
                         Snackbar.LENGTH_LONG).show()
+                    isLoading(false)
                 }
             }
 
@@ -204,10 +212,9 @@ class LoginActivity : BaseActivity() {
                 Snackbar.make(_binding.root,
                     message,
                     Snackbar.LENGTH_LONG).show()
+                isLoading(false)
             }
         }
-
-        isLoading(false)
     }
 
 

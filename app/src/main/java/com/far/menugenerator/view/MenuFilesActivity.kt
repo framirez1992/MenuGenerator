@@ -20,7 +20,7 @@ import com.far.menugenerator.common.utils.FileUtils
 import com.far.menugenerator.databinding.ActivityMenuFilesBinding
 import com.far.menugenerator.databinding.DialogSeachFilePermissionBinding
 import com.far.menugenerator.databinding.MenuNameDialogBinding
-import com.far.menugenerator.model.State
+import com.far.menugenerator.viewModel.model.State
 import com.far.menugenerator.view.common.BaseActivity
 import com.far.menugenerator.view.common.DialogManager
 import com.far.menugenerator.viewModel.MenuFilesViewModel
@@ -60,7 +60,6 @@ class MenuFilesActivity : BaseActivity() {
         const val ARG_MENU_TYPE = "menuType";
         const val ARG_MENU_ID="menuId"
         const val ARG_MENU_ONLINE="menuOnline"
-        const val ARG_MENU_FIREBASE_REF="menuFirebaseRef"
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -80,26 +79,23 @@ class MenuFilesActivity : BaseActivity() {
             companyRef = intent.getStringExtra(ARG_COMPANY_REF)
             menuId = intent.getStringExtra(ARG_MENU_ID)
             isOnline = intent.getBooleanExtra(ARG_MENU_ONLINE,false)
-            menuFirebaseRef = intent.getStringExtra(ARG_MENU_FIREBASE_REF)
         }else{
             menuType = savedInstanceState.getString(ARG_MENU_TYPE)
             companyRef = savedInstanceState.getString(ARG_COMPANY_REF)
             menuId = savedInstanceState.getString(ARG_MENU_ID)
             isOnline = savedInstanceState.getBoolean(ARG_MENU_ONLINE,false)
-            menuFirebaseRef = savedInstanceState.getString(ARG_MENU_FIREBASE_REF)
         }
 
         if(LoginActivity.userFirebase == null || companyRef.isNullOrEmpty() || menuType.isNullOrEmpty()){
             finish()
         }else {
-            if (viewModel.companyReference.isNullOrEmpty() || viewModel.menuId.isNullOrEmpty()) {
+            if (viewModel.companyId.isNullOrEmpty() || viewModel.menuId.isNullOrEmpty()) {
                 viewModel.initialize(
-                    userId = LoginActivity.userFirebase?.internalId!!,
-                    companyRef = companyRef,
+                    userId = LoginActivity.userFirebase?.accountId!!,
+                    companyId = companyRef,
                     menuReferenceId = menuId,
                     menuType = menuType,
-                    isOnlineMenu = isOnline,
-                    menuReferenceFirebaseRef = menuFirebaseRef
+                    isOnlineMenu = isOnline
                 )
             }
         } 
@@ -135,10 +131,9 @@ class MenuFilesActivity : BaseActivity() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putString(MenuActivity.ARG_COMPANY_REF,viewModel.companyReference)
+        outState.putString(MenuActivity.ARG_COMPANY_ID,viewModel.companyId)
         outState.putString(MenuActivity.ARG_MENU_ID,viewModel.menuReferenceId)
         outState.putBoolean(MenuActivity.ARG_MENU_ONLINE, viewModel.isMenuOnline?:false)
-        outState.putString(MenuActivity.ARG_MENU_FIREBASE_REF, viewModel.menuReferenceFirebaseRef)
         outState.putString(MenuActivity.ARG_MENU_TYPE, viewModel.menuType?.name)
     }
 

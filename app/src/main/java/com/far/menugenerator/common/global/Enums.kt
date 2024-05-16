@@ -1,4 +1,4 @@
-package com.far.menugenerator.model
+package com.far.menugenerator.common.global
 
 class Enums {
     enum class MenuType{

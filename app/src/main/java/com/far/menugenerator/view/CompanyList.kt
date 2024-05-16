@@ -15,9 +15,9 @@ import com.far.menugenerator.R
 import com.far.menugenerator.common.utils.PreferenceUtils
 import com.far.menugenerator.databinding.DialogImageTitleDescriptionBinding
 import com.far.menugenerator.databinding.FragmentCompanyListBinding
-import com.far.menugenerator.model.ProcessState
-import com.far.menugenerator.model.State
-import com.far.menugenerator.model.database.model.CompanyFirebase
+import com.far.menugenerator.viewModel.model.ProcessState
+import com.far.menugenerator.viewModel.model.State
+import com.far.menugenerator.model.firebase.firestore.model.CompanyFirebase
 import com.far.menugenerator.view.adapters.CompanyAdapter
 import com.far.menugenerator.view.adapters.ImageOption
 import com.far.menugenerator.view.common.BaseActivity
@@ -73,7 +73,7 @@ class CompanyList : BaseActivity() {
 
     override fun onResume() {
         super.onResume()
-        _viewModel.onResume(LoginActivity.userFirebase?.internalId!!)
+        _viewModel.onResume(LoginActivity.userFirebase?.accountId!!)
     }
     override fun onBackPressed() {
         showSignOutDialog()
@@ -109,7 +109,7 @@ class CompanyList : BaseActivity() {
                 dialogManager.showImageBottomSheet(options){option->
 
                     when(option.string){
-                        R.string.show_menus -> navigation.menuListActivity(companyId = comp.companyId, companyRef = comp.fireBaseRef!!)
+                        R.string.show_menus -> navigation.menuListActivity(companyId = comp.companyId)
                         R.string.edit-> navigation.companyActivity(company = comp)
                         R.string.delete-> showDeleteCompanyConfirmationDialog(company = comp)
                     }
@@ -122,7 +122,7 @@ class CompanyList : BaseActivity() {
 
 
     private fun getCompanies(){
-        _viewModel.getCompanies(LoginActivity.userFirebase?.internalId!!)
+        _viewModel.getCompanies(LoginActivity.userFirebase?.accountId!!)
     }
     private fun processCompanySearchState(processState: ProcessState?){
         if(processState == null)
@@ -180,7 +180,7 @@ class CompanyList : BaseActivity() {
         }
     }
 
-    private fun showDeleteCompanyConfirmationDialog(company:CompanyFirebase){
+    private fun showDeleteCompanyConfirmationDialog(company: CompanyFirebase){
 
         val dialogBinding = DialogImageTitleDescriptionBinding.inflate(layoutInflater)
         dialogBinding.title.setText(R.string.delete_company)
@@ -189,7 +189,7 @@ class CompanyList : BaseActivity() {
         dialogManager.showTwoButtonsDialog( view = dialogBinding.root,
             button1Label = R.string.delete,
             onButton1Click = {
-                _viewModel.deleteCompany(user = LoginActivity.userFirebase?.internalId!!, company = company)
+                _viewModel.deleteCompany(uid = LoginActivity.userFirebase?.accountId!!, company = company)
             },
             button2Label = R.string.cancel,
             onButton2Click = {

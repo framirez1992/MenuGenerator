@@ -1,7 +1,6 @@
 package com.far.menugenerator.viewModel
 
 import android.graphics.Bitmap
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -9,23 +8,21 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.far.menugenerator.common.helpers.NetworkUtils
 import com.far.menugenerator.common.utils.FileUtils
-import com.far.menugenerator.model.ProcessState
-import com.far.menugenerator.model.State
-import com.far.menugenerator.model.database.MenuService
-import com.far.menugenerator.model.database.model.MenuFirebase
-import com.far.menugenerator.model.storage.MenuStorage
-import kotlinx.coroutines.Dispatchers
+import com.far.menugenerator.viewModel.model.ProcessState
+import com.far.menugenerator.viewModel.model.State
+import com.far.menugenerator.model.firebase.firestore.MenuService
+import com.far.menugenerator.model.firebase.firestore.model.MenuFirebase
+import com.far.menugenerator.model.firebase.storage.MenuStorage
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeout
 import java.io.File
-import java.net.URL
 import java.util.concurrent.TimeoutException
 import javax.inject.Inject
 import javax.inject.Provider
 
 class QRPreviewViewModel(
-    private val menuService:MenuService,
-    private val menuStorage:MenuStorage): ViewModel() {
+    private val menuService: MenuService,
+    private val menuStorage: MenuStorage
+): ViewModel() {
 
     private val state = MutableLiveData<ProcessState>()
     private val menuFirebase = MutableLiveData<MenuFirebase?>()
@@ -35,11 +32,11 @@ class QRPreviewViewModel(
     //private lateinit var menuRef:MenuReference
     private var _userId:String?=null
     private var _companyId:String?=null
-    private var _menuFireBaseRef:String?=null
+    private var _menuId:String?=null
 
     val userId get() = _userId
     val companyId get() = _companyId
-    val menuFirebaseRef get() = _menuFireBaseRef
+    val menuId get() = _menuId
 
     fun getState():LiveData<ProcessState> = state
     fun getQrBitmap():LiveData<Bitmap> = qrBitmap
@@ -71,7 +68,7 @@ class QRPreviewViewModel(
 
         viewModelScope.launch {
             try{
-                val menu = menuService.getMenu(user = _userId!!, companyId = _companyId!!, firebaseRef = _menuFireBaseRef!!)
+                val menu = menuService.getMenu(user = _userId!!, companyId = _companyId!!, menuId = _menuId!!)
                 menuFirebase.postValue(menu)
                 val url = menu?.fileUrl!!.split("&token")[0]//SIN TOKEN
                 val bm = FileUtils.generateQRCode(url)
@@ -84,10 +81,10 @@ class QRPreviewViewModel(
         }
     }
 
-    fun initialize(userId:String,companyId: String, menuFireBaseRef:String) {
+    fun initialize(userId:String, companyId: String, menuId:String) {
         _userId = userId
         _companyId = companyId
-        _menuFireBaseRef = menuFireBaseRef
+        _menuId = menuId
     }
 
 

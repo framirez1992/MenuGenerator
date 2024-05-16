@@ -17,12 +17,11 @@ import com.android.billingclient.api.PurchasesUpdatedListener
 import com.far.menugenerator.R
 import com.far.menugenerator.databinding.ActivityPremiumBinding
 import com.far.menugenerator.databinding.DialogImageTitleDescriptionBinding
-import com.far.menugenerator.model.ProcessState
-import com.far.menugenerator.model.State
+import com.far.menugenerator.viewModel.model.ProcessState
+import com.far.menugenerator.viewModel.model.State
 import com.far.menugenerator.view.common.BaseActivity
 import com.far.menugenerator.view.common.DialogManager
 import com.far.menugenerator.viewModel.PremiumViewModel
-import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject

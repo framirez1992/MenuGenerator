@@ -1,8 +1,8 @@
 package com.far.menugenerator.common.global
 
 object Constants {
-    const val USERID_DEMO="demo"
-    const val COMPANYID_DEMO="331cb29d-b935-4070-ac23-91b954d6062d"
+    const val USERID_DEMO="oFMa0FGAHMhfoPfFBuP0r5C1Ght2"
+    const val COMPANYID_DEMO="ed015393-4a17-4b1d-8f50-95b121bb6d7a"
 
     const val PDF_FILE_NAME="document.pdf"
     //OJO USAR SIEMPRE LA WEB (FUNCIONA PARA DEBUG Y PARA RELEASE)

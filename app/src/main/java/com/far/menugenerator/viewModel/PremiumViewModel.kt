@@ -23,21 +23,20 @@ import com.android.billingclient.api.queryPurchasesAsync
 import com.far.menugenerator.common.global.Constants
 import com.far.menugenerator.common.helpers.NetworkUtils
 import com.far.menugenerator.common.utils.FileUtils
-import com.far.menugenerator.model.Enums
+import com.far.menugenerator.common.global.Enums
 import com.far.menugenerator.model.ItemStyle
 import com.far.menugenerator.model.MenuSettings
-import com.far.menugenerator.model.ProcessState
-import com.far.menugenerator.model.State
-import com.far.menugenerator.model.database.MenuService
-import com.far.menugenerator.model.database.PurchaseService
-import com.far.menugenerator.model.database.model.ItemFirebase
-import com.far.menugenerator.model.database.model.MenuFirebase
-import com.far.menugenerator.model.database.model.PurchaseFirebase
-import com.far.menugenerator.model.database.model.PurchaseStatus
+import com.far.menugenerator.viewModel.model.ProcessState
+import com.far.menugenerator.viewModel.model.State
+import com.far.menugenerator.model.firebase.firestore.MenuService
+import com.far.menugenerator.model.firebase.firestore.PurchaseService
+import com.far.menugenerator.model.firebase.firestore.model.ItemFirebase
+import com.far.menugenerator.model.firebase.firestore.model.MenuFirebase
+import com.far.menugenerator.model.firebase.firestore.model.PurchaseFirebase
+import com.far.menugenerator.model.firebase.firestore.model.PurchaseStatus
 import com.far.menugenerator.model.database.room.model.MenuItems
 import com.far.menugenerator.model.database.room.services.MenuDS
-import com.far.menugenerator.model.storage.MenuStorage
-import com.google.common.collect.ImmutableList
+import com.far.menugenerator.model.firebase.storage.MenuStorage
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -48,9 +47,9 @@ import javax.inject.Inject
 import javax.inject.Provider
 
 class PremiumViewModel(
-    private val purchaseService:PurchaseService,
-    private val menuService:MenuService,
-    private val menuStorage:MenuStorage,
+    private val purchaseService: PurchaseService,
+    private val menuService: MenuService,
+    private val menuStorage: MenuStorage,
     private val menuDS: MenuDS
 ):ViewModel() {
 
@@ -59,7 +58,7 @@ class PremiumViewModel(
     private var _userId: String?=null
     private var _companyId:String?=null
     private var _menuId:String?=null
-    private var _menuType:Enums.MenuType?=null
+    private var _menuType: Enums.MenuType?=null
 
     val userId get() = _userId
     val companyId get() = _companyId
@@ -184,7 +183,7 @@ class PremiumViewModel(
         val queryProductDetailsParams =
             QueryProductDetailsParams.newBuilder()
                 .setProductList(
-                    ImmutableList.of(
+                    listOf(
                         QueryProductDetailsParams.Product.newBuilder()
                             .setProductId(Constants.IN_APP_PRODUCT_MENU_ID
                                 //"base_subscription"
@@ -226,9 +225,9 @@ class PremiumViewModel(
                 val localMenuSettings = Gson().fromJson(localMenu.menuSettings!!,MenuSettings::class.java)
 
                 //Upload PDF file
-                val menuStorageUrl = uploadMenuFile(user = _userId!!, menuId = localMenu.menuId, pdfPath = Uri.parse(localMenu.fileUri).path!!).toString()
+                val menuStorageUrl = uploadMenuFile(uid = _userId!!, companyId = localMenu.companyId, menuId = localMenu.menuId, pdfPath = Uri.parse(localMenu.fileUri).path!!).toString()
                 //Upload Images
-                val items = prepareItemsFirebase(user = _userId!!, menuId = localMenu.menuId, items = localMenuItems)
+                val items = prepareItemsFirebase(user = _userId!!, companyId = localMenu.companyId, menuId = localMenu.menuId, items = localMenuItems)
                 //Save Menu in FireBase
                 val savedMenu = saveMenuFireBase(user =  _userId!!, companyId = localMenu.companyId, menuId = localMenu.menuId, menuType = _menuType!!.name,fileName = localMenu.name, fileUrl =  menuStorageUrl, items =  items, menuSettings = localMenuSettings)
 
@@ -257,7 +256,7 @@ class PremiumViewModel(
 
 
 
-    private suspend fun prepareItemsFirebase(user:String,menuId: String, items:List<MenuItems>):List<ItemFirebase>{
+    private suspend fun prepareItemsFirebase(user:String,companyId: String,menuId: String, items:List<MenuItems>):List<ItemFirebase>{
 
         //UPLOAD LOCAL IMAGES ONLY
         val firebaseItems = items.mapIndexed { _,menuItem->
@@ -277,15 +276,15 @@ class PremiumViewModel(
         firebaseItems.filter { it.type != ItemStyle.MENU_CATEGORY_HEADER.name && !it.imageUrl.isNullOrEmpty() }
             .forEach{
                 val menuItem = items.first{ i-> i.id == it.id}
-                val url = menuStorage.uploadMenuItemsImages(user,menuId,Uri.parse(menuItem.imageUri))
+                val url = menuStorage.uploadMenuItemsImages(uid= user,companyId = companyId,menuId = menuId,file= Uri.parse(menuItem.imageUri))
                 it.imageUrl = url.toString()
             }
         return firebaseItems
     }
-    private suspend fun uploadMenuFile(user:String,menuId:String, pdfPath:String): Uri {
-        return menuStorage.uploadFile(user,menuId,pdfPath)
+    private suspend fun uploadMenuFile(uid:String, companyId: String, menuId:String, pdfPath:String): Uri {
+        return menuStorage.uploadFile(uid = uid,companyId = companyId,menuId = menuId,pdfPath = pdfPath)
     }
-    private fun saveMenuFireBase(user:String,companyId:String,menuId:String,menuType: String, fileName:String, fileUrl:String, items:List<ItemFirebase>,menuSettings: MenuSettings): MenuFirebase {
+    private fun saveMenuFireBase(user:String, companyId:String, menuId:String, menuType: String, fileName:String, fileUrl:String, items:List<ItemFirebase>, menuSettings: MenuSettings): MenuFirebase {
         val menu = MenuFirebase(menuId = menuId, menuType = menuType,name=fileName,fileUrl= fileUrl, items = items, menuSettings = menuSettings)
         menuService.saveMenu(user, companyId = companyId,menu)
         return menu

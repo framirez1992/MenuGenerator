@@ -10,12 +10,12 @@ import androidx.lifecycle.viewModelScope
 import com.far.menugenerator.R
 import com.far.menugenerator.common.helpers.NetworkUtils
 import com.far.menugenerator.model.Company
-import com.far.menugenerator.model.ProcessState
-import com.far.menugenerator.model.State
-import com.far.menugenerator.model.database.CompanyService
-import com.far.menugenerator.model.database.model.CompanyFirebase
-import com.far.menugenerator.model.storage.CompanyStorage
-import com.far.menugenerator.model.storage.UploadResult
+import com.far.menugenerator.viewModel.model.ProcessState
+import com.far.menugenerator.viewModel.model.State
+import com.far.menugenerator.model.firebase.firestore.CompanyService
+import com.far.menugenerator.model.firebase.firestore.model.CompanyFirebase
+import com.far.menugenerator.model.firebase.storage.CompanyStorage
+import com.far.menugenerator.model.firebase.storage.UploadResult
 import kotlinx.coroutines.launch
 import java.util.UUID
 import java.util.concurrent.TimeoutException
@@ -23,8 +23,8 @@ import javax.inject.Inject
 import javax.inject.Provider
 
 class CompanyViewModel @Inject constructor(
-    private val companyService:CompanyService,
-    private val companyStorage:CompanyStorage
+    private val companyService: CompanyService,
+    private val companyStorage: CompanyStorage
 ): ViewModel() {
 
     @IntegerRes private val _currentScreen = MutableLiveData<Int>()
@@ -34,7 +34,7 @@ class CompanyViewModel @Inject constructor(
 
     val currentImage = MutableLiveData<Uri?>()
     val company = MutableLiveData<Company>()
-    private var editCompany:CompanyFirebase?=null
+    private var editCompany: CompanyFirebase?=null
 
 
 
@@ -45,7 +45,7 @@ class CompanyViewModel @Inject constructor(
         currentImage.value = null
     }
 
-    fun prepareCompanyEdit(comp:CompanyFirebase?){
+    fun prepareCompanyEdit(comp: CompanyFirebase?){
         if(editCompany != null || comp == null) return
 
         editCompany = comp
@@ -119,10 +119,10 @@ class CompanyViewModel @Inject constructor(
                     throw TimeoutException()
                 }
 
-                var uploadedFile:UploadResult? = null
+                var uploadedFile: UploadResult? = null
                 if(currentImage.value != null) {
                     uploadedFile = companyStorage.uploadCompanyLogo(
-                        user = user,
+                        uid = user,
                         companyId = company.companyId,
                         file = currentImage.value!!
                     )
@@ -156,12 +156,12 @@ class CompanyViewModel @Inject constructor(
                     throw TimeoutException()
                 }
                 deleteUnusedImagesFromFireStore(user=user, companyId = company.companyId)
-                val uploadResult:UploadResult? = if(currentImage.value != null && editCompany?.logoUrl!=null &&  currentImage.value == Uri.parse(editCompany?.logoUrl )){//no se modifico la imagen que tenia (Dejar igual)
+                val uploadResult: UploadResult? = if(currentImage.value != null && editCompany?.logoUrl!=null &&  currentImage.value == Uri.parse(editCompany?.logoUrl )){//no se modifico la imagen que tenia (Dejar igual)
                     UploadResult(fileUri = Uri.parse(editCompany!!.logoUrl), name = editCompany?.logoFileName)
                 }else if(currentImage.value != null && editCompany?.logoUrl==null){//No tenia imagen y se le esta agregando una ahora
-                    companyStorage.uploadCompanyLogo(user = user, companyId = company.companyId, file = currentImage.value!!)
+                    companyStorage.uploadCompanyLogo(uid = user, companyId = company.companyId, file = currentImage.value!!)
                 }else if(currentImage.value != null && currentImage.value != Uri.parse(editCompany?.logoUrl )){//la imagen original cambio porque no es la misma que se cargo en currentImage.value
-                    companyStorage.uploadCompanyLogo(user = user, companyId = company.companyId, file = currentImage.value!!)
+                    companyStorage.uploadCompanyLogo(uid = user, companyId = company.companyId, file = currentImage.value!!)
                 }else{//no imagen
                     null
                 }
@@ -170,7 +170,7 @@ class CompanyViewModel @Inject constructor(
                     phone1 = company.phone1, phone2 = company.phone2, phone3 = company.phone3,
                     address1 = company.address1, address2 = company.address2, address3 = company.address3,
                     facebook = company.facebook, instagram = company.instagram, whatsapp = company.whatsapp,
-                    logoUrl = uploadResult?.fileUri?.toString(), logoFileName = uploadResult?.name, fireBaseRef = editCompany!!.fireBaseRef)
+                    logoUrl = uploadResult?.fileUri?.toString(), logoFileName = uploadResult?.name)
                 companyService.updateCompany(user = user, company =  firebaseCompany)
                 _state.postValue(ProcessState(State.SUCCESS))
             }
@@ -190,7 +190,7 @@ class CompanyViewModel @Inject constructor(
 
     private suspend fun deleteUnusedImagesFromFireStore(user:String,companyId:String){
         if(editCompany?.logoUrl != null && (currentImage.value ==null || currentImage.value != Uri.parse(editCompany?.logoUrl))){
-            companyStorage.removeCompanyLogo(user =  user,companyId= companyId, remoteFileName = editCompany?.logoFileName!!)
+            companyStorage.removeCompanyLogo(uid =  user,companyId= companyId, remoteFileName = editCompany?.logoFileName!!)
         }
     }
 
