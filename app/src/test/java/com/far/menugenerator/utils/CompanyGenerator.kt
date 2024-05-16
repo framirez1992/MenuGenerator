@@ -6,7 +6,6 @@ object CompanyGenerator {
     fun getCompanies():List<CompanyFirebase?>{
         return listOf(
             CompanyFirebase(
-                fireBaseRef = "1",
                 companyId = "1",
                 businessName = "Company 1",
                 phone1 = "1",
@@ -22,7 +21,6 @@ object CompanyGenerator {
                 logoFileName = "name"
             ),
             CompanyFirebase(
-                fireBaseRef = "2",
                 companyId = "2",
                 businessName = "Company 2",
                 phone1 = "1",

@@ -160,7 +160,7 @@ class CompanyListViewModelTest {
         }
         MenuGenerator.generateMenus().forEach{
             coVerify {
-                menuStorage.removeAllMenuFiles(user = USER, menuId = it?.menuId!!)
+                menuStorage.removeAllMenuFiles(uid = USER, companyId = companyToDelete.companyId, menuId = it?.menuId!!)
                 menuService.deleteMenu(USER,companyToDelete.companyId,it)
             }
 
@@ -202,7 +202,7 @@ class CompanyListViewModelTest {
         dispatcher.scheduler.advanceUntilIdle()
 
         coVerify { companyStorage.removeCompanyLogo(uid = USER, companyId = company.companyId,company.logoFileName!!) }
-        coVerify { menuStorage.removeAllMenuFiles(user = USER, menuId = any()) }
+        coVerify { menuStorage.removeAllMenuFiles(uid = USER, companyId = company.companyId ,menuId = any()) }
         coVerify { menuService.deleteMenu(user = USER, companyId = company.companyId,any()) }
         coVerify { companyService.deleteCompany(user = USER, company = company) }
 
@@ -228,7 +228,7 @@ class CompanyListViewModelTest {
         val fbEx = FirebaseFirestoreException(FAILURE_MESSAGE,FirebaseFirestoreException.Code.NOT_FOUND)
 
         coEvery { companyStorage.removeCompanyLogo(any(),any(),any()) } throws ex!!
-        coEvery { menuStorage.removeAllMenuFiles(any(),any()) } throws ex
+        coEvery { menuStorage.removeAllMenuFiles(any(),any(),any()) } throws ex
         coEvery { menuService.deleteMenu(any(),any(),any()) } throws fbEx
         coEvery { companyService.deleteCompany(any(),any()) } throws fbEx
 
