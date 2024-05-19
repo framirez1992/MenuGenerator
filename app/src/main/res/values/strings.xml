@@ -109,4 +109,6 @@
     <string name="allow">Allow</string>
     <string name="tap_to_select_file">(Tap to select file)</string>
     <string name="finish_purchase">Finish Purchase</string>
+    <string name="url">URL</string>
+    <string name="login">Login</string>
 </resources>

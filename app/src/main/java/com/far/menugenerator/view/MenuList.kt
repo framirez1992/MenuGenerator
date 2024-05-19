@@ -282,8 +282,7 @@ class MenuList : BaseActivity() {
                 dialogManager.dismissLoadingDialog()
 
             if(it.state == State.SUCCESS) {
-                ActivityHelper.copyTextToClipboard(this, label = "URL", it.message!!)
-                Toast.makeText(this,getString(R.string.text_copied_to_clipboard),Toast.LENGTH_SHORT).show()
+                showCopyUrlDialog(it.message!!)
             }else if(it.state == State.GENERAL_ERROR)
                 Snackbar.make(binding.root,getString(R.string.operation_failed_please_retry),Snackbar.LENGTH_LONG).show()
             else if(it.state == State.NETWORK_ERROR)
@@ -312,6 +311,22 @@ class MenuList : BaseActivity() {
             button2Label = R.string.cancel,
             onButton2Click = {
             })
+    }
+
+    private fun showCopyUrlDialog(url:String){
+
+        val dialogBinding = DialogImageTitleDescriptionBinding.inflate(layoutInflater)
+        dialogBinding.title.setText(R.string.url)
+        dialogBinding.body.text = url
+        dialogBinding.img.setImageResource(R.drawable.url)
+        dialogManager.showTwoButtonsDialog( view = dialogBinding.root,
+            button1Label = R.string.copy_link,
+            onButton1Click = {
+                ActivityHelper.copyTextToClipboard(this, label = "URL", url)
+                Toast.makeText(this,getString(R.string.text_copied_to_clipboard),Toast.LENGTH_SHORT).show()
+            },
+            button2Label = R.string.close,
+            onButton2Click = { })
     }
 
 }

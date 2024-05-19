@@ -22,7 +22,7 @@ android {
         applicationId "com.far.menugenerator"
         minSdk 23
         targetSdk 34
-        versionCode 14
+        versionCode 16
         versionName "1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

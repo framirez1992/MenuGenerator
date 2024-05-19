@@ -79,8 +79,8 @@
                                             <option name="values">
                                               <map>
                                                 <entry key="color" value="000000" />
-                                                <entry key="imagePath" value="C:\Users\framirez\Downloads\Presentación_sin_título-removebg-preview.png" />
-                                                <entry key="scalingPercent" value="70" />
+                                                <entry key="imagePath" value="C:\Users\framirez\Downloads\MenuGenerator\menugeneratorsimbol_logo.svg" />
+                                                <entry key="scalingPercent" value="73" />
                                               </map>
                                             </option>
                                           </PersistentState>
@@ -318,9 +318,10 @@
                         </option>
                         <option name="values">
                           <map>
+                            <entry key="assetSourceType" value="FILE" />
                             <entry key="opacityPercent" value="75" />
-                            <entry key="outputName" value="rounded_upgrade_24" />
-                            <entry key="sourceFile" value="C:\Users\framirez\AndroidStudioProjects\MenuGenerator" />
+                            <entry key="outputName" value="menugeneratorsimbol_logo" />
+                            <entry key="sourceFile" value="C:\Users\framirez\Downloads\MenuGenerator\menugeneratorsimbol_logo.svg" />
                           </map>
                         </option>
                       </PersistentState>

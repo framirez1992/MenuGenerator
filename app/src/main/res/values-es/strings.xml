@@ -2,8 +2,6 @@
 
   <string name="menu_demo_id">a1af91d0-538c-40c6-b565-b34fa66c3d3a</string>
 
-  <string name="app_name">MenuGenerator</string>
-
   <string name="sign_in">Iniciar sesión</string>
       
   <string name="my_business">Mi negocio</string>
@@ -210,5 +208,7 @@
       
   <string name="tap_to_select_file">(Toque para seleccionar el archivo)</string>
     <string name="finish_purchase">Finalizar Compra</string>
+    <string name="url">URL</string>
+  <string name="login">Login</string>
 
 </resources>

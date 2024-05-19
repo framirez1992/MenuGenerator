@@ -65,32 +65,6 @@ class LoginActivity : BaseActivity() {
     private fun updateUI(firebaseUser: FirebaseUser){
         viewModel.loadUser(firebaseUser)
     }
-    /*
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == RC_SIGN_IN) {
-            val task: Task<GoogleSignInAccount> = GoogleSignIn.getSignedInAccountFromIntent(data)
-            handleSignInResult(task)
-        }
-    }*/
-
-    /*
-    private fun handleSignInResult(completedTask: Task<GoogleSignInAccount>) {
-        try {
-            val account = completedTask.getResult(ApiException::class.java)
-            updateUI(account)
-        } catch (e: ApiException) {
-            // The ApiException status code indicates the detailed failure reason.
-            // Please refer to the GoogleSignInStatusCodes class reference for more information.
-            val TAG = "LoginActivity"
-            Log.w(TAG, "signInResult:failed code=" + e.getStatusCode())
-            updateUI(null)
-            val message = "${getString(R.string.operation_failed_please_retry)}. ${e.message.toString()}"
-            Snackbar.make(_binding.root,
-                message,
-                Snackbar.LENGTH_LONG).show()
-        }
-    }*/
     private fun initViews(){
         _binding.btnLogin.setOnClickListener(){
             login()
@@ -177,9 +151,8 @@ class LoginActivity : BaseActivity() {
 
                         val firebaseCredential = GoogleAuthProvider.getCredential(googleIdTokenCredential.idToken, null)
                         val authResult = auth.signInWithCredential(firebaseCredential).await()
-                            if(authResult.user != null){
-                                updateUI(authResult.user!!)
-                            }
+
+                        if(authResult.user != null){ updateUI(authResult.user!!) }
                     } catch (e: GoogleIdTokenParsingException) {
                         Log.e(TAG, "Received an invalid google id token response", e)
                         val message = "${getString(R.string.operation_failed_please_retry)}. ${e.message.toString()}"
