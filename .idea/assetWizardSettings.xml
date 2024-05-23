@@ -308,7 +308,7 @@
                                 <PersistentState>
                                   <option name="values">
                                     <map>
-                                      <entry key="url" value="file:/$USER_HOME$/AppData/Local/Android/Sdk/icons/material/materialsymbolsrounded/upgrade/rounded_upgrade_24.xml" />
+                                      <entry key="url" value="file:/$USER_HOME$/AppData/Local/Android/Sdk/icons/material/materialiconsround/email/round_email_24.xml" />
                                     </map>
                                   </option>
                                 </PersistentState>
@@ -318,9 +318,8 @@
                         </option>
                         <option name="values">
                           <map>
-                            <entry key="assetSourceType" value="FILE" />
                             <entry key="opacityPercent" value="75" />
-                            <entry key="outputName" value="menugeneratorsimbol_logo" />
+                            <entry key="outputName" value="round_email_24" />
                             <entry key="sourceFile" value="C:\Users\framirez\Downloads\MenuGenerator\menugeneratorsimbol_logo.svg" />
                           </map>
                         </option>

@@ -923,6 +923,7 @@ class MenuActivity : BaseActivity() {
             _binding.menuPreviewFinalScreen.tvPhone1.visibility = View.VISIBLE
         }
 
+
         if(company.phone2.isNullOrBlank() || !menuSettings.showPhone2){
             _binding.menuPreviewFinalScreen.tvPhone2.visibility = View.GONE
         }else{
@@ -980,7 +981,8 @@ class MenuActivity : BaseActivity() {
             _binding.menuPreviewFinalScreen.llWhatsapp.visibility = View.GONE
         }else{
             _binding.menuPreviewFinalScreen.llWhatsapp.visibility = View.VISIBLE
-            _binding.menuPreviewFinalScreen.tvWhatsapp.text= StringUtils.formatPhone(company.whatsapp)
+            val ws = StringUtils.formatPhone(company.whatsapp)
+            _binding.menuPreviewFinalScreen.tvWhatsapp.text= ws
         }
     }
 

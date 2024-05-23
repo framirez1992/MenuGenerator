@@ -1,5 +1,5 @@
 <resources>
-    <string name="menu_demo_id">17d47682-efeb-4315-9cbf-2d2be2c00a28</string>
+    <string name="menu_demo_id">2c85adab-4b8a-4fec-bfdb-9be11a618a93</string>
 
     <string name="app_name" translatable="false">MenuGenerator</string>
     <string name="sign_in">Sign In</string>
@@ -111,4 +111,20 @@
     <string name="finish_purchase">Finish Purchase</string>
     <string name="url">URL</string>
     <string name="login">Login</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="forgot_password">Forgot password?</string>
+    <string name="don_t_have_an_account">Don\'t have an account?</string>
+    <string name="sign_up_now">Sign Up Now</string>
+    <string name="reset">Reset</string>
+    <string name="invalid_email">Invalid email</string>
+    <string name="check_your_inbox">Check your inbox</string>
+    <string name="we_have_sent_you_an_email_with_further_instructions">We have sent you an email with further instructions.</string>
+    <string name="must_be_at_least_characters_long">Must be at least %1$s characters long.</string>
+    <string name="password_reset">Password reset</string>
+    <string name="already_have_an_account">Already have an account?</string>
+    <string name="sign_up">Sign up</string>
+    <string name="passwords_don_t_match">"Passwords don't match. "</string>
+    <string name="welcome_aboard">Welcome aboard!</string>
+    <string name="your_account_has_been_created">Your account has been created. You can now log in using your email and password.</string>
 </resources>

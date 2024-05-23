@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?><resources>
 
-  <string name="menu_demo_id">a1af91d0-538c-40c6-b565-b34fa66c3d3a</string>
+  <string name="menu_demo_id">c93e04df-5034-4b20-ae94-42d3efa8fb07</string>
 
-  <string name="sign_in">Iniciar sesión</string>
+  <string name="sign_in">Inicia sesión</string>
       
   <string name="my_business">Mi negocio</string>
       
@@ -210,5 +210,21 @@
     <string name="finish_purchase">Finalizar Compra</string>
     <string name="url">URL</string>
   <string name="login">Login</string>
+    <string name="email">Email</string>
+  <string name="password">Contraseña</string>
+  <string name="forgot_password">Olvidaste la contraseña?</string>
+  <string name="don_t_have_an_account">No tienes una cuenta?</string>
+  <string name="sign_up_now">Registrate ahora</string>
+  <string name="reset">Reiniciar</string>
+  <string name="invalid_email">Email invalido</string>
+  <string name="check_your_inbox">Revisa tu correo</string>
+  <string name="we_have_sent_you_an_email_with_further_instructions">Te hemos enviado un correo electrónico con más instrucciones.</string>
+  <string name="must_be_at_least_characters_long">Debe tener una longitud mínima de %1$s caracteres.</string>
+  <string name="password_reset">Reiniciar contraseña</string>
+    <string name="already_have_an_account">Tienes una cuenta?</string>
+  <string name="sign_up">Registrate</string>
+  <string name="passwords_don_t_match">"Las contraseñas no coinciden"</string>
+  <string name="welcome_aboard">¡Bienvenido a bordo!</string>
+  <string name="your_account_has_been_created">Tu cuenta ha sido creada. Ahora puedes iniciar sesión con tu correo electrónico y contraseña.</string>
 
 </resources>

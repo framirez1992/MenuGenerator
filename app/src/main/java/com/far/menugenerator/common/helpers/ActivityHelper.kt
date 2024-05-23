@@ -15,6 +15,7 @@ import com.canhub.cropper.CropImageActivity
 import com.canhub.cropper.CropImageOptions
 import com.far.menugenerator.R
 import com.far.menugenerator.view.common.BaseActivity
+import com.google.firebase.ktx.BuildConfig
 import java.io.File
 
 object ActivityHelper {
@@ -81,5 +82,4 @@ object ActivityHelper {
         val clipData = ClipData.newPlainText(label, text)
         clipboardManager.setPrimaryClip(clipData)
     }
-
 }

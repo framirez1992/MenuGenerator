@@ -25,6 +25,7 @@ import com.far.menugenerator.view.common.DialogManager
 import com.far.menugenerator.view.common.ScreenNavigation
 import com.far.menugenerator.viewModel.CompanyListViewModel
 import com.google.android.material.snackbar.Snackbar
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -212,8 +213,12 @@ class CompanyList : BaseActivity() {
     }
     private fun signOut() {
         lifecycleScope.launch {
-            val request = ClearCredentialStateRequest()
-            credentialManager.clearCredentialState(request)
+            //google credential manager
+            //val request = ClearCredentialStateRequest()
+            //credentialManager.clearCredentialState(request)
+
+            val auth = FirebaseAuth.getInstance()
+            auth.signOut()
             finish()
         }
     }
