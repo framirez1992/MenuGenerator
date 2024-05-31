@@ -123,7 +123,6 @@ class QRPreview : BaseActivity() {
     private fun showOptions(){
         val options = listOf(
             //ImageOption(icon = R.drawable.baseline_remove_red_eye_24, R.string.preview),
-            //ImageOption(icon = R.drawable.round_link_24, R.string.copy_link),
             //ImageOption(icon = R.drawable.baseline_file_present_24,R.string.share_menu),
             ImageOption(icon = R.drawable.rounded_qr_code_2_24,R.string.share_qr_code)
         )
@@ -143,7 +142,10 @@ class QRPreview : BaseActivity() {
         prepareMenuItems(process.state == State.SUCCESS)
 
         if(process.state == State.GENERAL_ERROR)
-            Snackbar.make(binding.root,R.string.operation_failed_please_retry,Snackbar.LENGTH_LONG).show()
+            Snackbar.make(binding.root,process.message?:getString(R.string.operation_failed_please_retry),Snackbar.LENGTH_LONG).show()
+        else if(process.state == State.NETWORK_ERROR){
+            dialogManager.showInternetErrorDialog()
+        }
 
 
     }
@@ -153,7 +155,7 @@ class QRPreview : BaseActivity() {
         file.outputStream().use { os ->
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, os)
         }
-        ActivityHelper.shareFile(this,file)
+        ActivityHelper.shareFile(this,file, viewModel.getMenu().value?.shorUrl?:"")
 
     }
 

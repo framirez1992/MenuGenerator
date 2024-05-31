@@ -226,5 +226,6 @@
   <string name="passwords_don_t_match">"Las contraseñas no coinciden"</string>
   <string name="welcome_aboard">¡Bienvenido a bordo!</string>
   <string name="your_account_has_been_created">Tu cuenta ha sido creada. Ahora puedes iniciar sesión con tu correo electrónico y contraseña.</string>
+    <string name="scan">Scan</string>
 
 </resources>

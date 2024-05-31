@@ -37,7 +37,7 @@ object ActivityHelper {
         baseActivity.startActivityForResult(intent, BaseActivity.REQUEST_CODE_CROP_IMAGE)
     }
 
-    fun shareFile(baseActivity: BaseActivity,file: File){
+    fun shareFile(baseActivity: BaseActivity,file: File, message:String=""){
         //crear xml/paths indicando las rutasde archivos a las que vamos a dar acceso
         //Definir provider en el manifest con nuestro authority (nombre.de.paquete.fileprovider)
         //especificar en el metadata del provider las rutas a las que vamos a dar acceso
@@ -50,7 +50,7 @@ object ActivityHelper {
         val intent = Intent(Intent.ACTION_SEND)
             .setType(mime)
             .putExtra(Intent.EXTRA_STREAM, uri)
-        //.putExtra(Intent.EXTRA_TEXT, "Check out this cool image!")
+            .putExtra(Intent.EXTRA_TEXT, message)
 
         val chooser = Intent.createChooser(intent, /* title */ null)
         try {

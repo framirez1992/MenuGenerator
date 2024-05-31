@@ -18,8 +18,8 @@ import com.far.menugenerator.R
 import com.far.menugenerator.common.global.Constants
 import com.far.menugenerator.common.utils.FileUtils
 import com.far.menugenerator.databinding.ActivityMenuFilesBinding
+import com.far.menugenerator.databinding.DialogMenuNameBinding
 import com.far.menugenerator.databinding.DialogSeachFilePermissionBinding
-import com.far.menugenerator.databinding.MenuNameDialogBinding
 import com.far.menugenerator.viewModel.model.State
 import com.far.menugenerator.view.common.BaseActivity
 import com.far.menugenerator.view.common.DialogManager
@@ -278,7 +278,7 @@ class MenuFilesActivity : BaseActivity() {
 
     private fun showMenuNameDialog(menuName:String?) {
         LayoutInflater.from(this)
-        val dialogBinding = MenuNameDialogBinding.inflate(LayoutInflater.from(this))
+        val dialogBinding = DialogMenuNameBinding.inflate(LayoutInflater.from(this))
         val dialogBuilder = dialogManager.getMaterialDialogBuilder(dialogBinding.root)
         dialogBuilder.setPositiveButton(R.string.finish,null)
 

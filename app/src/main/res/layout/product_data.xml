@@ -150,7 +150,8 @@
                     android:lines="1"
                     android:inputType="text"
                     android:selectAllOnFocus="true"
-                    android:maxLength="50"/>
+                    android:maxLength="50"
+                    android:imeOptions="actionNext"/>
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -174,7 +175,8 @@
                     android:lines="1"
                     android:inputType="number|numberDecimal"
                     android:selectAllOnFocus="true"
-                    android:maxLength="15"/>
+                    android:maxLength="15"
+                    android:imeOptions="actionNext"/>
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -186,6 +188,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/tilProductPrice"
+                app:layout_constraintBottom_toBottomOf="parent"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -195,7 +198,9 @@
                     android:hint="@string/description"
                     android:textSize="@dimen/body"
                     android:selectAllOnFocus="true"
-                    android:maxLength="500"/>
+                    android:maxLength="500"
+                    android:inputType="textMultiLine"
+                    android:lines="10"/>
 
             </com.google.android.material.textfield.TextInputLayout>
 

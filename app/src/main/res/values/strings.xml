@@ -127,4 +127,5 @@
     <string name="passwords_don_t_match">"Passwords don't match. "</string>
     <string name="welcome_aboard">Welcome aboard!</string>
     <string name="your_account_has_been_created">Your account has been created. You can now log in using your email and password.</string>
+    <string name="scan">Scan</string>
 </resources>

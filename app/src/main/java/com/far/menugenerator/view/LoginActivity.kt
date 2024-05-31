@@ -1,5 +1,6 @@
 package com.far.menugenerator.view
 
+import android.accounts.NetworkErrorException
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -7,7 +8,6 @@ import android.view.View
 import android.view.WindowManager
 import android.widget.EditText
 import android.widget.Toast
-import androidx.annotation.IdRes
 import androidx.core.widget.addTextChangedListener
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
@@ -18,7 +18,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.far.menugenerator.R
 import com.far.menugenerator.common.global.Constants
-import com.far.menugenerator.common.helpers.ActivityHelper
+import com.far.menugenerator.common.helpers.NetworkUtils
 import com.far.menugenerator.common.utils.StringUtils
 import com.far.menugenerator.databinding.ActivityLoginBinding
 import com.far.menugenerator.databinding.DialogImageTitleDescriptionBinding
@@ -86,6 +86,9 @@ class LoginActivity : BaseActivity() {
     private fun initViews(){
         setScreenVisible(showMain = true)
 
+        _binding.loginScreen.imgLogo.setOnClickListener{
+                startActivity(Intent(this, BluetoothConnect::class.java))
+        }
         _binding.loginScreen.imgLogo.setOnLongClickListener {
             Toast.makeText(baseContext,Constants.getAppVersion(applicationContext),Toast.LENGTH_LONG).show()
             return@setOnLongClickListener true
@@ -103,11 +106,19 @@ class LoginActivity : BaseActivity() {
             if(!passwordValidation(password,_binding.loginScreen.tilPassword, _binding.loginScreen.etPassword)){
                 return@setOnClickListener
             }
-            login(email, password)
-            hideKeyboard(_binding.container.windowToken)
 
-            //login()
-            //signInWithGoogle()
+            _binding.loginScreen.etEmail.text?.clear()
+            _binding.loginScreen.etPassword.text?.clear()
+            lifecycleScope.launch {
+                isLoading(true)
+                if(!NetworkUtils.isConnectedToInternet()){
+                    dialogManager.showInternetErrorDialog()
+                    isLoading(false)
+                }else{
+                    login(email, password)
+                    hideKeyboard(_binding.container.windowToken)
+                }
+            }
         }
 
         _binding.loginScreen.tvForgotPassword.setOnClickListener{
@@ -137,7 +148,15 @@ class LoginActivity : BaseActivity() {
             }
 
 
-            registerUser(email,password)
+            lifecycleScope.launch {
+                isLoadingSignUp(true)
+                if(!NetworkUtils.isConnectedToInternet()){
+                    dialogManager.showInternetErrorDialog()
+                    isLoadingSignUp(false)
+                }else{
+                    registerUser(email,password)
+                }
+            }
         }
         _binding.signUpScreen.llSignIn.setOnClickListener{
             setScreenVisible(showMain = true)
@@ -187,11 +206,14 @@ class LoginActivity : BaseActivity() {
         _binding.loginScreen.pb.visibility = if(loading) View.VISIBLE else View.GONE
         _binding.loginScreen.btnLogin.visibility = if(loading) View.INVISIBLE else View.VISIBLE
         _binding.loginScreen.btnLogin.isEnabled = !loading
+        _binding.loginScreen.llSignup.isEnabled = !loading
+        _binding.loginScreen.tvForgotPassword.isEnabled = !loading
     }
     private fun isLoadingSignUp(loading: Boolean){
         _binding.signUpScreen.pb.visibility = if(loading) View.VISIBLE else View.GONE
         _binding.signUpScreen.btnSignUp.visibility = if(loading) View.INVISIBLE else View.VISIBLE
         _binding.signUpScreen.btnSignUp.isEnabled = !loading
+        _binding.signUpScreen.llSignIn.isEnabled = !loading
     }
 
     private fun login(){
@@ -221,7 +243,6 @@ class LoginActivity : BaseActivity() {
     }
 
     private fun registerUser(email:String, password:String) {
-        isLoadingSignUp(true)
         auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
@@ -239,7 +260,6 @@ class LoginActivity : BaseActivity() {
     }
 
     private fun login(email: String, password: String) {
-        isLoading(true)
         auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {

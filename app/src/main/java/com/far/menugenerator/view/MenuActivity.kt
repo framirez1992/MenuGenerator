@@ -24,8 +24,8 @@ import com.far.menugenerator.common.utils.StringUtils
 import com.far.menugenerator.databinding.ActivityMainBinding
 import com.far.menugenerator.databinding.DialogCategoryBinding
 import com.far.menugenerator.databinding.DialogImageTitleDescriptionBinding
+import com.far.menugenerator.databinding.DialogMenuNameBinding
 import com.far.menugenerator.databinding.ItemMenuFinalPreviewBinding
-import com.far.menugenerator.databinding.MenuNameDialogBinding
 import com.far.menugenerator.databinding.MenuSettingsBinding
 import com.far.menugenerator.model.Category
 import com.far.menugenerator.model.ItemPreview
@@ -469,7 +469,7 @@ class MenuActivity : BaseActivity() {
 
     private fun showMenuNameDialog(menuName:String?) {
         LayoutInflater.from(this)
-        val dialogBinding = MenuNameDialogBinding.inflate(LayoutInflater.from(this))
+        val dialogBinding = DialogMenuNameBinding.inflate(LayoutInflater.from(this))
         val dialogBuilder = dialogManager.getMaterialDialogBuilder(dialogBinding.root)
         dialogBuilder.setPositiveButton(R.string.finish,null)
 

@@ -61,7 +61,6 @@ android {
 }
 
 
-
 dependencies {
 
     implementation 'com.google.devtools.ksp:symbol-processing-api:1.9.21-1.0.15'
@@ -145,5 +144,5 @@ dependencies {
     implementation 'com.google.android.libraries.identity.googleid:googleid:1.1.0'
     implementation 'com.google.android.gms:play-services-auth:21.1.1'
     ////////////////////////////////////////////////////////////////////////////////////
-
+    implementation 'com.github.DantSu:ESCPOS-ThermalPrinter-Android:3.3.0'
 }

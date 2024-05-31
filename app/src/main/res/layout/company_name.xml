@@ -23,7 +23,8 @@
             android:textSize="@dimen/body"
             android:lines="1"
             android:inputType="text"
-            android:maxLength="50"/>
+            android:maxLength="50"
+            android:imeOptions="actionDone"/>
     </com.google.android.material.textfield.TextInputLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

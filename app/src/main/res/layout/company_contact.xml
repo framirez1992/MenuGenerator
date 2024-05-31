@@ -23,7 +23,8 @@
             android:drawableStart="@drawable/facebook_tiny"
             android:lines="1"
             android:inputType="textUri"
-            android:maxLength="100"/>
+            android:maxLength="100"
+            android:imeOptions="actionNext"/>
     </com.google.android.material.textfield.TextInputLayout>
 
 
@@ -45,7 +46,8 @@
             android:drawableStart="@drawable/instagram_tiny"
             android:lines="1"
             android:inputType="textUri"
-            android:maxLength="100"/>
+            android:maxLength="100"
+            android:imeOptions="actionNext"/>
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
@@ -66,7 +68,8 @@
             android:drawableStart="@drawable/whatsapp_tiny"
             android:lines="1"
             android:inputType="number"
-            android:maxLength="20"/>
+            android:maxLength="20"
+            android:imeOptions="actionDone"/>
     </com.google.android.material.textfield.TextInputLayout>
 
 
