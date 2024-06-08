@@ -19,6 +19,7 @@ import androidx.lifecycle.lifecycleScope
 import com.far.menugenerator.R
 import com.far.menugenerator.common.global.Constants
 import com.far.menugenerator.common.helpers.NetworkUtils
+import com.far.menugenerator.common.utils.PreferenceUtils
 import com.far.menugenerator.common.utils.StringUtils
 import com.far.menugenerator.databinding.ActivityLoginBinding
 import com.far.menugenerator.databinding.DialogImageTitleDescriptionBinding
@@ -85,10 +86,6 @@ class LoginActivity : BaseActivity() {
     }
     private fun initViews(){
         setScreenVisible(showMain = true)
-
-        _binding.loginScreen.imgLogo.setOnClickListener{
-                startActivity(Intent(this, BluetoothConnect::class.java))
-        }
         _binding.loginScreen.imgLogo.setOnLongClickListener {
             Toast.makeText(baseContext,Constants.getAppVersion(applicationContext),Toast.LENGTH_LONG).show()
             return@setOnLongClickListener true
@@ -197,6 +194,10 @@ class LoginActivity : BaseActivity() {
             isLoading(false)
         }else{//success
             userFirebase = viewModel.getUser()
+
+            //permission
+            PreferenceUtils.setAdminPreference(this,userFirebase?.admin == true)
+
             screenNavigation.companyListActivity()
             isLoading(false)
         }

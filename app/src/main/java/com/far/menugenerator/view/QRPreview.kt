@@ -1,21 +1,28 @@
 package com.far.menugenerator.view
 
+import android.annotation.SuppressLint
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
+import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.widget.Toast
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.ViewModelProvider
 import com.far.menugenerator.R
 import com.far.menugenerator.common.helpers.ActivityHelper
+import com.far.menugenerator.common.utils.PreferenceUtils
+import com.far.menugenerator.common.utils.PrintUtils
 import com.far.menugenerator.databinding.FragmentQRPreviewBinding
-import com.far.menugenerator.viewModel.model.ProcessState
-import com.far.menugenerator.viewModel.model.State
 import com.far.menugenerator.view.adapters.ImageOption
 import com.far.menugenerator.view.common.BaseActivity
 import com.far.menugenerator.view.common.DialogManager
 import com.far.menugenerator.viewModel.QRPreviewViewModel
+import com.far.menugenerator.viewModel.model.ProcessState
+import com.far.menugenerator.viewModel.model.State
 import com.google.android.material.snackbar.Snackbar
 import java.io.File
 import javax.inject.Inject
@@ -121,18 +128,45 @@ class QRPreview : BaseActivity() {
     }
 
     private fun showOptions(){
-        val options = listOf(
+        val options = mutableListOf(
             //ImageOption(icon = R.drawable.baseline_remove_red_eye_24, R.string.preview),
             //ImageOption(icon = R.drawable.baseline_file_present_24,R.string.share_menu),
             ImageOption(icon = R.drawable.rounded_qr_code_2_24,R.string.share_qr_code)
         )
+        if(PreferenceUtils.getAdminPreference(this,false)){
+            options.add(ImageOption(icon = R.drawable.baseline_bluetooth_searching_24, R.string.scan))
+            options.add(ImageOption(icon = R.drawable.round_print_24,R.string.print))
+        }
         dialogManager.showImageBottomSheet(options){
             optionSelected = it
             when (it.string) {
                 R.string.share_qr_code -> shareBitmap(binding.imgQR.drawable.toBitmap())
+                R.string.scan -> startActivity(Intent(this, BluetoothConnect::class.java))
+                R.string.print -> printQR()
             }
 
         }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun printQR() {
+        val mac = PreferenceUtils.getMacAddress(this, "")
+        val bluetoothManager: BluetoothManager = getSystemService(BluetoothManager::class.java)
+        val bluetoothDevice = bluetoothManager.adapter.bondedDevices.firstOrNull{ it.address ==  mac}
+        if(bluetoothDevice != null){
+            val p = PrintUtils(bluetoothDevice)
+            p.printQRCode(
+                data =  viewModel.getMenu().value?.shorUrl!!,
+                onSuccess = {
+
+                },
+                onFail = {
+                    Toast.makeText(this, it.message, Toast.LENGTH_LONG).show()
+                })
+        }else{
+            Toast.makeText(this, getString(R.string.not_found), Toast.LENGTH_LONG).show()
+        }
+
     }
 
 

@@ -25,6 +25,8 @@ import com.dantsu.escposprinter.EscPosPrinter
 import com.dantsu.escposprinter.connection.bluetooth.BluetoothConnection
 import com.dantsu.escposprinter.textparser.PrinterTextParserImg
 import com.far.menugenerator.R
+import com.far.menugenerator.common.utils.PreferenceUtils
+import com.far.menugenerator.common.utils.PrintUtils
 import com.far.menugenerator.databinding.ActivityBluetoothConnectBinding
 import com.far.menugenerator.databinding.DialogSeachFilePermissionBinding
 import com.far.menugenerator.view.adapters.BluetoothDevicesAdapter
@@ -62,39 +64,8 @@ class BluetoothConnect : AppCompatActivity() {
 
         _binding.rv.layoutManager = LinearLayoutManager(this, VERTICAL, false)
         _binding.rv.adapter = BluetoothDevicesAdapter(devices = devices){
+            PreferenceUtils.setMacAddress(this,it.address)
             printdata(it)
-            /*
-            lifecycleScope.launch {
-                try {
-                    //myParingDevice.setPairingConfirmation(true);
-                    //esto es para conexiones standar a bluetooh
-                    val m: Method = it.javaClass.getMethod(
-                        "createRfcommSocket",
-                        Int::class.javaPrimitiveType
-                    )
-                    val socket = m.invoke(it, 1) as BluetoothSocket
-                    socket.connect()
-                    val ALIGN_CENTER = byteArrayOf(0x1b, 0x61, 0x01)
-                    val ALIGN_LEFT = byteArrayOf(0x1b, 0x61, 0x00)
-                    val ALIGN_RIGHT = byteArrayOf(0x1b, 0x61, 0x02)
-                    val TEXT_SIZE_NORMAL = byteArrayOf(0x1b, 0x21, 0x00)
-                    val TEXT_SIZE_LARGE = byteArrayOf(0x1b, 0x21, 0x30)
-                    val INVERTED_COLOR_ON = byteArrayOf(0x1d, 0x42, 0x01)
-                    val BEEPER = byteArrayOf(0x1b, 0x42, 0x05, 0x05)
-                    val INIT = byteArrayOf(0x1b, 0x40)
-
-                    //socket.outputStream.write(ALIGN_CENTER)
-                    //socket.outputStream.write(TEXT_SIZE_LARGE)
-                    //socket.outputStream.write("Configurado\n\n".toByteArray())
-
-
-
-                }catch (e:Exception){
-                    Log.d("aaa",e.message!!)
-                }
-            }*/
-
-
         }
 
         // Register the permissions callback, which handles the user's response to the
@@ -240,59 +211,13 @@ class BluetoothConnect : AppCompatActivity() {
     }
 
     fun printdata(bluetoothDevice:BluetoothDevice) {
-        try{
-            val device =  BluetoothConnection(bluetoothDevice)
-            device.connect()
-            val printer = EscPosPrinter(device, 203, 48f, 32)
-            /*
-            printer
-                .printFormattedText(
-                    """
-        [C]<img>${
-                        PrinterTextParserImg.bitmapToHexadecimalString(
-                            printer,
-                            this.applicationContext.resources.getDrawableForDensity(
-                                R.drawable.delete,
-                                DisplayMetrics.DENSITY_MEDIUM
-                            )
-                        )
-                    }</img>
-        [L]
-        [C]<u><font size='big'>ORDER N°045</font></u>
-        [L]
-        [C]================================
-        [L]
-        [L]<b>BEAUTIFUL SHIRT</b>[R]9.99e
-        [L]  + Size : S
-        [L]
-        [L]<b>AWESOME HAT</b>[R]24.99e
-        [L]  + Size : 57/58
-        [L]
-        [C]--------------------------------
-        [R]TOTAL PRICE :[R]34.98e
-        [R]TAX :[R]4.23e
-        [L]
-        [C]================================
-        [L]
-        [L]<font size='tall'>Customer :</font>
-        [L]Raymond DUPONT
-        [L]5 rue des girafes
-        [L]31547 PERPETES
-        [L]Tel : +33801201456
-        [L]
-        [C]<barcode type='ean13' height='10'>831254784551</barcode>
-        [C]<qrcode size='20'>https://dantsu.com/</qrcode>
-        """.trimIndent()
-                )*/
-
-            printer.printFormattedText("""
-                [C]<qrcode size='35'>https://tinyurl.com/4t7jm79w</qrcode>
-                [L]
-                [C]<font size='normal'><b>${"https://tinyurl.com/4t7jm79w".uppercase()}</b></font>
-            """.trimIndent())
-        }catch (e:Exception){
-            Log.i("ERROR", e.message!!)
-        }
+       val p = PrintUtils(bluetoothDevice)
+        p.printConnected(
+            onSuccess = {
+              finish()
+        }, onFail = {
+            Toast.makeText(this,it.message,Toast.LENGTH_LONG).show()
+        })
     }
 
 
