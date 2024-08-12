@@ -42,9 +42,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
 import java.util.Calendar
+import java.util.UUID
 import java.util.concurrent.TimeoutException
 import javax.inject.Inject
 import javax.inject.Provider
+import kotlin.math.log
 
 class PremiumViewModel(
     private val purchaseService: PurchaseService,
@@ -142,6 +144,7 @@ class PremiumViewModel(
                 //Transacciones que el pago ya se aprobo
                 registerPaidPurchaseStatus.postValue(ProcessState(state = State.SUCCESS))
             }catch (e:Exception){
+                Log.d(TAG, "${e.message}");
                 registerPaidPurchaseStatus.postValue(ProcessState(state = State.GENERAL_ERROR))
             }
         }
@@ -154,7 +157,7 @@ class PremiumViewModel(
             if(p == null){
                 p = PurchaseFirebase(
                     status = PurchaseStatus.CONFIRMATION_PENDING.name,
-                    orderId = it.orderId,
+                    orderId = it.orderId?:UUID.randomUUID().toString(),//si el OrderId = null no fue por una compra, sino por un codigo de promosion.
                     purchaseToken = it.purchaseToken,
                     userId = _userId,
                     companyId = _companyId,
