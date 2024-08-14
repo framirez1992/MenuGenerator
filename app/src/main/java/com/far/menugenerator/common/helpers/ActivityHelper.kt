@@ -30,9 +30,13 @@ object ActivityHelper {
     fun callCropImage(baseActivity: BaseActivity) {
         //Implementar onActivityresult en la actividad desde dode se llame
         val intent = Intent(baseActivity, CropImageActivity::class.java)
-        val options = CropImageOptions()
-        options.activityBackgroundColor = baseActivity.getColor(R.color.grey_900)
-        options.backgroundColor = baseActivity.getColor(R.color.grey_900)
+
+        val options = CropImageOptions(
+            imageSourceIncludeCamera = false,
+            imageSourceIncludeGallery = true,
+            activityBackgroundColor = baseActivity.getColor(R.color.grey_900),
+            backgroundColor = baseActivity.getColor(R.color.grey_900))
+
         intent.putExtra(CropImage.CROP_IMAGE_EXTRA_OPTIONS,options)
         baseActivity.startActivityForResult(intent, BaseActivity.REQUEST_CODE_CROP_IMAGE)
     }
